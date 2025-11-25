@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Model files (large)
+results/*/best_model.pt
+results/**/best_model.pt
+*.pth
+*.pt
+
+# Embeddings cache (large)
+results/*/embeddings/*.npy
+results/**/embeddings/*.npy
+**/embeddings/*.npy
+
+# Predictions (can be regenerated)
+*.npz
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+~*
+.~*
+
+# Data files (TOO LARGE for GitHub - train.csv: 1.6GB, test.csv: 580MB)
+datasets/*.csv
+datasets/train.csv
+datasets/test.csv
+
+# Experiment results (keep configs, delete large outputs)
+# results/*/checkpoints/
+# results/*/trees/
+
+# OS-specific
+.fuse_hidden*

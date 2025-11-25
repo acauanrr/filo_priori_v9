@@ -1,0 +1,146 @@
+# Fine-Tuning Configuration for BGE Embeddings - CPU VERSION
+# Optimized for CPU training (fallback when GPU has issues)
+#
+# This configuration fine-tunes BGE-Large for software engineering domain
+# using contrastive learning with triplets generated from test execution history.
+#
+# Hardware Requirements:
+# - CPU: Multi-core recommended
+# - RAM: 64GB+ recommended
+# - Disk: ~10GB for checkpoints
+#
+# Expected Training Time (CPU):
+# - Small (10K triplets): ~2-3 hours
+# - Medium (100K triplets): ~20-30 hours
+# - Full (1M+ triplets): ~100-150 hours (NOT RECOMMENDED on CPU)
+
+experiment:
+  name: "bge_finetuning_v1"
+  description: "Contrastive fine-tuning of BGE for SE domain"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+
+  # Sample size for quick testing (set to null for full dataset)
+  # CPU is SLOW - recommend starting with small sample
+  sample_size: 10000  # For quick testing (2-3 hours on CPU)
+  # sample_size: null  # Full dataset (100+ hours on CPU - NOT RECOMMENDED)
+
+# Triplet Generation Configuration
+triplet:
+  # Minimum number of failed builds required per test case
+  min_fail_builds: 1
+
+  # Minimum number of passed builds required per test case
+  min_pass_builds: 1
+
+  # Maximum triplets to generate per test case
+  # Higher = more training data but slower generation
+  max_triplets_per_test: 10
+
+  # Cache path for generated triplets (speeds up re-runs)
+  cache_path: "cache/triplets_full.csv"
+
+# Model Configuration
+model:
+  # Base model to fine-tune
+  base_model: "BAAI/bge-large-en-v1.5"
+
+  # Output path for fine-tuned model
+  # This model will be saved here and can be loaded for inference
+  output_path: "models/finetuned_bge_v1"
+
+  # Embedding dimension (1024 for BGE-Large)
+  embedding_dim: 1024
+
+# Training Configuration
+training:
+  # Number of training epochs
+  # Start with 3-5 epochs, increase if underfitting
+  num_epochs: 5
+
+  # Batch size
+  # CPU has memory constraints and is slower
+  # Recommended: 8-16 for BGE-Large on CPU
+  # Smaller batch = slower but uses less memory
+  batch_size: 8  # Optimized for CPU training
+
+  # Learning rate
+  # Recommended: 2e-5 to 5e-5 for fine-tuning
+  learning_rate: 3e-5
+
+  # Triplet margin
+  # Distance threshold between anchor-positive and anchor-negative
+  # Higher = stricter separation requirement
+  triplet_margin: 0.5
+
+  # Checkpoint saving
+  checkpoint_save_steps: 500  # Save every 500 steps
+  checkpoint_save_total_limit: 3  # Keep only 3 most recent checkpoints
+
+  # Mixed precision training (FP16)
+  # Speeds up training and reduces memory usage
+  use_amp: true
+
+# Evaluation Configuration
+evaluation:
+  # Validate on sample triplets every N steps
+  eval_steps: 500
+
+  # Number of triplets to use for validation
+  eval_sample_size: 1000
+
+# Hardware Configuration
+hardware:
+  device: "cpu"  # Force CPU usage (change to "cuda" if GPU works)
+  num_workers: 4  # Data loading workers
+  pin_memory: false  # Not needed for CPU
+
+# Advanced Training Options
+advanced:
+  # Gradient accumulation steps
+  # Effective batch size = batch_size * gradient_accumulation_steps
+  # Use if you want larger effective batch size
+  gradient_accumulation_steps: 1
+
+  # Weight decay for regularization
+  weight_decay: 0.01
+
+  # Max gradient norm for clipping
+  max_grad_norm: 1.0
+
+  # Warmup ratio (fraction of training for learning rate warmup)
+  warmup_ratio: 0.1
+
+# Logging Configuration
+logging:
+  # Log training metrics every N steps
+  log_steps: 100
+
+  # Save training logs to file
+  log_to_file: true
+  log_file: "logs/finetune_bge.log"
+
+  # TensorBoard logging
+  use_tensorboard: true
+  tensorboard_dir: "runs/finetune_bge_v1"
+
+# Output Configuration
+output:
+  # Save final model
+  save_final_model: true
+
+  # Save intermediate checkpoints
+  save_checkpoints: true
+
+  # Export model to ONNX format (for deployment)
+  export_onnx: false
+
+# Notes:
+# 1. First run with sample_size=10000 to test (~30 min)
+# 2. Then run with sample_size=null for full dataset (~10-15 hours)
+# 3. Monitor GPU usage with: watch -n 1 nvidia-smi
+# 4. Check training progress in: logs/finetune_bge.log
+# 5. Fine-tuned model will be in: models/finetuned_bge_v1/

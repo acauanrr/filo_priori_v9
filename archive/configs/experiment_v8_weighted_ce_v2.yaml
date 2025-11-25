@@ -1,0 +1,261 @@
+# Filo-Priori V8 - Weighted CE V2 (IMPROVED)
+# Solução melhorada para baixo Recall da classe minoritária
+#
+# PROBLEMA DA V1:
+# - Test Recall Fail: apenas 6% (modelo quase sempre prevê Pass)
+# - Val Recall Fail (best): 14% (muito baixo)
+# - Class weights 37:1 não foram agressivos o suficiente
+#
+# MELHORIAS NESTA VERSÃO:
+# 1. Class weights 3x mais agressivos (100:1)
+# 2. Dropout reduzido (0.2 → 0.1)
+# 3. Weight decay reduzido (5e-5 → 1e-5)
+# 4. Learning rate reduzido (1e-4 → 5e-5)
+# 5. Threshold search muito mais baixo ([0.05, 0.50])
+# 6. SMOTE habilitado para balancear dados
+#
+# META: Recall Fail ≥ 30% (atualmente 6%)
+
+experiment:
+  name: "v8_weighted_ce_v2"
+  version: "8.0.3"
+  description: "V8 with Weighted CE - Improved for better minority class recall"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"  # Class 1
+  binary_negative_class: "Fail"  # Class 0
+
+  # ✅ MELHORIA 1: Habilitar SMOTE para balancear dados
+  smote:
+    enabled: true
+    k_neighbors: 5
+    sampling_strategy: 0.15  # Balancear de 2.6% para 15% (menos agressivo que 0.5)
+
+# Text Processing Configuration
+text:
+  num_commits_to_keep: 3
+  max_commit_length: 512
+  max_summary_length: 256
+  max_steps_length: 512
+
+# Semantic Embeddings
+semantic:
+  model_name: "models/finetuned_bge_v1"
+  embedding_dim: 1024
+  max_length: 512
+  batch_size: 32
+  pooling_strategy: "mean"
+  normalize_embeddings: true
+  cache_path: "cache/embeddings"
+
+  fields:
+    - "TE_Summary"
+    - "TC_Steps"
+    - "commit"
+
+# Structural Features
+structural:
+  extractor:
+    recent_window: 5
+    min_history: 2
+    cache_path: "cache/structural_features.pkl"
+
+  input_dim: 6
+
+# Phylogenetic Graph
+graph:
+  type: "co_failure"
+  min_co_occurrences: 2
+  weight_threshold: 0.1
+  cache_path: "cache/phylogenetic_graph.pkl"
+  build_graph: true
+
+# Model Architecture - REDUZIR REGULARIZAÇÃO
+model:
+  type: "dual_stream_v8"
+
+  # Semantic Stream - MENOS DROPOUT
+  semantic:
+    input_dim: 1024
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1  # ✅ MELHORIA 2: Reduzido de 0.2 para 0.1
+    activation: "gelu"
+
+  # Structural Stream - MENOS DROPOUT
+  structural:
+    input_dim: 6
+    hidden_dim: 256
+    num_heads: 4
+    dropout: 0.1  # ✅ MELHORIA 2: Reduzido de 0.2 para 0.1
+    activation: "elu"
+    use_edge_weights: true
+
+  # Fusion Layer
+  fusion:
+    type: "cross_attention"
+    num_heads: 4
+    dropout: 0.1  # Reduzido de 0.1 para manter consistência
+
+  # Classifier - MENOS DROPOUT
+  classifier:
+    hidden_dims: [128, 64]
+    dropout: 0.2  # ✅ MELHORIA 2: Reduzido de 0.3 para 0.2
+
+  num_classes: 2
+
+# Training Configuration - AJUSTADO PARA MELHOR CONVERGÊNCIA
+training:
+  num_epochs: 60  # Aumentado para dar mais tempo com LR menor
+  batch_size: 32
+  learning_rate: 5e-5  # ✅ MELHORIA 3: Reduzido de 1e-4 (convergência mais suave)
+  weight_decay: 1e-5   # ✅ MELHORIA 3: Reduzido de 5e-5 (menos regularização)
+
+  optimizer:
+    type: "AdamW"
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  scheduler:
+    type: "cosine"
+    T_max: 60
+    eta_min: 5e-7  # Mais baixo que antes
+
+  grad_clip_norm: 1.0
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 25  # Aumentado de 20 (dar mais tempo)
+    monitor: "val_f1_macro"
+    mode: "max"
+    min_delta: 0.0005  # Mais sensível
+
+  use_amp: false
+
+# Loss Function - WEIGHTED CE COM WEIGHTS MAIS AGRESSIVOS
+loss:
+  type: "weighted_ce"
+
+  # ✅ MELHORIA 4: Class weights 3x mais agressivos
+  weighted_ce:
+    use_class_weights: false  # Usar custom weights
+    class_weights: [100.0, 1.0]  # Ratio 100:1 (vs 37:1 natural)
+    label_smoothing: 0.05  # ✅ MELHORIA 5: Label smoothing leve
+    #
+    # Explicação: Class weight natural é 37:1 (Pass:Fail)
+    # V1 usou 37:1 → Recall Fail = 6%
+    # V2 usa 100:1 → Espera-se Recall Fail ≥ 30%
+    #
+    # Label smoothing 0.05 suaviza labels:
+    # - Fail: 0 → 0.025 (soft)
+    # - Pass: 1 → 0.975 (soft)
+    # Isso ajuda a evitar overconfidence na classe Pass
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision"
+    - "recall"
+    - "auprc"
+    - "confusion_matrix"
+    - "prediction_diversity"
+
+  temperature_scaling:
+    enabled: true
+    initial_T: 1.0
+
+  # ✅ MELHORIA 6: Threshold search muito mais baixo
+  threshold_search:
+    enabled: true
+    search_range: [0.05, 0.50]  # V1: [0.1, 0.9], V2: muito mais baixo!
+    search_step: 0.05
+    metric: "f1_macro"
+    #
+    # Com imbalance 37:1, threshold ideal pode ser ~0.10-0.20
+    # (muito menor que 0.5 padrão)
+
+# APFD Configuration
+apfd:
+  expected_builds: 277
+  count_tc_1_rule: true
+  only_fail_results: true
+  save_prioritized_tests: true
+  save_apfd_per_build: true
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  log_to_file: true
+  log_file: "logs/experiment_v8_weighted_ce_v2.log"
+  log_to_tensorboard: true
+  tensorboard_dir: "runs/experiment_v8_weighted_ce_v2"
+
+  checkpoint:
+    save_best: true
+    save_last: true
+    save_every_n_epochs: 10
+
+# Output Configuration
+output:
+  results_dir: "results/experiment_v8_weighted_ce_v2"
+  save_predictions: true
+  save_features: true
+  save_confusion_matrix: true
+  save_pr_curves: true
+
+# Hardware Configuration
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+
+# ============================================================================
+# EXPECTED IMPROVEMENTS:
+# ============================================================================
+# DATASET (com SMOTE):
+# - Training samples: ~62,878 → ~70,000+ (após SMOTE)
+# - Class ratio: 97.4%/2.6% → ~85%/15% (mais balanceado)
+#
+# EXPECTED METRICS:
+# 1. Recall Fail: 6% → **≥30%** (5x melhoria!)
+# 2. Recall Pass: 98% → ≥95% (manter alto)
+# 3. Precision Fail: 9% → ≥20% (melhor que V1)
+# 4. F1 Macro: 0.52 → **≥0.60** (melhoria significativa)
+# 5. Accuracy: 96% → ≥92% (pode cair um pouco, mas OK)
+# 6. Prediction Diversity: 0.35 → ≥0.40
+#
+# SUCCESS CRITERIA (GO):
+# - Recall Fail ≥ 0.30 (30%+ dos Fails detectados)
+# - Recall Pass ≥ 0.92 (ainda alto)
+# - F1 Macro ≥ 0.60 (balanceado)
+# - Precision Fail ≥ 0.18 (aceitável FP rate)
+# - Test Accuracy ≥ 0.90 (overall bom)
+#
+# NO-GO CRITERIA (FAILURE):
+# - Recall Fail < 0.20 (ainda muito baixo)
+# - Recall Pass < 0.85 (muita perda)
+# - F1 Macro < 0.55 (sem melhoria)
+#
+# VALIDATION COMMANDS:
+# python main_v8.py --config configs/experiment_v8_weighted_ce_v2.yaml --device cuda
+#
+# CHECK RESULTS:
+# grep "Recall.*Not-Pass" results/experiment_v8_weighted_ce_v2/tmux-buffer.txt
+# grep "Final Test" results/experiment_v8_weighted_ce_v2/tmux-buffer.txt
+# ============================================================================

@@ -1,0 +1,286 @@
+# EXPERIMENT 012 - BEST PRACTICES COMBINATION
+# Objetivo: Atingir o melhor desempenho possível combinando apenas o que funcionou
+# Expected: Test F1 Macro 0.68-0.73 (+1-6 pp vs 007)
+#
+# ESTRATÉGIA:
+# ✅ Usar Bidirectional Fusion (única mudança arquitetural com efeito real)
+# ✅ Adicionar SMOTE (balanceamento de classes - recomendação #1)
+# ✅ Ajustar Focal Loss alpha para dar mais peso à classe minoritária
+# ✅ Usar hyperparameters otimizados do Exp 007 e 010
+# ❌ NÃO usar GATv2 (problema técnico com torch-scatter)
+# ❌ NÃO usar Attention Pooling (sem efeito observado)
+# ❌ NÃO usar Improved Classifier (causou regressão)
+#
+# Baseline: Experiment 007 (F1 Macro = 0.6677)
+# Reference: Experiment 010 (F1 Macro = 0.6690, melhor Not-Pass Recall)
+
+# Data Configuration - ⭐ ADD SMOTE
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+  output_dir: "results/experiment_012_best_practices"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  sample_size: null
+
+  # Binary Classification
+  binary_classification: true
+  binary_positive_class: "Pass"
+  binary_strategy: "pass_vs_all"
+
+  # ⭐ DATA AUGMENTATION - SMOTE (NEW!)
+  use_smote: true                     # Enable SMOTE for balancing
+  smote_k_neighbors: 5                # Standard SMOTE parameter
+  smote_sampling_strategy: 0.5        # Increase Not-Pass to 50% of Pass count
+  use_resampling: false
+
+# Text Processing (SAME AS BASELINE)
+text:
+  max_summary_length: 128
+  max_steps_length: 256
+  max_commit_length: 512
+  commit_strategy: "first_n"
+  num_commits_to_keep: 3
+
+# Embedding Configuration (SAME AS BASELINE)
+embedding:
+  model_name: "BAAI/bge-large-en-v1.5"
+  batch_size: 32
+  max_length: 512
+  pooling_strategy: "mean"
+  normalize_embeddings: true
+  query_instruction: null
+  cache_embeddings: true
+  embedding_dim: 1024
+
+# Phylogenetic Structure (SAME AS BASELINE)
+phylogenetic:
+  distance_metric: "cosine"
+  tree_method: "knn_only"
+  linkage_method: "average"
+  tree_type: "none"
+  use_approx: true
+  subsample_for_tree: 50000
+  cache_tree: true
+
+# Model Architecture - BEST COMBINATION
+model:
+  # Semantic Stream - Simple Mean Pooling (baseline - funciona)
+  semantic_stream:
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.4                      # Exp 007 value (balanced)
+    activation: "gelu"
+    pooling_type: "mean"              # NOT using attention (sem efeito)
+
+  # Structural Stream - GAT (stable, available)
+  structural_stream:
+    hidden_dim: 256
+    num_gnn_layers: 2
+    num_neighbors: 10
+    dropout: 0.4
+    aggregation: "mean"
+    layer_type: "gat"                 # NOT using gatv2 (torch-scatter issue)
+    use_residual: false
+
+  # ⭐ Cross-Attention Fusion - Bidirectional (from Exp 010 - WORKED!)
+  cross_attention:
+    num_heads: 4
+    hidden_dim: 256
+    dropout: 0.4
+    num_layers: 1
+    fusion_type: "bidirectional_cross_attention"  # ⭐ From Exp 010
+    use_feedforward: true                          # ⭐ Enhanced fusion
+    use_gating: true                               # ⭐ Learnable fusion weights
+
+  # Classification Head - Simple MLP (baseline - stable)
+  classifier:
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.5                      # Slightly higher (from baseline)
+    classifier_type: "simple"         # NOT using improved (caused regression)
+
+# Training Configuration - OPTIMIZED HYPERPARAMETERS
+training:
+  num_epochs: 80                      # Same as baseline
+  batch_size: 64                      # Same as baseline
+  learning_rate: 4.5e-5               # ⭐ Between Exp 007 (5e-5) and 010 (4e-5)
+  weight_decay: 1.0e-4                # Exp 007 value (good regularization)
+  warmup_steps: 1000                  # Same as baseline
+  gradient_clip: 1.0
+  use_balanced_sampling: true         # Keep enabled
+  optimize_threshold: true
+  threshold_search_range: [0.20, 0.80]
+
+  # ⭐ Loss Configuration - ADJUSTED for better minority class learning
+  loss:
+    type: "focal"
+    focal_alpha: [0.22, 0.78]         # ⭐ More weight to Not-Pass (vs [0.25, 0.75])
+    use_class_weights: false          # Keep disabled (Exp 007)
+    focal_gamma: 2.0                  # Standard value
+    label_smoothing: 0.05             # Keep enabled
+
+  # Optimization (SAME AS BASELINE)
+  optimizer: "adamw"
+  scheduler: "cosine"
+
+  # ⭐ Early Stopping - Extended patience (from Exp 010)
+  early_stopping:
+    patience: 15                      # ⭐ +25% vs baseline (allow more exploration)
+    min_delta: 5.0e-4
+    monitor: "f1_macro"
+    mode: "max"
+
+  # Checkpointing
+  save_every_n_epochs: 5
+  save_best_only: true
+
+# Evaluation Configuration (SAME AS BASELINE)
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision_macro"
+    - "precision_weighted"
+    - "recall_macro"
+    - "recall_weighted"
+    - "confusion_matrix"
+    - "roc_auc"
+    - "auprc"
+
+# Hardware Configuration (SAME AS BASELINE)
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  mixed_precision: true
+
+# Logging
+logging:
+  use_tensorboard: true
+  log_every_n_steps: 50
+  log_dir: "results/experiment_012_best_practices/logs"
+  save_predictions: true
+
+# ADVANCED MONITORING (SAME AS BASELINE)
+monitoring:
+  enabled: true
+  check_every_n_batches: 50
+  prediction_diversity_threshold: 0.05
+  gradient_norm_max: 100.0
+  gradient_norm_min: 1e-6
+  loss_spike_multiplier: 5.0
+  auto_terminate_on_collapse: true
+
+# SUCCESS CRITERIA (Experiment 012)
+success_criteria:
+  phase: "optimization"
+  required_metrics:
+    f1_macro: 0.68                    # Target: +1 pp over baseline (0.6677)
+    accuracy: 0.60                    # Maintain at least baseline
+    recall_pass: 0.50
+    recall_not_pass: 0.45             # Target: +7 pp over baseline (0.3748)
+    prediction_diversity: 0.30
+  blocking_failures:
+    - "prediction_collapse"
+    - "performance_regression"        # F1 < 0.66 (below baseline)
+
+# Experiment Metadata
+experiment:
+  phase: "Optimization"
+  experiment_id: "012"
+  description: "Best practices combination: Bidirectional Fusion + SMOTE + Optimized Hyperparameters"
+  hypothesis: |
+    Combining the architectural improvement that worked (Bidirectional Fusion from Exp 010)
+    with data augmentation (SMOTE) and fine-tuned hyperparameters will achieve:
+    1. Better class balance (SMOTE increases Not-Pass samples)
+    2. Better feature interaction (Bidirectional Fusion)
+    3. More stable training (optimized hyperparameters)
+    Expected F1 Macro improvement: +1-6 pp (0.6677 → 0.68-0.73)
+
+  baseline_experiment: "007"
+  baseline_metrics:
+    f1_macro: 0.6677
+    accuracy: 0.8739
+    pass_recall: 0.9387
+    not_pass_recall: 0.3748
+
+  expected_improvements:
+    - "F1 Macro: 0.6677 → 0.68-0.73 (+1-6 pp)"
+    - "Not-Pass Recall: 37% → 45-55% (+8-18 pp) via SMOTE"
+    - "Prediction Diversity: 9.7% → 15-20% (+5-10 pp)"
+    - "Maintain Pass Recall ≥ 88%"
+
+  key_changes:
+    - "✅ ADD: SMOTE with sampling_strategy=0.5 (balancing)"
+    - "✅ ADD: Bidirectional Cross-Attention Fusion (Exp 010)"
+    - "✅ ADJUST: Focal alpha [0.22, 0.78] (more weight to Not-Pass)"
+    - "✅ ADJUST: Learning rate 4.5e-5 (between 007 and 010)"
+    - "✅ ADJUST: Patience 15 (allow more exploration)"
+    - "❌ NO: GATv2 (torch-scatter technical issue)"
+    - "❌ NO: Attention Pooling (no observed effect)"
+    - "❌ NO: Improved Classifier (caused regression)"
+
+  rationale: |
+    This experiment is the result of comprehensive analysis of Experiments 007-011.
+    We combine ONLY the changes that demonstrated real positive impact:
+
+    1. BIDIRECTIONAL FUSION (Exp 010):
+       - Only architectural change with measurable effect
+       - Improved Not-Pass Recall by +10 pp
+       - Increased Prediction Diversity by +4.7 pp
+       - Enables richer semantic-structural interaction
+
+    2. SMOTE DATA AUGMENTATION:
+       - Addresses fundamental class imbalance (88.5% Pass, 11.5% Not-Pass)
+       - Creates synthetic minority class samples
+       - sampling_strategy=0.5 → Not-Pass becomes 33% of dataset (vs 11.5%)
+       - Should significantly improve Not-Pass Recall
+
+    3. OPTIMIZED HYPERPARAMETERS:
+       - focal_alpha [0.22, 0.78]: More aggressive minority class weighting
+       - learning_rate 4.5e-5: Sweet spot between Exp 007 and 010
+       - patience 15: Allow full convergence (from Exp 010)
+       - weight_decay 1e-4: Maintain good regularization (from Exp 007)
+
+    4. AVOIDING WHAT FAILED:
+       - NO GATv2: Technical blocker (torch-scatter)
+       - NO Attention Pooling: Zero effect in Exp 009
+       - NO Improved Classifier: Caused -1.1% regression in Exp 011
+
+    This is a conservative, evidence-based approach focusing on reliability
+    over novelty. Each component has been validated to either work (Exp 010)
+    or be theoretically sound with low risk (SMOTE, adjusted hyperparameters).
+
+  risk_assessment:
+    low_risk:
+      - "Bidirectional Fusion: Proven in Exp 010"
+      - "Hyperparameter adjustments: Small, conservative changes"
+    medium_risk:
+      - "SMOTE: May create unrealistic synthetic samples"
+      - "Focal alpha [0.22, 0.78]: More aggressive than baseline"
+    mitigation:
+      - "Monitor prediction diversity (should increase)"
+      - "Check validation metrics for overfitting on synthetic data"
+      - "If F1 < 0.66, revert to Exp 007 config"
+
+  go_no_go_decision:
+    go_criteria:
+      - "F1 Macro ≥ 0.68 (target)"
+      - "Not-Pass Recall ≥ 0.45 (+7 pp vs baseline)"
+      - "Prediction Diversity ≥ 0.15"
+      - "No prediction collapse"
+    no_go_criteria:
+      - "F1 Macro < 0.66 (below baseline tolerance)"
+      - "Not-Pass Recall < 0.35 (no improvement)"
+      - "Prediction collapse detected"
+    next_steps_if_go:
+      - "Proceed to Experiment 013: Ensemble (007 + 010 + 012)"
+      - "Consider fine-tuning embeddings (Phase III)"
+    next_steps_if_no_go:
+      - "Accept F1 ~0.67 as practical limit"
+      - "Focus on model interpretability and confidence scores"
+      - "Investigate feature engineering (new signals)"

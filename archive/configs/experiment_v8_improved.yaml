@@ -1,0 +1,244 @@
+# Filo-Priori V8 - Improved (Conservador e Balanceado)
+# Versão intermediária entre V1 e V2
+#
+# PROBLEMA V1:
+# - Recall Fail: 6% (muito baixo)
+# - Class weights 37:1 (auto) não agressivos o suficiente
+#
+# PROBLEMA V2:
+# - F1: 0.02 (CATASTRÓFICO!)
+# - Class weights 100:1 + SMOTE causaram colapso reverso
+# - Modelo prevendo tudo como Fail
+#
+# SOLUÇÃO (IMPROVED):
+# - Class weights moderados: 60:1 (entre 37 e 100)
+# - SEM SMOTE (evitar complexidade)
+# - Threshold search mais baixo: [0.10, 0.60]
+# - Dropout ligeiramente reduzido
+# - Weight decay moderadamente reduzido
+
+experiment:
+  name: "v8_improved"
+  version: "8.0.4"
+  description: "V8 balanced approach - moderate improvements without extremes"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+
+  # SEM SMOTE para evitar complexidade
+  smote:
+    enabled: false
+
+# Text Processing
+text:
+  num_commits_to_keep: 3
+  max_commit_length: 512
+  max_summary_length: 256
+  max_steps_length: 512
+
+# Semantic Embeddings
+semantic:
+  model_name: "models/finetuned_bge_v1"
+  embedding_dim: 1024
+  max_length: 512
+  batch_size: 32
+  pooling_strategy: "mean"
+  normalize_embeddings: true
+  cache_path: "cache/embeddings"
+
+  fields:
+    - "TE_Summary"
+    - "TC_Steps"
+    - "commit"
+
+# Structural Features
+structural:
+  extractor:
+    recent_window: 5
+    min_history: 2
+    cache_path: "cache/structural_features.pkl"
+  input_dim: 6
+
+# Phylogenetic Graph
+graph:
+  type: "co_failure"
+  min_co_occurrences: 2
+  weight_threshold: 0.1
+  cache_path: "cache/phylogenetic_graph.pkl"
+  build_graph: true
+
+# Model Architecture - MODERADAMENTE REDUZIDO
+model:
+  type: "dual_stream_v8"
+
+  semantic:
+    input_dim: 1024
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15  # Entre V1 (0.2) e V2 (0.1)
+    activation: "gelu"
+
+  structural:
+    input_dim: 6
+    hidden_dim: 256
+    num_heads: 4
+    dropout: 0.15  # Entre V1 (0.2) e V2 (0.1)
+    activation: "elu"
+    use_edge_weights: true
+
+  fusion:
+    type: "cross_attention"
+    num_heads: 4
+    dropout: 0.1
+
+  classifier:
+    hidden_dims: [128, 64]
+    dropout: 0.25  # Entre V1 (0.3) e V2 (0.2)
+
+  num_classes: 2
+
+# Training - MODERADO
+training:
+  num_epochs: 50
+  batch_size: 32
+  learning_rate: 7.5e-5  # Entre V1 (1e-4) e V2 (5e-5)
+  weight_decay: 3e-5     # Entre V1 (5e-5) e V2 (1e-5)
+
+  optimizer:
+    type: "AdamW"
+    betas: [0.9, 0.999]
+    eps: 1e-8
+
+  scheduler:
+    type: "cosine"
+    T_max: 50
+    eta_min: 1e-6
+
+  grad_clip_norm: 1.0
+
+  early_stopping:
+    enabled: true
+    patience: 20
+    monitor: "val_f1_macro"
+    mode: "max"
+    min_delta: 0.001
+
+  use_amp: false
+
+# Loss - CUSTOM WEIGHTS MODERADOS
+loss:
+  type: "weighted_ce"
+
+  weighted_ce:
+    use_class_weights: false
+    class_weights: [60.0, 1.0]  # Moderado: entre 37 (V1) e 100 (V2)
+    label_smoothing: 0.0  # Sem label smoothing para simplificar
+    #
+    # Ratio 60:1 é 1.6x mais agressivo que natural (37:1)
+    # Mas muito menos que V2 (100:1) que causou colapso reverso
+    #
+    # Meta: Recall Fail 20-30% (melhor que V1 sem colapso de V2)
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision"
+    - "recall"
+    - "auprc"
+    - "confusion_matrix"
+    - "prediction_diversity"
+
+  temperature_scaling:
+    enabled: true
+    initial_T: 1.0
+
+  threshold_search:
+    enabled: true
+    search_range: [0.10, 0.60]  # Mais baixo que V1 [0.1, 0.9]
+    search_step: 0.05
+    metric: "f1_macro"
+
+# APFD
+apfd:
+  expected_builds: 277
+  count_tc_1_rule: true
+  only_fail_results: true
+  save_prioritized_tests: true
+  save_apfd_per_build: true
+
+# Logging
+logging:
+  level: "INFO"
+  log_to_file: true
+  log_file: "logs/experiment_v8_improved.log"
+  log_to_tensorboard: true
+  tensorboard_dir: "runs/experiment_v8_improved"
+
+  checkpoint:
+    save_best: true
+    save_last: true
+    save_every_n_epochs: 10
+
+# Output
+output:
+  results_dir: "results/experiment_v8_improved"
+  save_predictions: true
+  save_features: true
+  save_confusion_matrix: true
+  save_pr_curves: true
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+
+# ============================================================================
+# EXPECTED RESULTS (IMPROVED):
+# ============================================================================
+# Abordagem CONSERVADORA E BALANCEADA
+#
+# MUDANÇAS vs V1:
+# - Class weights: 37:1 → 60:1 (1.6x mais agressivo)
+# - Dropout: 0.2-0.3 → 0.15-0.25 (redução moderada)
+# - Weight decay: 5e-5 → 3e-5 (redução moderada)
+# - LR: 1e-4 → 7.5e-5 (ligeiramente menor)
+# - Threshold: [0.1, 0.9] → [0.10, 0.60] (range mais baixo)
+#
+# EVITA PROBLEMAS DE V2:
+# - SEM SMOTE (menos complexidade)
+# - SEM label smoothing (menos complexidade)
+# - Weights 60:1 (não 100:1 extremo)
+#
+# EXPECTED METRICS:
+# 1. Recall Fail: 6% → 20-25% (3-4x melhoria sem colapso)
+# 2. Recall Pass: 98% → ≥94% (mantém alto)
+# 3. F1 Macro: 0.52 → ≥0.58 (melhoria moderada)
+# 4. Accuracy: 96% → ≥93% (pequena queda aceitável)
+#
+# SUCCESS CRITERIA:
+# - Recall Fail ≥ 20% (melhoria significativa vs V1 sem colapso)
+# - Recall Pass ≥ 92%
+# - F1 Macro ≥ 0.55
+# - Prediction Diversity ≥ 0.35
+# - NO COLLAPSE (F1 > 0.50)
+#
+# VALIDATION:
+# python main_v8.py --config configs/experiment_v8_improved.yaml --device cuda
+# ============================================================================

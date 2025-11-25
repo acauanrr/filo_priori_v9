@@ -1,0 +1,70 @@
+graph LR
+    %% ============================================
+    %% FILO-PRIORI V8: DUAL-STREAM ARCHITECTURE
+    %% Ultra-compact version for presentation slides
+    %% ============================================
+
+    subgraph inputs["📥 INPUTS"]
+        direction TB
+        I1["<b>Semantic</b><br/>[1536]<br/>SBERT"]
+        I2["<b>Structural</b><br/>[10]<br/>Features"]
+        I3["<b>Graph</b><br/>Multi-Edge"]
+    end
+
+    subgraph streams["🔄 DUAL STREAMS"]
+        direction TB
+
+        subgraph sem["SEMANTIC"]
+            S1["<b>MLP</b><br/>1536→256→256<br/>2 layers, GELU<br/>~1.0M params"]
+        end
+
+        subgraph str["STRUCTURAL + GAT"]
+            S2["<b>MLP</b><br/>10→64→64<br/>2 layers, GELU<br/>~5K params"]
+            S3["<b>GAT</b><br/>64→128→64<br/>2 heads, ELU<br/>~26K params"]
+        end
+    end
+
+    subgraph fusion["🔗 FUSION"]
+        F1["<b>MLP</b><br/>320→256→256<br/>2 layers, GELU<br/>~166K params"]
+    end
+
+    subgraph classifier["🎯 OUTPUT"]
+        C1["<b>Classifier</b><br/>256→128→2<br/>Softmax<br/>~66K params"]
+    end
+
+    subgraph result["📊 RESULT"]
+        R1["<b>Predictions</b><br/>[batch, 2]<br/>Pass/Fail<br/>Probabilities"]
+    end
+
+    subgraph summary["💡 SUMMARY"]
+        direction TB
+        SUM["<b>TOTAL</b><br/>~1.26M params<br/><br/><b>Performance</b><br/>APFD: 0.6171<br/>F1: 0.5312<br/>Acc: 63.29%"]
+    end
+
+    %% Flow
+    I1 --> S1
+    I2 --> S2 --> S3
+    I3 -.-> S3
+
+    S1 --> F1
+    S3 --> F1
+
+    F1 --> C1
+    C1 --> R1
+
+    %% Styling
+    classDef inputStyle fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#000
+    classDef semanticStyle fill:#E8F5E9,stroke:#388E3C,stroke-width:2px,color:#000
+    classDef structuralStyle fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#000
+    classDef fusionStyle fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#000
+    classDef classifierStyle fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#000
+    classDef resultStyle fill:#E0F2F1,stroke:#00796B,stroke-width:2px,color:#000
+    classDef summaryStyle fill:#FFF9C4,stroke:#F57F17,stroke-width:3px,color:#000
+
+    class inputs,I1,I2,I3 inputStyle
+    class sem,S1 semanticStyle
+    class str,S2,S3 structuralStyle
+    class fusion,F1 fusionStyle
+    class classifier,C1 classifierStyle
+    class result,R1 resultStyle
+    class summary,SUM summaryStyle

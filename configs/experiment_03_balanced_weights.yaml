@@ -1,0 +1,252 @@
+# Filo-Priori - Experimento 03: Balanced Weights
+# CORREÇÃO DO COLAPSO INVERTIDO
+#
+# Mudanças vs Experimento 02:
+# - focal_alpha: 0.75 → 0.25 (3x redução)
+# - focal_gamma: 3.0 → 2.0 (redução)
+# - majority_weight: 0.05 → 0.2 (5:1 vs 20:1 ratio)
+#
+# Impacto esperado:
+# - Total weight ratio: 112x → ~30x (4x redução)
+# - Sampling minority: 35% → 17% (mais realista)
+# - F1 Macro: 0.025 → 0.40-0.50
+
+experiment:
+  name: "experiment_03_balanced_weights"
+  version: "3.0.0"
+  description: "Correção de weights para evitar colapso invertido"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+
+  smote:
+    enabled: false
+
+# Text Processing
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+# Commit Extraction
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Semantic Embeddings with SBERT
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+
+  max_length: 384
+  batch_size: 128
+  normalize_embeddings: true
+  device: "cuda"
+
+  use_cache: true
+  cache_dir: "cache"
+
+# Alias for backward compatibility
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+
+# Structural Features
+structural:
+  extractor:
+    recent_window: 5
+    min_history: 2
+    cache_path: "cache/structural_features.pkl"
+  input_dim: 6
+
+# Phylogenetic Graph - Multi-Edge (MANTIDO - Funcionou perfeitamente!)
+graph:
+  build_graph: true
+  use_multi_edge: true
+
+  edge_types:
+    - co_failure
+    - co_success
+    - semantic
+
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 10
+  semantic_threshold: 0.7
+
+  cache_path: "cache/multi_edge_graph.pkl"
+  type: "co_failure"  # Legacy (ignored)
+
+# Model Architecture
+model:
+  type: "dual_stream"
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  structural:
+    input_dim: 6
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.2
+    activation: "elu"
+
+  fusion:
+    input_dim: 384
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.2
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.3
+
+# Training Configuration - WEIGHTS CORRIGIDOS
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.00005
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 12
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # CORREÇÃO 1: Balanced Sampling MENOS agressivo
+  sampling:
+    use_balanced_sampling: true
+    minority_weight: 1.0
+    majority_weight: 0.2    # ↑ de 0.05 (5:1 vs 20:1)
+                            # Minority: ~17% vs 35% antes
+
+  # CORREÇÃO 2: Weighted Focal Loss MENOS agressivo
+  loss:
+    type: "weighted_focal"
+
+    # Reduzir focal parameters
+    focal_alpha: 0.25       # ↓ de 0.75 (3x redução)
+    focal_gamma: 2.0        # ↓ de 3.0
+
+    label_smoothing: 0.0
+
+    # Class weights automáticos (~19:1) mantidos
+    # Total weight ratio esperado: ~30x vs 112x antes
+
+# Legacy loss config (for backward compatibility)
+loss:
+  type: "weighted_focal"
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  label_smoothing: 0.0
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.01, 0.99]
+    step: 0.01
+    optimize_for: "f1_macro"
+
+# Ranking Configuration
+ranking:
+  method: "probability"
+  reverse: true
+
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System Configuration
+system:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  use_amp: false
+
+  deterministic: true
+  benchmark: false
+
+# Alias for validator
+hardware:
+  device: "cuda"
+  num_workers: 4
+
+# Logging and Checkpointing
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_03_balanced_weights"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true

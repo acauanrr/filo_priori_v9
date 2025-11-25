@@ -1,0 +1,221 @@
+# ==============================================================================
+#                   EXPERIMENT 014 - RANKING FIX: CORREÇÃO CRÍTICA DE LOSS
+#                       (Meta: APFD > 0.60)
+# ==============================================================================
+#
+# MOTIVAÇÃO:
+#   Experimento 013 melhorou alinhamento mas ficou em APFD ~0.53-0.55
+#   Análise identificou 3 problemas críticos:
+#
+# 1. BUG NA FOCAL LOSS (CRÍTICO!):
+#    - Exp 013: focal_alpha = [0.15, 0.85]
+#    - Mapeamento: Fail=0, Pass=1
+#    - PROBLEMA: Dando 85% de peso para Pass (majoritária)!
+#    - CORREÇÃO: [0.85, 0.15] → 85% peso para Fail
+#
+# 2. SINAL DE RANKING FRACO:
+#    - Exp 013: ranking_weight = 0.2 (muito baixo!)
+#    - Resultado: Baixa separação de P(Fail), APFD mediano
+#    - CORREÇÃO: ranking_weight = 0.5 (sinal 2.5x mais forte)
+#
+# 3. EARLY STOPPING:
+#    - Exp 013: monitor = auprc_macro (JÁ ESTÁ CORRETO!)
+#    - Mantendo: AUPRC é melhor métrica para ranking
+#
+# EXPECTATIVA:
+#   - Maior peso em Fail → melhor Recall@10%, melhor ordenação
+#   - Ranking loss forte → maior separação de probabilidades
+#   - Train Fail Recall: 70-80% (vs 60-70% do Exp 013)
+#   - Test Fail Recall: 55-65% (vs 50-55% do Exp 013)
+#   - Mean APFD: 0.60-0.70 (vs 0.53-0.55 do Exp 013)
+#   - Median APFD: 0.65-0.75 (vs ~0.55 do Exp 013)
+#
+# ==============================================================================
+
+experiment:
+  experiment_id: "014_ranking_fix"
+  description: "Correção crítica de focal loss e fortalecimento de ranking"
+  baseline_experiment: "013_pass_vs_fail"
+
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+  output_dir: "results/experiment_014_ranking_fix"
+
+  # Train/val/test split (80/10/10)
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+  # Pass vs Fail APENAS (mantendo do Exp 013)
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+
+  # SMOTE - CRÍTICO (desbalanceamento 30:1)
+  use_smote: true
+  smote_sampling_strategy: "auto"
+  smote_k_neighbors: 5
+
+  # Dataset settings
+  sample_size: null  # Use full dataset
+  random_seed: 42
+
+# Text processing
+text:
+  # Text combination strategy
+  combine_summary_and_steps: true
+  include_commit_info: true
+  commit_separator: " [SEP] "
+
+  # Commit processing
+  num_commits_to_keep: 3
+  max_commit_length: 512
+
+  # Text cleaning
+  remove_special_chars: false
+  lowercase: false
+
+# Embedding model
+embedding:
+  model_name: "BAAI/bge-large-en-v1.5"
+  embedding_dim: 1024
+  batch_size: 32
+  max_length: 512
+  pooling_strategy: "mean"
+  normalize_embeddings: true
+  cache_embeddings: true
+
+# Phylogenetic tree construction
+phylogenetic:
+  # Distance metric for building tree
+  distance_metric: "cosine"
+
+  # Tree construction method
+  tree_method: "knn"
+  tree_type: "hierarchical"
+  linkage_method: "average"
+
+  # Approximation settings
+  use_approx: true
+  subsample_for_tree: 50000
+
+  # Cache settings
+  cache_tree: true
+
+# Model architecture
+model:
+  # Semantic stream (Transformer-based)
+  semantic_stream:
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.4
+    activation: "gelu"
+    pooling_type: "mean"
+
+  # Structural stream (GNN-based)
+  structural_stream:
+    hidden_dim: 256
+    num_gnn_layers: 2
+    num_neighbors: 10
+    dropout: 0.4
+    aggregation: "mean"
+    layer_type: "gat"
+    use_edge_attention: true
+
+  # Cross-attention fusion
+  cross_attention:
+    num_heads: 4
+    hidden_dim: 256
+    dropout: 0.4
+    num_layers: 2
+    fusion_type: "bidirectional_cross_attention"
+    use_feedforward: true
+    use_gating: true
+
+  # Classifier
+  classifier:
+    hidden_dim: 128
+    num_classes: 2       # Pass vs Fail
+    dropout: 0.4
+    classifier_type: "simple"
+
+# Training configuration
+training:
+  # Optimizer
+  optimizer: "adamw"
+  learning_rate: 5e-5
+  weight_decay: 2e-4
+
+  # Learning rate scheduler
+  scheduler: "cosine"
+  warmup_epochs: 3
+  min_lr: 1e-6
+
+  # Training epochs
+  num_epochs: 100
+  early_stopping_patience: 12
+
+  # Early stopping configuration
+  early_stopping:
+    monitor: auprc_macro  # ✅ JÁ ESTÁ CORRETO - mantendo
+    patience: 12
+    mode: max
+
+  # Batch size
+  batch_size: 64
+
+  # Loss function
+  loss:
+    type: "focal"
+    use_class_weights: false
+
+    # ✅ CORREÇÃO CRÍTICA: Invertendo pesos para priorizar Fail
+    # Mapeamento: Fail=0, Pass=1
+    # [0.85, 0.15] = 85% peso para Fail (classe 0), 15% para Pass (classe 1)
+    focal_alpha: [0.85, 0.15]  # CORRIGIDO! (era [0.15, 0.85])
+    focal_gamma: 2.0
+
+  # Gradient clipping
+  clip_grad_norm: 1.0
+
+  # Threshold optimization and calibration
+  optimize_threshold: true
+  calibrate_probabilities: true
+  apply_best_threshold: true
+
+  # Hard Negative Mining (HNM)
+  hard_negative_mining:
+    enabled: true
+    top_k_percent: 0.2
+    pass_boost: 2.0
+    update_interval_epochs: 1
+    min_weight: 0.1
+    max_weight: 10.0
+
+  # ✅ RANKING: SINAL FORTALECIDO (2.5x mais forte)
+  ranking:
+    enabled: true
+    weight: 0.5              # AUMENTADO! (era 0.2)
+    loss_type: logistic
+    max_pairs_per_build: 50
+    metrics:
+      ndcg_ks: [5, 10]
+      recall_at_percent: [0.1]
+
+  # Evaluation
+  evaluate_every_n_epochs: 1
+  save_best_model: true
+
+  # Metrics
+  primary_metric: "f1_macro"
+
+  # Logging
+  log_interval: 50
+  use_tensorboard: true
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true

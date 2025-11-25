@@ -1,0 +1,7 @@
+Embedding Cache Metadata
+Generated: 2025-11-14 22:26:12
+Model: sentence-transformers/all-mpnet-base-v2
+Embedding Dimension: 768
+Train Samples: 28729
+Test Samples: 28729
+Data Hash: 5fe709d0c3da2786d160cbf06f1045c8

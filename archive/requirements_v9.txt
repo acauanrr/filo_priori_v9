@@ -1,0 +1,8 @@
+# Additional requirements for Filo-Priori V9
+# Install with: pip install -r requirements_v9.txt
+
+# Sentence Transformers for Qodo-Embed model
+sentence-transformers>=2.2.2
+
+# Optional: Flash Attention for faster inference (requires CUDA)
+# flash-attn>=2.5.6

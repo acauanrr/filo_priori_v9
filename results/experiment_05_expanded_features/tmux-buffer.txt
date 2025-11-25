@@ -1,0 +1,882 @@
+INFO:__main__:Loading configuration...
+INFO:__main__:Loading configuration from configs/experiment_05_expanded_features.yaml
+INFO:__main__:Validating configuration...
+INFO:utils.config_validator:Validating configuration...
+INFO:utils.config_validator:Configuration validation passed!
+INFO:__main__:Configuration validation passed!
+INFO:__main__:Using device: cuda
+INFO:__main__:======================================================================
+INFO:__main__:STEP 1: DATA PREPARATION
+INFO:__main__:======================================================================
+INFO:__main__:
+1.1: Loading datasets...
+INFO:preprocessing.data_loader:Loading data from datasets/train.csv
+INFO:preprocessing.data_loader:Loading full dataset (this may take a while...)
+INFO:preprocessing.data_loader:Loaded 69169 records
+INFO:preprocessing.data_loader:Columns: ['Build_ID', 'Build_ID_entry', 'TP_Key', 'TC_Key', 'TE_Summary', 'TE_Key', 'Build_Test_Start_Date', 'TE_Date', 'TE_Created_Date', 'TE_Test_Result', 'TC_Steps', 'TE_Updated_Date', 'commit', 'CR', 'CR_Resolution', 'CR_Resolved_Date', 'CR_Component_Name', 'CR_Type']
+INFO:preprocessing.data_loader:Cleaning data...
+INFO:preprocessing.data_loader:Dropped 0 rows with missing critical fields
+INFO:preprocessing.data_loader:Target distribution:
+TE_Test_Result
+Pass                61224
+Delete               3653
+Blocked              1862
+Fail                 1654
+Conditional Pass      654
+Pending               116
+Blocked-NA              4
+Indeterminate           2
+Name: count, dtype: int64
+INFO:preprocessing.data_loader:Binary classification strategy: pass_vs_fail
+INFO:preprocessing.data_loader:Positive class: Pass
+INFO:preprocessing.data_loader:Excluded samples with labels other than Pass/Fail
+INFO:preprocessing.data_loader:Binary label mapping: {'Fail': 0, 'Pass': 1}
+INFO:preprocessing.data_loader:Class distribution after encoding:
+label
+1    61224
+0     1654
+Name: count, dtype: int64
+INFO:preprocessing.data_loader:Class weights: [19.00785973  0.51350777]
+INFO:preprocessing.data_loader:🔒 Using GROUP-AWARE split (by Build_ID) to prevent leakage
+INFO:preprocessing.data_loader:   Total samples: 62878, Total builds: 3067
+INFO:preprocessing.data_loader:✅ Train set: 50621 samples (2453 builds)
+INFO:preprocessing.data_loader:✅ Val set:   6062 samples (307 builds)
+INFO:preprocessing.data_loader:✅ Test set:  6195 samples (307 builds)
+INFO:preprocessing.data_loader:✅ No build leakage: All splits are disjoint by Build_ID
+INFO:__main__:  Train: 50621 samples
+INFO:__main__:  Val: 6062 samples
+INFO:__main__:  Test: 6195 samples
+INFO:__main__:
+1.1.1: Computing class weights...
+INFO:preprocessing.data_loader:Class weights: [19.13114135  0.51341839]
+INFO:__main__:  Class weights: [19.13114135  0.51341839]
+INFO:__main__:  Weight ratio (minority/majority): 37.26:1
+INFO:__main__:
+1.2: Extracting semantic embeddings with SBERT...
+INFO:__main__:  Using EmbeddingManager with intelligent caching
+INFO:__main__:  Generating/loading embeddings for 50621 train + 6062 val + 6195 test samples...
+WARNING:embeddings.embedding_cache:Data has changed since cache was created
+INFO:embeddings.embedding_manager:Cache found but invalid (data changed) - regenerating
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:GENERATING EMBEDDINGS
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:Initializing encoder: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:Initializing SBERT encoder on cuda
+INFO:embeddings.sbert_encoder:Model: sentence-transformers/all-mpnet-base-v2
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:✓ Loaded SBERT model on cuda
+INFO:embeddings.sbert_encoder:✓ Embedding dimension: 768
+INFO:embeddings.sbert_encoder:✓ Batch size: 128
+INFO:embeddings.sbert_encoder:✓ Max sequence length: 384
+INFO:embeddings.embedding_manager:Preparing texts...
+INFO:embeddings.embedding_manager:  Train TCs: 50621
+INFO:embeddings.embedding_manager:  Test TCs: 6195
+INFO:embeddings.embedding_manager:  Train Commits: 50621
+INFO:embeddings.embedding_manager:  Test Commits: 6195
+INFO:embeddings.embedding_manager:Encoding...
+INFO:embeddings.sbert_encoder:Encoding 50621 texts in 40 chunks (chunk_size=1280)
+Train TCs:   0%|          | 0/40 [00:00<?, ?it/s]Train TCs:   2%|▎         | 1/40 [00:00<00:28,  1.38it/s]Train TCs:   5%|▌         | 2/40 [00:01<00:19,  1.91it/s]Train TCs:   8%|▊         | 3/40 [00:01<00:16,  2.18it/s]Train TCs:  10%|█         | 4/40 [00:01<00:15,  2.34it/s]Train TCs:  12%|█▎        | 5/40 [00:02<00:14,  2.42it/s]Train TCs:  15%|█▌        | 6/40 [00:02<00:13,  2.49it/s]Train TCs:  18%|█▊        | 7/40 [00:03<00:13,  2.52it/s]Train TCs:  20%|██        | 8/40 [00:03<00:12,  2.55it/s]Train TCs:  22%|██▎       | 9/40 [00:03<00:12,  2.58it/s]Train TCs:  25%|██▌       | 10/40 [00:04<00:11,  2.58it/s]Train TCs:  28%|██▊       | 11/40 [00:04<00:12,  2.37it/s]Train TCs:  30%|███       | 12/40 [00:05<00:11,  2.40it/s]Train TCs:  32%|███▎      | 13/40 [00:05<00:10,  2.46it/s]Train TCs:  35%|███▌      | 14/40 [00:05<00:10,  2.50it/s]Train TCs:  38%|███▊      | 15/40 [00:06<00:09,  2.53it/s]Train TCs:  40%|████      | 16/40 [00:06<00:09,  2.54it/s]Train TCs:  42%|████▎     | 17/40 [00:06<00:08,  2.56it/s]Train TCs:  45%|████▌     | 18/40 [00:07<00:08,  2.57it/s]Train TCs:  48%|████▊     | 19/40 [00:07<00:08,  2.55it/s]Train TCs:  50%|█████     | 20/40 [00:08<00:07,  2.57it/s]Train TCs:  52%|█████▎    | 21/40 [00:08<00:08,  2.36it/s]Train TCs:  55%|█████▌    | 22/40 [00:09<00:07,  2.42it/s]Train TCs:  57%|█████▊    | 23/40 [00:09<00:06,  2.47it/s]Train TCs:  60%|██████    | 24/40 [00:09<00:06,  2.51it/s]Train TCs:  62%|██████▎   | 25/40 [00:10<00:05,  2.55it/s]Train TCs:  65%|██████▌   | 26/40 [00:10<00:05,  2.57it/s]Train TCs:  68%|██████▊   | 27/40 [00:10<00:05,  2.58it/s]Train TCs:  70%|███████   | 28/40 [00:11<00:04,  2.58it/s]Train TCs:  72%|███████▎  | 29/40 [00:11<00:04,  2.58it/s]Train TCs:  75%|███████▌  | 30/40 [00:12<00:03,  2.59it/s]Train TCs:  78%|███████▊  | 31/40 [00:13<00:05,  1.64it/s]Train TCs:  80%|████████  | 32/40 [00:13<00:04,  1.83it/s]Train TCs:  82%|████████▎ | 33/40 [00:14<00:03,  2.00it/s]Train TCs:  85%|████████▌ | 34/40 [00:14<00:02,  2.13it/s]Train TCs:  88%|████████▊ | 35/40 [00:14<00:02,  2.22it/s]Train TCs:  90%|█████████ | 36/40 [00:15<00:01,  2.32it/s]Train TCs:  92%|█████████▎| 37/40 [00:15<00:01,  2.39it/s]Train TCs:  95%|█████████▌| 38/40 [00:16<00:00,  2.44it/s]Train TCs:  98%|█████████▊| 39/40 [00:16<00:00,  2.50it/s]Train TCs: 100%|██████████| 40/40 [00:16<00:00,  2.87it/s]Train TCs: 100%|██████████| 40/40 [00:16<00:00,  2.41it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 50621 texts → shape: (50621, 768)
+INFO:embeddings.sbert_encoder:Encoding 6195 texts in 5 chunks (chunk_size=1280)
+Test TCs:   0%|          | 0/5 [00:00<?, ?it/s]Test TCs:  20%|██        | 1/5 [00:00<00:02,  1.94it/s]Test TCs:  40%|████      | 2/5 [00:00<00:01,  2.19it/s]Test TCs:  60%|██████    | 3/5 [00:01<00:00,  2.31it/s]Test TCs:  80%|████████  | 4/5 [00:01<00:00,  2.42it/s]Test TCs: 100%|██████████| 5/5 [00:02<00:00,  2.58it/s]Test TCs: 100%|██████████| 5/5 [00:02<00:00,  2.43it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6195 texts → shape: (6195, 768)
+INFO:embeddings.sbert_encoder:Encoding 50621 texts in 40 chunks (chunk_size=1280)
+Train Commits:   0%|          | 0/40 [00:00<?, ?it/s]Train Commits:   2%|▎         | 1/40 [00:00<00:19,  2.01it/s]Train Commits:   5%|▌         | 2/40 [00:00<00:16,  2.37it/s]Train Commits:   8%|▊         | 3/40 [00:01<00:14,  2.53it/s]Train Commits:  10%|█         | 4/40 [00:01<00:13,  2.62it/s]Train Commits:  12%|█▎        | 5/40 [00:01<00:13,  2.66it/s]Train Commits:  15%|█▌        | 6/40 [00:02<00:12,  2.73it/s]Train Commits:  18%|█▊        | 7/40 [00:02<00:11,  2.77it/s]Train Commits:  20%|██        | 8/40 [00:03<00:11,  2.78it/s]Train Commits:  22%|██▎       | 9/40 [00:03<00:11,  2.81it/s]Train Commits:  25%|██▌       | 10/40 [00:03<00:10,  2.84it/s]Train Commits:  28%|██▊       | 11/40 [00:04<00:11,  2.59it/s]Train Commits:  30%|███       | 12/40 [00:04<00:10,  2.62it/s]Train Commits:  32%|███▎      | 13/40 [00:04<00:10,  2.70it/s]Train Commits:  35%|███▌      | 14/40 [00:05<00:09,  2.75it/s]Train Commits:  38%|███▊      | 15/40 [00:05<00:08,  2.78it/s]Train Commits:  40%|████      | 16/40 [00:05<00:08,  2.81it/s]Train Commits:  42%|████▎     | 17/40 [00:06<00:08,  2.72it/s]Train Commits:  45%|████▌     | 18/40 [00:06<00:08,  2.72it/s]Train Commits:  48%|████▊     | 19/40 [00:07<00:07,  2.72it/s]Train Commits:  50%|█████     | 20/40 [00:07<00:07,  2.72it/s]Train Commits:  52%|█████▎    | 21/40 [00:07<00:07,  2.49it/s]Train Commits:  55%|█████▌    | 22/40 [00:08<00:07,  2.54it/s]Train Commits:  57%|█████▊    | 23/40 [00:08<00:06,  2.60it/s]Train Commits:  60%|██████    | 24/40 [00:09<00:06,  2.64it/s]Train Commits:  62%|██████▎   | 25/40 [00:09<00:05,  2.63it/s]Train Commits:  65%|██████▌   | 26/40 [00:09<00:05,  2.67it/s]Train Commits:  68%|██████▊   | 27/40 [00:10<00:04,  2.69it/s]Train Commits:  70%|███████   | 28/40 [00:10<00:04,  2.70it/s]Train Commits:  72%|███████▎  | 29/40 [00:10<00:04,  2.72it/s]Train Commits:  75%|███████▌  | 30/40 [00:11<00:03,  2.73it/s]Train Commits:  78%|███████▊  | 31/40 [00:11<00:03,  2.49it/s]Train Commits:  80%|████████  | 32/40 [00:12<00:03,  2.55it/s]Train Commits:  82%|████████▎ | 33/40 [00:12<00:02,  2.61it/s]Train Commits:  85%|████████▌ | 34/40 [00:12<00:02,  2.65it/s]Train Commits:  88%|████████▊ | 35/40 [00:13<00:01,  2.69it/s]Train Commits:  90%|█████████ | 36/40 [00:13<00:01,  2.71it/s]Train Commits:  92%|█████████▎| 37/40 [00:13<00:01,  2.72it/s]Train Commits:  95%|█████████▌| 38/40 [00:14<00:00,  2.73it/s]Train Commits:  98%|█████████▊| 39/40 [00:14<00:00,  2.70it/s]Train Commits: 100%|██████████| 40/40 [00:14<00:00,  3.11it/s]Train Commits: 100%|██████████| 40/40 [00:14<00:00,  2.70it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 50621 texts → shape: (50621, 768)
+INFO:embeddings.sbert_encoder:Encoding 6195 texts in 5 chunks (chunk_size=1280)
+Test Commits:   0%|          | 0/5 [00:00<?, ?it/s]Test Commits:  20%|██        | 1/5 [00:00<00:01,  2.09it/s]Test Commits:  40%|████      | 2/5 [00:00<00:01,  2.44it/s]Test Commits:  60%|██████    | 3/5 [00:01<00:00,  2.59it/s]Test Commits:  80%|████████  | 4/5 [00:01<00:00,  2.67it/s]Test Commits: 100%|██████████| 5/5 [00:01<00:00,  2.84it/s]Test Commits: 100%|██████████| 5/5 [00:01<00:00,  2.68it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6195 texts → shape: (6195, 768)
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:SAVING EMBEDDINGS TO CACHE
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:✓ Saved to: cache/embeddings.npz
+INFO:embeddings.embedding_cache:✓ File size: 2.0 MB
+INFO:embeddings.embedding_cache:✓ Metadata: cache/embeddings_metadata.txt
+INFO:embeddings.embedding_cache:======================================================================
+INFO:__main__:
+  Encoding validation set...
+WARNING:embeddings.embedding_cache:Data has changed since cache was created
+INFO:embeddings.embedding_manager:Cache found but invalid (data changed) - regenerating
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:GENERATING EMBEDDINGS
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:Initializing encoder: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:Initializing SBERT encoder on cuda
+INFO:embeddings.sbert_encoder:Model: sentence-transformers/all-mpnet-base-v2
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:✓ Loaded SBERT model on cuda
+INFO:embeddings.sbert_encoder:✓ Embedding dimension: 768
+INFO:embeddings.sbert_encoder:✓ Batch size: 128
+INFO:embeddings.sbert_encoder:✓ Max sequence length: 384
+INFO:embeddings.embedding_manager:Preparing texts...
+INFO:embeddings.embedding_manager:  Train TCs: 6062
+INFO:embeddings.embedding_manager:  Test TCs: 6062
+INFO:embeddings.embedding_manager:  Train Commits: 6062
+INFO:embeddings.embedding_manager:  Test Commits: 6062
+INFO:embeddings.embedding_manager:Encoding...
+INFO:embeddings.sbert_encoder:Encoding 6062 texts in 5 chunks (chunk_size=1280)
+Train TCs:   0%|          | 0/5 [00:00<?, ?it/s]Train TCs:  20%|██        | 1/5 [00:00<00:02,  1.42it/s]Train TCs:  40%|████      | 2/5 [00:01<00:01,  1.92it/s]Train TCs:  60%|██████    | 3/5 [00:01<00:00,  2.19it/s]Train TCs:  80%|████████  | 4/5 [00:01<00:00,  2.34it/s]Train TCs: 100%|██████████| 5/5 [00:02<00:00,  2.62it/s]Train TCs: 100%|██████████| 5/5 [00:02<00:00,  2.31it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6062 texts → shape: (6062, 768)
+INFO:embeddings.sbert_encoder:Encoding 6062 texts in 5 chunks (chunk_size=1280)
+Test TCs:   0%|          | 0/5 [00:00<?, ?it/s]Test TCs:  20%|██        | 1/5 [00:00<00:02,  1.93it/s]Test TCs:  40%|████      | 2/5 [00:00<00:01,  2.27it/s]Test TCs:  60%|██████    | 3/5 [00:01<00:00,  2.42it/s]Test TCs:  80%|████████  | 4/5 [00:01<00:00,  2.50it/s]Test TCs: 100%|██████████| 5/5 [00:01<00:00,  2.76it/s]Test TCs: 100%|██████████| 5/5 [00:01<00:00,  2.55it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6062 texts → shape: (6062, 768)
+INFO:embeddings.sbert_encoder:Encoding 6062 texts in 5 chunks (chunk_size=1280)
+Train Commits:   0%|          | 0/5 [00:00<?, ?it/s]Train Commits:  20%|██        | 1/5 [00:00<00:01,  2.06it/s]Train Commits:  40%|████      | 2/5 [00:01<00:02,  1.27it/s]Train Commits:  60%|██████    | 3/5 [00:01<00:01,  1.68it/s]Train Commits:  80%|████████  | 4/5 [00:02<00:00,  1.98it/s]Train Commits: 100%|██████████| 5/5 [00:02<00:00,  2.35it/s]Train Commits: 100%|██████████| 5/5 [00:02<00:00,  2.00it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6062 texts → shape: (6062, 768)
+INFO:embeddings.sbert_encoder:Encoding 6062 texts in 5 chunks (chunk_size=1280)
+Test Commits:   0%|          | 0/5 [00:00<?, ?it/s]Test Commits:  20%|██        | 1/5 [00:00<00:02,  1.96it/s]Test Commits:  40%|████      | 2/5 [00:01<00:01,  1.98it/s]Test Commits:  60%|██████    | 3/5 [00:01<00:01,  1.94it/s]Test Commits:  80%|████████  | 4/5 [00:01<00:00,  2.11it/s]Test Commits: 100%|██████████| 5/5 [00:02<00:00,  2.44it/s]Test Commits: 100%|██████████| 5/5 [00:02<00:00,  2.22it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 6062 texts → shape: (6062, 768)
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:SAVING EMBEDDINGS TO CACHE
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:✓ Saved to: cache/embeddings.npz
+INFO:embeddings.embedding_cache:✓ File size: 0.4 MB
+INFO:embeddings.embedding_cache:✓ Metadata: cache/embeddings_metadata.txt
+INFO:embeddings.embedding_cache:======================================================================
+INFO:__main__:  Embedding dimension: 768
+INFO:__main__:  Combined dimension: 1536
+INFO:__main__:  Model: sentence-transformers/all-mpnet-base-v2
+INFO:__main__:
+  Concatenating TC and Commit embeddings...
+INFO:__main__:  Train embeddings: (50621, 1536)
+INFO:__main__:  Val embeddings: (6062, 1536)
+INFO:__main__:  Test embeddings: (6195, 1536)
+INFO:__main__:
+1.4: Extracting structural features...
+INFO:__main__:  Initializing StructuralFeatureExtractorV2 (29 features)...
+INFO:preprocessing.structural_feature_extractor_v2:Initialized StructuralFeatureExtractorV2 with:
+INFO:preprocessing.structural_feature_extractor_v2:  recent_window=5
+INFO:preprocessing.structural_feature_extractor_v2:  very_recent_window=2
+INFO:preprocessing.structural_feature_extractor_v2:  medium_term_window=10
+INFO:preprocessing.structural_feature_extractor_v2:  → 29 features total
+INFO:__main__:  ✓ Using V2 extractor with 29 features
+INFO:__main__:  Fitting extractor on training data...
+INFO:preprocessing.structural_feature_extractor_v2:Fitting StructuralFeatureExtractorV2 on training data...
+INFO:preprocessing.structural_feature_extractor_v2:Training data shape: (50621, 22)
+INFO:preprocessing.structural_feature_extractor_v2:Build chronology established using Build_Test_Start_Date
+INFO:preprocessing.structural_feature_extractor_v2:Chronology spans 2453 builds
+INFO:preprocessing.structural_feature_extractor_v2:Computing EXTENSIVE per-TC_Key historical statistics (V2)...
+INFO:preprocessing.structural_feature_extractor_v2:✓ Computed EXTENSIVE history for 2347 test cases
+INFO:preprocessing.structural_feature_extractor_v2:✓ Stored first appearances for 2347 test cases
+INFO:preprocessing.structural_feature_extractor_v2:Computing global statistics for 29 features...
+INFO:preprocessing.structural_feature_extractor_v2:  Feature means (first 10): [8.3890198e+02 2.6135275e-02 2.5333719e-02 2.3399048e-02 6.2583454e+01
+ 1.2965963e+00 6.1286858e+01 5.8631793e-02 4.2796230e+01 7.9253668e-01]
+INFO:preprocessing.structural_feature_extractor_v2:  Feature medians (first 10): [684.   0.   0.   0.  36.   0.  35.   0.  25.   0.]
+INFO:preprocessing.structural_feature_extractor_v2:  Feature stds (first 10): [7.0913013e+02 6.7458861e-02 1.0067556e-01 4.9048297e-02 7.6796181e+01
+ 2.4710934e+00 7.5966492e+01 3.7019184e-01 5.9424965e+01 1.2968451e+00]
+INFO:preprocessing.structural_feature_extractor_v2:✓ Fitted extractor on 2347 unique test cases
+INFO:preprocessing.structural_feature_extractor_v2:✓ Build chronology spans 2453 builds
+INFO:preprocessing.structural_feature_extractor_v2:✓ Extracting 29 features per test case
+INFO:preprocessing.structural_feature_extractor_v2:✓ Saved V2 historical state to cache/structural_features_v2.pkl
+INFO:__main__:  Transforming training data...
+INFO:preprocessing.structural_feature_extractor_v2:Transforming 50621 samples into 29 features...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 10000/50621 samples...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 20000/50621 samples...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 30000/50621 samples...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 40000/50621 samples...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 50000/50621 samples...
+INFO:preprocessing.structural_feature_extractor_v2:✓ Extracted feature matrix: (50621, 29)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature means: [8.3890198e+02 2.6135275e-02 2.5333719e-02 2.3399048e-02 6.2583454e+01
+ 1.2965963e+00 6.1286858e+01 5.8631793e-02 4.2796230e+01 7.9253668e-01]... (showing first 10)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature stds:  [7.0913013e+02 6.7458861e-02 1.0067556e-01 4.9048297e-02 7.6796181e+01
+ 2.4710934e+00 7.5966492e+01 3.7019184e-01 5.9424965e+01 1.2968451e+00]... (showing first 10)
+INFO:__main__:  Transforming validation data...
+INFO:preprocessing.structural_feature_extractor_v2:Transforming 6062 samples into 29 features...
+INFO:preprocessing.structural_feature_extractor_v2:✓ Extracted feature matrix: (6062, 29)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature means: [2.0384877e+03 2.8686173e-02 2.5544673e-02 2.3697034e-02 5.6465687e+01
+ 1.2278126e+00 5.5237877e+01 5.9716266e-02 3.8985649e+01 7.6261961e-01]... (showing first 10)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature stds:  [5.7918677e+02 7.7886522e-02 1.0489004e-01 5.1645517e-02 7.5002281e+01
+ 2.4427924e+00 7.4177452e+01 4.0378672e-01 5.6964211e+01 1.3299178e+00]... (showing first 10)
+INFO:__main__:  Transforming test data...
+INFO:preprocessing.structural_feature_extractor_v2:Transforming 6195 samples into 29 features...
+INFO:preprocessing.structural_feature_extractor_v2:✓ Extracted feature matrix: (6195, 29)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature means: [2.0580222e+03 2.7250437e-02 2.4961963e-02 2.2497460e-02 6.1382404e+01
+ 1.2986280e+00 6.0083778e+01 5.1977400e-02 4.1303955e+01 8.0258274e-01]... (showing first 10)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature stds:  [5.6877844e+02 7.6100342e-02 1.0366430e-01 4.8286945e-02 7.6021851e+01
+ 2.5101357e+00 7.5148628e+01 3.3064464e-01 5.8321339e+01 1.3322607e+00]... (showing first 10)
+INFO:__main__:
+1.4b: Imputing missing structural features...
+INFO:__main__:  (Uses semantic similarity to estimate features for tests without history)
+INFO:__main__:  Validation samples needing imputation: 79/6062
+INFO:__main__:  Test samples needing imputation: 51/6195
+INFO:__main__:  Imputing validation features...
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:STRUCTURAL FEATURE IMPUTATION
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:Initialized StructuralFeatureImputer with k=10, threshold=0.50
+INFO:preprocessing.structural_feature_imputation:Training samples with history: 50621/50621
+INFO:preprocessing.structural_feature_imputation:Fitting StructuralFeatureImputer on training data...
+INFO:preprocessing.structural_feature_imputation:  Training samples: 50621
+INFO:preprocessing.structural_feature_imputation:  Feature means: [ 8.3890198e+02  2.6135275e-02  2.5333719e-02  2.3399048e-02
+  6.2583454e+01  1.2965963e+00  6.1286858e+01  5.8631793e-02
+  4.2796230e+01  7.9253668e-01  9.5315381e+02  4.6830764e+00
+  4.5366846e-02 -8.0200483e-04  4.9607673e+00  2.7982458e-02
+  2.5169335e-02  2.6491014e-03  1.0986538e+00 -9.2713916e+02
+  9.3528038e+01  8.2692951e-02  3.4961143e+01  4.1863060e+01
+  5.1664982e+01  4.5456848e+00  9.9915057e-01  9.7660702e-01
+  3.6681141e+01]
+INFO:preprocessing.structural_feature_imputation:  Feature stds: [7.0913013e+02 6.7458861e-02 1.0067556e-01 4.9048297e-02 7.6796181e+01
+ 2.4710934e+00 7.5966492e+01 3.7019184e-01 5.9424965e+01 1.2968451e+00
+ 4.0532083e+02 5.0198189e+01 1.5508364e-01 8.6379990e-02 2.9809141e-01
+ 1.6387375e-01 8.8318571e-02 1.1560044e-01 2.2819934e+00 6.9645380e+02
+ 2.7005716e+02 2.7541918e-01 4.0628025e+01 1.2270022e+02 1.4779401e+02
+ 1.8799049e+01 2.9124858e-02 4.9044412e-02 5.2248726e+01]
+INFO:preprocessing.structural_feature_imputation:  Reference tests (with history): 50621
+INFO:preprocessing.structural_feature_imputation:
+Test samples needing imputation: 79/6062
+INFO:preprocessing.structural_feature_imputation:Imputing features for 79/6062 samples...
+INFO:preprocessing.structural_feature_imputation:  Imputation complete:
+INFO:preprocessing.structural_feature_imputation:    Semantic-based: 79
+INFO:preprocessing.structural_feature_imputation:    Fallback (conservative): 0
+INFO:preprocessing.structural_feature_imputation:
+Imputation Statistics:
+INFO:preprocessing.structural_feature_imputation:  Samples imputed: 79/6062 (1.3%)
+INFO:preprocessing.structural_feature_imputation:  Feature means before: [508.83544921875, 0.043842706829309464, 0.043274518102407455, 0.0, 1.0, 0.025316456332802773, 0.9746835231781006, 0.025316456332802773, 0.9746835231781006, 0.025316456332802773, 973.7088623046875, 25.291139602661133, 0.3620254099369049, 0.0, 1.0, 0.04515213146805763, 0.043158020824193954, 0.0, 1.0, 508.83544921875, 78.40505981445312, 0.7088607549667358, 1.0, 35.658226013183594, 42.74683380126953, 78.40505981445312, 0.0, 0.6455696225166321, 0.9746835231781006]
+INFO:preprocessing.structural_feature_imputation:  Feature means after: [1311.628662109375, 0.03322504088282585, 0.03269878774881363, 0.026042548939585686, 31.758182525634766, 0.9068914651870728, 30.950695037841797, 0.16106896102428436, 24.2880916595459, 0.8136867880821228, 874.3357543945312, 34.60698318481445, 0.018570655956864357, 0.0015986838843673468, 5.001760959625244, 0.08221808075904846, 0.024534523487091064, 0.0496661439538002, 0.8267859816551208, -430.2161865234375, 100.96324157714844, 0.1938284933567047, 19.361427307128906, 44.130008697509766, 54.809661865234375, 6.850863456726074, 1.0001236200332642, 0.9744720458984375, 19.663803100585938]
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:__main__:  Imputing test features...
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:STRUCTURAL FEATURE IMPUTATION
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:Initialized StructuralFeatureImputer with k=10, threshold=0.50
+INFO:preprocessing.structural_feature_imputation:Training samples with history: 50621/50621
+INFO:preprocessing.structural_feature_imputation:Fitting StructuralFeatureImputer on training data...
+INFO:preprocessing.structural_feature_imputation:  Training samples: 50621
+INFO:preprocessing.structural_feature_imputation:  Feature means: [ 8.3890198e+02  2.6135275e-02  2.5333719e-02  2.3399048e-02
+  6.2583454e+01  1.2965963e+00  6.1286858e+01  5.8631793e-02
+  4.2796230e+01  7.9253668e-01  9.5315381e+02  4.6830764e+00
+  4.5366846e-02 -8.0200483e-04  4.9607673e+00  2.7982458e-02
+  2.5169335e-02  2.6491014e-03  1.0986538e+00 -9.2713916e+02
+  9.3528038e+01  8.2692951e-02  3.4961143e+01  4.1863060e+01
+  5.1664982e+01  4.5456848e+00  9.9915057e-01  9.7660702e-01
+  3.6681141e+01]
+INFO:preprocessing.structural_feature_imputation:  Feature stds: [7.0913013e+02 6.7458861e-02 1.0067556e-01 4.9048297e-02 7.6796181e+01
+ 2.4710934e+00 7.5966492e+01 3.7019184e-01 5.9424965e+01 1.2968451e+00
+ 4.0532083e+02 5.0198189e+01 1.5508364e-01 8.6379990e-02 2.9809141e-01
+ 1.6387375e-01 8.8318571e-02 1.1560044e-01 2.2819934e+00 6.9645380e+02
+ 2.7005716e+02 2.7541918e-01 4.0628025e+01 1.2270022e+02 1.4779401e+02
+ 1.8799049e+01 2.9124858e-02 4.9044412e-02 5.2248726e+01]
+INFO:preprocessing.structural_feature_imputation:  Reference tests (with history): 50621
+INFO:preprocessing.structural_feature_imputation:
+Test samples needing imputation: 51/6195
+INFO:preprocessing.structural_feature_imputation:Imputing features for 51/6195 samples...
+INFO:preprocessing.structural_feature_imputation:  Imputation complete:
+INFO:preprocessing.structural_feature_imputation:    Semantic-based: 51
+INFO:preprocessing.structural_feature_imputation:    Fallback (conservative): 0
+INFO:preprocessing.structural_feature_imputation:
+Imputation Statistics:
+INFO:preprocessing.structural_feature_imputation:  Samples imputed: 51/6195 (0.8%)
+INFO:preprocessing.structural_feature_imputation:  Feature means before: [278.686279296875, 0.08085912466049194, 0.08018329739570618, 0.0, 1.0, 0.05882352963089943, 0.9411764740943909, 0.05882352963089943, 0.9411764740943909, 0.05882352963089943, 940.2352905273438, 58.764705657958984, 0.24117662012577057, 0.0, 1.0, 0.08241655677556992, 0.08004475384950638, 0.0, 1.0, 278.686279296875, 58.6274528503418, 0.843137264251709, 1.0, 25.980392456054688, 32.64706039428711, 58.6274528503418, 0.0, 0.5784313678741455, 0.9411764740943909]
+INFO:preprocessing.structural_feature_imputation:  Feature means after: [1518.40576171875, 0.03838453069329262, 0.037726569920778275, 0.029563969001173973, 29.980714797973633, 1.0658351182937622, 28.450103759765625, 0.18432697653770447, 20.074581146240234, 0.9449793696403503, 845.4434814453125, 39.68546676635742, 0.017315445467829704, 0.0018946814816445112, 4.998201847076416, 0.09457895159721375, 0.029062656685709953, 0.057188890874385834, 0.7777543663978577, -193.36154174804688, 112.39025115966797, 0.06376378238201141, 18.669986724853516, 51.243892669677734, 63.8415641784668, 8.02570915222168, 0.9999025464057922, 0.9708146452903748, 15.194767951965332]
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:__main__:
+1.6: Building phylogenetic graph...
+INFO:__main__:  Using multi-edge graph builder
+INFO:phylogenetic.phylogenetic_graph_builder:======================================================================
+INFO:phylogenetic.phylogenetic_graph_builder:BUILDING PHYLOGENETIC GRAPH
+INFO:phylogenetic.phylogenetic_graph_builder:======================================================================
+INFO:phylogenetic.phylogenetic_graph_builder:Using MultiEdgeGraphBuilder with edge types: ['co_failure', 'co_success', 'semantic']
+INFO:phylogenetic.multi_edge_graph_builder:Initialized MultiEdgeGraphBuilder
+INFO:phylogenetic.multi_edge_graph_builder:  Edge types: ['co_failure', 'co_success', 'semantic']
+INFO:phylogenetic.multi_edge_graph_builder:  Edge weights: {'co_failure': 1.0, 'co_success': 0.5, 'semantic': 0.3}
+INFO:phylogenetic.phylogenetic_graph_builder:Loading cached multi-edge graph from cache/multi_edge_graph.pkl
+INFO:phylogenetic.multi_edge_graph_builder:Multi-edge graph loaded from cache/multi_edge_graph.pkl
+INFO:phylogenetic.multi_edge_graph_builder:  Edge types: ['co_failure', 'co_success', 'semantic']
+INFO:phylogenetic.multi_edge_graph_builder:  Nodes: 2347
+INFO:phylogenetic.multi_edge_graph_builder:  Combined edges: 334946
+INFO:phylogenetic.phylogenetic_graph_builder:
+======================================================================
+INFO:phylogenetic.phylogenetic_graph_builder:MULTI-EDGE PHYLOGENETIC GRAPH STATISTICS
+INFO:phylogenetic.phylogenetic_graph_builder:======================================================================
+INFO:phylogenetic.phylogenetic_graph_builder:Nodes: 2347
+INFO:phylogenetic.phylogenetic_graph_builder:Edges (combined): 334946
+INFO:phylogenetic.phylogenetic_graph_builder:Edge type counts: {'co_failure': 495, 'co_success': 207913, 'semantic': 253085}
+INFO:phylogenetic.phylogenetic_graph_builder:Density: 0.121664
+INFO:phylogenetic.phylogenetic_graph_builder:Avg Degree: 285.42
+INFO:phylogenetic.phylogenetic_graph_builder:======================================================================
+INFO:__main__:
+✓ Data preparation complete!
+INFO:__main__:
+1.7: Extracting graph structure (edge_index and edge_weights)...
+INFO:__main__:Graph structure: 187172 edges among 2347 nodes
+INFO:__main__:
+1.8: Creating TC_Key to global index mapping...
+INFO:__main__:  Mapped 2347 unique TC_Keys to global indices (0-2346)
+INFO:__main__:  Train: 50621/50621 in graph
+INFO:__main__:  Val: 6006/6062 in graph
+INFO:__main__:  Test: 6152/6195 in graph
+INFO:__main__:
+Creating data loaders...
+INFO:__main__:Train embeddings shape: (50621, 1536)
+INFO:__main__:Train structural features shape: (50621, 29)
+INFO:__main__:Train labels shape: (50621,)
+INFO:__main__:Train global indices shape: (50621,)
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 2: MODEL INITIALIZATION
+INFO:__main__:======================================================================
+WARNING:models.dual_stream_v8:Semantic and structural hidden dims differ (256 vs 128). Using semantic_hidden=256 for both.
+INFO:models.dual_stream_v8:Initialized GAT-based StructuralStreamV8:
+INFO:models.dual_stream_v8:  - Input: [N, 29] structural features
+INFO:models.dual_stream_v8:  - GAT Layer 1: 4 heads, output [N, 1024]
+INFO:models.dual_stream_v8:  - GAT Layer 2: 1 head, output [N, 256]
+INFO:models.dual_stream_v8:  - Edge weights: True
+INFO:models.dual_stream_v8:Using CrossAttentionFusion (default)
+INFO:models.dual_stream_v8:======================================================================
+INFO:models.dual_stream_v8:DUAL-STREAM MODEL V8 INITIALIZED
+INFO:models.dual_stream_v8:======================================================================
+INFO:models.dual_stream_v8:Semantic Stream: [batch, 1024] → [batch, 256]
+INFO:models.dual_stream_v8:Structural Stream: [batch, 6] → [batch, 256]
+INFO:models.dual_stream_v8:Fusion: [batch, 512]
+INFO:models.dual_stream_v8:Classifier: [batch, 512] → [batch, 2]
+INFO:models.dual_stream_v8:======================================================================
+INFO:__main__:
+Initializing loss function...
+INFO:__main__:  Loss type: weighted_ce
+INFO:__main__:  Using Weighted Cross-Entropy
+INFO:__main__:    Class weights: [19.13114135  0.51341839]
+INFO:__main__:    Weight ratio: 37.26:1
+INFO:__main__:Initializing optimizer...
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 3: TRAINING
+INFO:__main__:======================================================================
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.4997
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9442
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 1/50: Train Loss=0.7068, Val Loss=0.5718, Val F1=0.4928, Val Acc=0.9717
+INFO:__main__:  → New best model saved! (F1=0.4928)
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5009
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9461
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 2/50: Train Loss=0.8085, Val Loss=0.6298, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.4997
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9442
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 3/50: Train Loss=0.7800, Val Loss=0.5696, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.4990
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9434
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 4/50: Train Loss=0.7924, Val Loss=0.5554, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.4987
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9426
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 5/50: Train Loss=0.7737, Val Loss=0.6158, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5015
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9473
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 6/50: Train Loss=0.7502, Val Loss=0.5734, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5009
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9466
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 7/50: Train Loss=0.7882, Val Loss=0.5547, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5017
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9476
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 8/50: Train Loss=0.7611, Val Loss=0.6291, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5013
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9472
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 9/50: Train Loss=0.8146, Val Loss=0.6196, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5014
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9474
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 10/50: Train Loss=0.8223, Val Loss=0.5561, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5020
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9473
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 11/50: Train Loss=0.7284, Val Loss=0.5651, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5022
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9475
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 12/50: Train Loss=0.7988, Val Loss=0.5597, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5020
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9474
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 13/50: Train Loss=0.7535, Val Loss=0.5743, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5023
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9478
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 14/50: Train Loss=0.7788, Val Loss=0.5923, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5023
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9472
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 15/50: Train Loss=0.7628, Val Loss=0.5886, Val F1=0.4928, Val Acc=0.9717
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5024
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9473
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       170
+        Pass       0.97      1.00      0.99      5836
+
+    accuracy                           0.97      6006
+   macro avg       0.49      0.50      0.49      6006
+weighted avg       0.94      0.97      0.96      6006
+
+INFO:__main__:Epoch 16/50: Train Loss=0.7710, Val Loss=0.5616, Val F1=0.4928, Val Acc=0.9717
+INFO:__main__:Early stopping at epoch 16
+INFO:__main__:
+Loading best model...
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 3.5: THRESHOLD OPTIMIZATION
+INFO:__main__:======================================================================
+INFO:__main__:
+Threshold optimization disabled in config - using default threshold 0.5
+INFO:__main__:
+📊 Classification threshold for test evaluation: 0.5000
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 4: TEST EVALUATION
+INFO:__main__:======================================================================
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5019
+INFO:evaluation.metrics:AUPRC (Weighted): 0.9509
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00       157
+        Pass       0.97      1.00      0.99      5995
+
+    accuracy                           0.97      6152
+   macro avg       0.49      0.50      0.49      6152
+weighted avg       0.95      0.97      0.96      6152
+
+INFO:__main__:
+Test Results with default threshold (0.5):
+INFO:__main__:  Loss: 0.6208
+INFO:__main__:  Accuracy: 0.9745
+INFO:__main__:  F1 (Macro): 0.4935
+INFO:__main__:  F1 (Weighted): 0.9619
+INFO:__main__:  AUPRC (Macro): 0.5019
+INFO:__main__:
+📝 Using default threshold (0.5) - threshold optimization was disabled in config
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 5: APFD CALCULATION
+INFO:__main__:======================================================================
+INFO:__main__:  Test DataFrame size: 6195
+INFO:__main__:  Probabilities array size: (6195, 2)
+INFO:__main__:  Samples with predictions: 6152/6195
+INFO:__main__:  Orphan samples (not in graph): 43/6195
+INFO:__main__:✅ TE_Test_Result column found with 2 unique values
+INFO:__main__:   Values: {'Pass': 6038, 'Fail': 157}
+INFO:__main__:   label_binary distribution: {0: 6038, 1: 157}
+INFO:__main__:✅ Build_ID column found: 307 unique builds
+INFO:evaluation.apfd:Ranks calculated per build (rank range: 1-190)
+INFO:evaluation.apfd:Prioritized test cases saved to: results/experiment_05_expanded_features/prioritized_test_cases.csv
+INFO:__main__:✅ Prioritized test cases saved to: results/experiment_05_expanded_features/prioritized_test_cases.csv
+INFO:evaluation.apfd:Calculating APFD for 307 total builds...
+INFO:evaluation.apfd:APFD calculated for 64 builds with 'Fail' results
+INFO:evaluation.apfd:   Builds included: 64
+INFO:evaluation.apfd:   Builds skipped (no failures): 243
+INFO:evaluation.apfd:   Expected: 277 builds (as per project requirements)
+WARNING:evaluation.apfd:⚠️  WARNING: Expected 277 builds but got 64
+WARNING:evaluation.apfd:   This may indicate incorrect filtering or data issues
+INFO:evaluation.apfd:APFD per-build report saved to: results/experiment_05_expanded_features/apfd_per_build.csv
+INFO:__main__:
+✅ APFD per-build report saved to: results/experiment_05_expanded_features/apfd_per_build.csv
+INFO:__main__:📊 Mean APFD: 0.5686 (across 64 builds)
+WARNING:__main__:⚠️  WARNING: Expected 277 builds but got 64
+WARNING:__main__:   This may indicate incorrect filtering or data issues
+INFO:__main__:
+======================================================================
+INFO:__main__:STEP 6: PROCESSING FULL TEST.CSV FOR FINAL APFD
+INFO:__main__:======================================================================
+INFO:__main__:
+6.1: Loading FULL test.csv...
+INFO:preprocessing.data_loader:Loading FULL test dataset from datasets/test.csv
+INFO:preprocessing.data_loader:Loaded 31333 test samples from test.csv
+INFO:preprocessing.data_loader:Total builds: 1365
+INFO:preprocessing.data_loader:Builds with at least one 'Fail': 277 (expected: 277)
+INFO:preprocessing.data_loader:Lightweight cleaning for FULL test.csv (no row drops)
+INFO:preprocessing.data_loader:Target distribution (non-strict):
+TE_Test_Result
+Pass                27805
+Delete               1970
+Fail                  924
+Blocked               484
+Conditional Pass      130
+Pending                20
+Name: count, dtype: int64
+INFO:preprocessing.data_loader:Binary classification strategy: pass_vs_fail
+INFO:preprocessing.data_loader:Positive class: Pass
+INFO:preprocessing.data_loader:Excluded samples with labels other than Pass/Fail
+INFO:preprocessing.data_loader:Binary label mapping: {'Fail': 0, 'Pass': 1}
+INFO:preprocessing.data_loader:Class distribution after encoding:
+label
+1    27805
+0      924
+Name: count, dtype: int64
+INFO:preprocessing.data_loader:After preprocessing: 28729 samples
+INFO:__main__:✅ Loaded full test.csv:
+INFO:__main__:   Total samples: 28729
+INFO:__main__:   Total builds: 1339
+INFO:__main__:   Builds with 'Fail': 277
+INFO:__main__:
+6.2: Generating semantic embeddings for full test set...
+WARNING:embeddings.embedding_cache:Data has changed since cache was created
+INFO:embeddings.embedding_manager:Cache found but invalid (data changed) - regenerating
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:GENERATING EMBEDDINGS
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_manager:Initializing encoder: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:Initializing SBERT encoder on cuda
+INFO:embeddings.sbert_encoder:Model: sentence-transformers/all-mpnet-base-v2
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-mpnet-base-v2
+INFO:embeddings.sbert_encoder:✓ Loaded SBERT model on cuda
+INFO:embeddings.sbert_encoder:✓ Embedding dimension: 768
+INFO:embeddings.sbert_encoder:✓ Batch size: 128
+INFO:embeddings.sbert_encoder:✓ Max sequence length: 384
+INFO:embeddings.embedding_manager:Preparing texts...
+INFO:embeddings.embedding_manager:  Train TCs: 28729
+INFO:embeddings.embedding_manager:  Test TCs: 28729
+INFO:embeddings.embedding_manager:  Train Commits: 28729
+INFO:embeddings.embedding_manager:  Test Commits: 28729
+INFO:embeddings.embedding_manager:Encoding...
+INFO:embeddings.sbert_encoder:Encoding 28729 texts in 23 chunks (chunk_size=1280)
+
+======================================================================
+APFD PER BUILD - SUMMARY STATISTICS
+======================================================================
+Total builds analyzed: 64
+Total test cases: 1235
+Mean TCs per build: 19.3
+
+APFD Statistics:
+  Mean:   0.5686 ⭐ PRIMARY METRIC
+  Median: 0.5840
+  Std:    0.2178
+  Min:    0.1250
+  Max:    1.0000
+
+APFD Distribution:
+  Builds with APFD = 1.0:    2 (  3.1%)
+  Builds with APFD ≥ 0.7:   16 ( 25.0%)
+  Builds with APFD ≥ 0.5:   43 ( 67.2%)
+  Builds with APFD < 0.5:   21 ( 32.8%)
+======================================================================
+Train TCs:   0%|          | 0/23 [00:00<?, ?it/s]Train TCs:   4%|▍         | 1/23 [00:00<00:17,  1.23it/s]Train TCs:   9%|▊         | 2/23 [00:01<00:11,  1.82it/s]Train TCs:  13%|█▎        | 3/23 [00:01<00:09,  2.21it/s]Train TCs:  17%|█▋        | 4/23 [00:01<00:07,  2.46it/s]Train TCs:  22%|██▏       | 5/23 [00:02<00:06,  2.61it/s]Train TCs:  26%|██▌       | 6/23 [00:02<00:06,  2.73it/s]Train TCs:  30%|███       | 7/23 [00:02<00:05,  2.81it/s]Train TCs:  35%|███▍      | 8/23 [00:03<00:05,  2.87it/s]Train TCs:  39%|███▉      | 9/23 [00:03<00:04,  2.91it/s]Train TCs:  43%|████▎     | 10/23 [00:03<00:04,  2.94it/s]Train TCs:  48%|████▊     | 11/23 [00:04<00:04,  2.67it/s]Train TCs:  52%|█████▏    | 12/23 [00:04<00:04,  2.70it/s]Train TCs:  57%|█████▋    | 13/23 [00:05<00:03,  2.77it/s]Train TCs:  61%|██████    | 14/23 [00:05<00:04,  1.88it/s]Train TCs:  65%|██████▌   | 15/23 [00:06<00:03,  2.11it/s]Train TCs:  70%|██████▉   | 16/23 [00:06<00:03,  2.32it/s]Train TCs:  74%|███████▍  | 17/23 [00:06<00:02,  2.50it/s]Train TCs:  78%|███████▊  | 18/23 [00:07<00:01,  2.63it/s]Train TCs:  83%|████████▎ | 19/23 [00:07<00:01,  2.73it/s]Train TCs:  87%|████████▋ | 20/23 [00:07<00:01,  2.79it/s]Train TCs:  91%|█████████▏| 21/23 [00:08<00:00,  2.59it/s]Train TCs:  96%|█████████▌| 22/23 [00:08<00:00,  2.68it/s]Train TCs: 100%|██████████| 23/23 [00:08<00:00,  3.23it/s]Train TCs: 100%|██████████| 23/23 [00:08<00:00,  2.59it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 28729 texts → shape: (28729, 768)
+INFO:embeddings.sbert_encoder:Encoding 28729 texts in 23 chunks (chunk_size=1280)
+Test TCs:   0%|          | 0/23 [00:00<?, ?it/s]Test TCs:   4%|▍         | 1/23 [00:00<00:09,  2.23it/s]Test TCs:   9%|▊         | 2/23 [00:00<00:08,  2.57it/s]Test TCs:  13%|█▎        | 3/23 [00:01<00:07,  2.75it/s]Test TCs:  17%|█▋        | 4/23 [00:01<00:06,  2.84it/s]Test TCs:  22%|██▏       | 5/23 [00:01<00:06,  2.89it/s]Test TCs:  26%|██▌       | 6/23 [00:02<00:05,  2.93it/s]Test TCs:  30%|███       | 7/23 [00:02<00:05,  2.96it/s]Test TCs:  35%|███▍      | 8/23 [00:02<00:05,  2.98it/s]Test TCs:  39%|███▉      | 9/23 [00:03<00:04,  2.97it/s]Test TCs:  43%|████▎     | 10/23 [00:03<00:04,  2.98it/s]Test TCs:  48%|████▊     | 11/23 [00:03<00:04,  2.70it/s]Test TCs:  52%|█████▏    | 12/23 [00:04<00:03,  2.76it/s]Test TCs:  57%|█████▋    | 13/23 [00:04<00:03,  2.82it/s]Test TCs:  61%|██████    | 14/23 [00:04<00:03,  2.86it/s]Test TCs:  65%|██████▌   | 15/23 [00:05<00:02,  2.90it/s]Test TCs:  70%|██████▉   | 16/23 [00:05<00:02,  2.92it/s]Test TCs:  74%|███████▍  | 17/23 [00:05<00:02,  2.93it/s]Test TCs:  78%|███████▊  | 18/23 [00:06<00:01,  2.90it/s]Test TCs:  83%|████████▎ | 19/23 [00:06<00:01,  2.93it/s]Test TCs:  87%|████████▋ | 20/23 [00:06<00:01,  2.97it/s]Test TCs:  91%|█████████▏| 21/23 [00:07<00:00,  2.72it/s]Test TCs:  96%|█████████▌| 22/23 [00:07<00:00,  2.76it/s]Test TCs: 100%|██████████| 23/23 [00:07<00:00,  3.34it/s]Test TCs: 100%|██████████| 23/23 [00:07<00:00,  2.91it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 28729 texts → shape: (28729, 768)
+INFO:embeddings.sbert_encoder:Encoding 28729 texts in 23 chunks (chunk_size=1280)
+Train Commits:   0%|          | 0/23 [00:00<?, ?it/s]Train Commits:   4%|▍         | 1/23 [00:00<00:09,  2.30it/s]Train Commits:   9%|▊         | 2/23 [00:00<00:07,  2.70it/s]Train Commits:  13%|█▎        | 3/23 [00:01<00:06,  2.89it/s]Train Commits:  17%|█▋        | 4/23 [00:01<00:06,  3.00it/s]Train Commits:  22%|██▏       | 5/23 [00:01<00:05,  3.06it/s]Train Commits:  26%|██▌       | 6/23 [00:02<00:05,  3.10it/s]Train Commits:  30%|███       | 7/23 [00:02<00:05,  3.11it/s]Train Commits:  35%|███▍      | 8/23 [00:02<00:04,  3.15it/s]Train Commits:  39%|███▉      | 9/23 [00:02<00:04,  3.17it/s]Train Commits:  43%|████▎     | 10/23 [00:03<00:04,  3.17it/s]Train Commits:  48%|████▊     | 11/23 [00:03<00:04,  2.85it/s]Train Commits:  52%|█████▏    | 12/23 [00:04<00:03,  2.94it/s]Train Commits:  57%|█████▋    | 13/23 [00:04<00:03,  3.01it/s]Train Commits:  61%|██████    | 14/23 [00:04<00:02,  3.07it/s]Train Commits:  65%|██████▌   | 15/23 [00:04<00:02,  3.10it/s]Train Commits:  70%|██████▉   | 16/23 [00:05<00:02,  3.12it/s]Train Commits:  74%|███████▍  | 17/23 [00:05<00:01,  3.15it/s]Train Commits:  78%|███████▊  | 18/23 [00:05<00:01,  3.15it/s]Train Commits:  83%|████████▎ | 19/23 [00:06<00:01,  3.14it/s]Train Commits:  87%|████████▋ | 20/23 [00:06<00:00,  3.09it/s]Train Commits:  91%|█████████▏| 21/23 [00:06<00:00,  2.82it/s]Train Commits:  96%|█████████▌| 22/23 [00:07<00:00,  2.92it/s]Train Commits: 100%|██████████| 23/23 [00:07<00:00,  3.52it/s]Train Commits: 100%|██████████| 23/23 [00:07<00:00,  3.09it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 28729 texts → shape: (28729, 768)
+INFO:embeddings.sbert_encoder:Encoding 28729 texts in 23 chunks (chunk_size=1280)
+Test Commits:   0%|          | 0/23 [00:00<?, ?it/s]Test Commits:   4%|▍         | 1/23 [00:00<00:09,  2.36it/s]Test Commits:   9%|▊         | 2/23 [00:00<00:08,  2.60it/s]Test Commits:  13%|█▎        | 3/23 [00:01<00:07,  2.85it/s]Test Commits:  17%|█▋        | 4/23 [00:01<00:06,  2.98it/s]Test Commits:  22%|██▏       | 5/23 [00:01<00:06,  2.98it/s]Test Commits:  26%|██▌       | 6/23 [00:02<00:05,  3.05it/s]Test Commits:  30%|███       | 7/23 [00:02<00:05,  3.10it/s]Test Commits:  35%|███▍      | 8/23 [00:02<00:04,  3.12it/s]Test Commits:  39%|███▉      | 9/23 [00:02<00:04,  3.12it/s]Test Commits:  43%|████▎     | 10/23 [00:03<00:04,  3.09it/s]Test Commits:  48%|████▊     | 11/23 [00:03<00:04,  2.76it/s]Test Commits:  52%|█████▏    | 12/23 [00:04<00:03,  2.80it/s]Test Commits:  57%|█████▋    | 13/23 [00:04<00:03,  2.85it/s]Test Commits:  61%|██████    | 14/23 [00:04<00:03,  2.90it/s]Test Commits:  65%|██████▌   | 15/23 [00:05<00:02,  2.93it/s]Test Commits:  70%|██████▉   | 16/23 [00:05<00:02,  2.96it/s]Test Commits:  74%|███████▍  | 17/23 [00:05<00:02,  2.96it/s]Test Commits:  78%|███████▊  | 18/23 [00:06<00:01,  2.98it/s]Test Commits:  83%|████████▎ | 19/23 [00:06<00:01,  2.98it/s]Test Commits:  87%|████████▋ | 20/23 [00:06<00:01,  2.97it/s]Test Commits:  91%|█████████▏| 21/23 [00:07<00:00,  2.66it/s]Test Commits:  96%|█████████▌| 22/23 [00:07<00:00,  2.69it/s]Test Commits: 100%|██████████| 23/23 [00:07<00:00,  3.19it/s]Test Commits: 100%|██████████| 23/23 [00:07<00:00,  2.95it/s]
+INFO:embeddings.sbert_encoder:✓ Encoded 28729 texts → shape: (28729, 768)
+INFO:embeddings.embedding_manager:======================================================================
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:SAVING EMBEDDINGS TO CACHE
+INFO:embeddings.embedding_cache:======================================================================
+INFO:embeddings.embedding_cache:✓ Saved to: cache/embeddings.npz
+INFO:embeddings.embedding_cache:✓ File size: 2.0 MB
+INFO:embeddings.embedding_cache:✓ Metadata: cache/embeddings_metadata.txt
+INFO:embeddings.embedding_cache:======================================================================
+INFO:__main__:✅ Generated embeddings: (28729, 1536)
+INFO:__main__:
+6.3: Extracting structural features for full test set...
+INFO:preprocessing.structural_feature_extractor_v2:Transforming 28729 samples into 29 features...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 10000/28729 samples...
+INFO:preprocessing.structural_feature_extractor_v2:  Processed 20000/28729 samples...
+INFO:preprocessing.structural_feature_extractor_v2:✓ Extracted feature matrix: (28729, 29)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature means: [1.3999716e+03 4.0820688e-02 3.9231516e-02 2.3361176e-02 4.5173241e+01
+ 1.0892130e+00 4.4084026e+01 9.2937447e-02 3.2538479e+01 7.1906435e-01]... (showing first 10)
+INFO:preprocessing.structural_feature_extractor_v2:  Feature stds:  [9.9024835e+02 1.0719389e-01 1.3053928e-01 5.2720342e-02 6.9496498e+01
+ 2.2186613e+00 6.9079300e+01 6.3926554e-01 6.1004280e+01 1.3229167e+00]... (showing first 10)
+INFO:__main__:✅ Extracted structural features: (28729, 29)
+INFO:__main__:   Samples needing imputation: 6530/28729
+INFO:__main__:   Imputing features...
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:STRUCTURAL FEATURE IMPUTATION
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:preprocessing.structural_feature_imputation:Initialized StructuralFeatureImputer with k=10, threshold=0.50
+INFO:preprocessing.structural_feature_imputation:Training samples with history: 50621/50621
+INFO:preprocessing.structural_feature_imputation:Fitting StructuralFeatureImputer on training data...
+INFO:preprocessing.structural_feature_imputation:  Training samples: 50621
+INFO:preprocessing.structural_feature_imputation:  Feature means: [ 8.3890198e+02  2.6135275e-02  2.5333719e-02  2.3399048e-02
+  6.2583454e+01  1.2965963e+00  6.1286858e+01  5.8631793e-02
+  4.2796230e+01  7.9253668e-01  9.5315381e+02  4.6830764e+00
+  4.5366846e-02 -8.0200483e-04  4.9607673e+00  2.7982458e-02
+  2.5169335e-02  2.6491014e-03  1.0986538e+00 -9.2713916e+02
+  9.3528038e+01  8.2692951e-02  3.4961143e+01  4.1863060e+01
+  5.1664982e+01  4.5456848e+00  9.9915057e-01  9.7660702e-01
+  3.6681141e+01]
+INFO:preprocessing.structural_feature_imputation:  Feature stds: [7.0913013e+02 6.7458861e-02 1.0067556e-01 4.9048297e-02 7.6796181e+01
+ 2.4710934e+00 7.5966492e+01 3.7019184e-01 5.9424965e+01 1.2968451e+00
+ 4.0532083e+02 5.0198189e+01 1.5508364e-01 8.6379990e-02 2.9809141e-01
+ 1.6387375e-01 8.8318571e-02 1.1560044e-01 2.2819934e+00 6.9645380e+02
+ 2.7005716e+02 2.7541918e-01 4.0628025e+01 1.2270022e+02 1.4779401e+02
+ 1.8799049e+01 2.9124858e-02 4.9044412e-02 5.2248726e+01]
+INFO:preprocessing.structural_feature_imputation:  Reference tests (with history): 50621
+INFO:preprocessing.structural_feature_imputation:
+Test samples needing imputation: 6530/28729
+INFO:preprocessing.structural_feature_imputation:Imputing features for 6530/28729 samples...
+INFO:preprocessing.structural_feature_imputation:  Imputation complete:
+INFO:preprocessing.structural_feature_imputation:    Semantic-based: 6530
+INFO:preprocessing.structural_feature_imputation:    Fallback (conservative): 0
+INFO:preprocessing.structural_feature_imputation:
+Imputation Statistics:
+INFO:preprocessing.structural_feature_imputation:  Samples imputed: 6530/28729 (22.7%)
+INFO:preprocessing.structural_feature_imputation:  Feature means before: [8.277182579040527, 0.026621462777256966, 0.02582232467830181, 0.0, 1.0, 0.0006125574000179768, 0.9993874430656433, 0.0006125574000179768, 0.9993874430656433, 0.0006125574000179768, 998.3880615234375, 0.611944854259491, 0.10440754145383835, 0.0, 1.0, 0.02845904417335987, 0.025656752288341522, 0.0, 1.0, 8.277182579040527, 64.31025695800781, 0.9950995445251465, 1.0, 30.172740936279297, 34.13751983642578, 64.31025695800781, 0.0, 0.5024502277374268, 0.9993874430656433]
+INFO:preprocessing.structural_feature_imputation:  Feature means after: [24.28407859802246, 0.0029995383229106665, 0.0026173433288931847, 0.0018421377753838897, 36.996055603027344, 0.7383754849433899, 36.21780014038086, 0.009106967598199844, 21.611083984375, 0.3195287585258484, 985.0322265625, 1.1443135738372803, 0.028451766818761826, 0.0013860599137842655, 4.999904155731201, 0.004148815292865038, 0.002234218642115593, 0.0027194060385227203, 0.9558398127555847, -1542.0909423828125, 7.166038990020752, 0.9896030426025391, 17.67123794555664, 2.932347059249878, 3.748561143875122, 0.13585157692432404, 0.9999943971633911, 0.9981417655944824, 20.344829559326172]
+INFO:preprocessing.structural_feature_imputation:======================================================================
+INFO:__main__:
+6.3b: Mapping TC_Keys to global indices...
+INFO:__main__:   Samples in training graph: 22231/28729 (77.4%)
+INFO:__main__:   Orphan samples: 6498/28729
+INFO:__main__:
+6.4: Generating predictions on full test set...
+INFO:evaluation.metrics:
+AUPRC (Macro): 0.5000
+INFO:evaluation.metrics:AUPRC (Weighted): 1.0000
+INFO:evaluation.metrics:
+Classification Report:
+              precision    recall  f1-score   support
+
+    Not-Pass       0.00      0.00      0.00   22231.0
+        Pass       0.00      0.00      0.00       0.0
+
+    accuracy                           0.00   22231.0
+   macro avg       0.00      0.00      0.00   22231.0
+weighted avg       0.00      0.00      0.00   22231.0
+
+INFO:__main__:✅ Predictions generated: (28729, 2)
+INFO:__main__:   Samples with actual predictions: 22231
+INFO:__main__:   Orphan samples (default prob 0.5): 6498
+INFO:__main__:
+6.5: Preparing data for APFD calculation...
+INFO:__main__:   Failures (TE_Test_Result=='Fail'): 924
+INFO:__main__:   Passes: 27805
+INFO:__main__:
+6.6: Generating prioritized test cases CSV...
+INFO:evaluation.apfd:Ranks calculated per build (rank range: 1-836)
+INFO:evaluation.apfd:Prioritized test cases saved to: results/experiment_05_expanded_features/prioritized_test_cases_FULL_testcsv.csv
+INFO:__main__:✅ Prioritized test cases (FULL) saved to: results/experiment_05_expanded_features/prioritized_test_cases_FULL_testcsv.csv
+INFO:__main__:
+6.7: Calculating APFD per build on FULL test.csv...
+INFO:evaluation.apfd:Calculating APFD for 1339 total builds...
+INFO:evaluation.apfd:APFD calculated for 277 builds with 'Fail' results
+INFO:evaluation.apfd:   Builds included: 277
+INFO:evaluation.apfd:   Builds skipped (no failures): 1062
+INFO:evaluation.apfd:   Expected: 277 builds (as per project requirements)
+INFO:evaluation.apfd:APFD per-build report saved to: results/experiment_05_expanded_features/apfd_per_build_FULL_testcsv.csv
+INFO:__main__:
+======================================================================
+INFO:__main__:FINAL APFD RESULTS - FULL TEST.CSV (277 BUILDS)
+INFO:__main__:======================================================================
+INFO:__main__:
+======================================================================
+INFO:__main__:VALIDATION
+INFO:__main__:======================================================================
+INFO:__main__:✅ SUCCESS: Found exactly 277 builds with failures!
+INFO:__main__:✅ Mean APFD: 0.5997
+INFO:__main__:
+✅ All results saved to: results/experiment_05_expanded_features/
+INFO:__main__:   - prioritized_test_cases.csv (test split)
+INFO:__main__:   - apfd_per_build.csv (test split)
+INFO:__main__:   - prioritized_test_cases_FULL_testcsv.csv (all 277 builds)
+INFO:__main__:   - apfd_per_build_FULL_testcsv.csv (all 277 builds)
+INFO:__main__:
+======================================================================
+INFO:__main__:TRAINING COMPLETE!
+INFO:__main__:======================================================================
+INFO:__main__:Best Val F1: 0.4928
+INFO:__main__:Test F1: 0.4935
+INFO:__main__:Mean APFD (test split): 0.5686
+INFO:__main__:Mean APFD (FULL test.csv, 277 builds): 0.5997
+
+======================================================================
+APFD PER BUILD - SUMMARY STATISTICS
+======================================================================
+Total builds analyzed: 277
+Total test cases: 5085
+Mean TCs per build: 18.4
+
+APFD Statistics:
+  Mean:   0.5997 ⭐ PRIMARY METRIC
+  Median: 0.5865
+  Std:    0.2506
+  Min:    0.0263
+  Max:    1.0000
+
+APFD Distribution:
+  Builds with APFD = 1.0:   23 (  8.3%)
+  Builds with APFD ≥ 0.7:  101 ( 36.5%)
+  Builds with APFD ≥ 0.5:  187 ( 67.5%)
+  Builds with APFD < 0.5:   90 ( 32.5%)
+======================================================================
+[W1114 21:56:05.437605721 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())

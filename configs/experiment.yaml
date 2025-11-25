@@ -1,0 +1,222 @@
+# Filo-Priori - SBERT Configuration
+# Optimized pipeline with intelligent embedding caching
+#
+# Key Features:
+# - SBERT (all-mpnet-base-v2): Lightweight, stable, and fast
+# - Automatic embedding caching and reuse
+# - 13x smaller than Qodo, 46x faster
+# - No NVML errors, stable GPU usage
+
+experiment:
+  name: "filo_priori_sbert"
+  version: "1.0.0"
+  description: "Production pipeline with SBERT embeddings and intelligent caching"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+
+  smote:
+    enabled: false
+
+# Text Processing
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000  # SBERT max is ~512 tokens (~2000 chars)
+  max_summary_length: 500
+  max_steps_length: 1000
+
+# Commit Extraction
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Semantic Embeddings with SBERT (also aliased as 'semantic' for compatibility)
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768  # Single embedding dimension
+  combined_embedding_dim: 1536  # TC (768) + Commit (768)
+
+  # Encoding parameters
+  max_length: 384  # SBERT recommended (supports up to 512)
+  batch_size: 128  # Can be larger than Qodo (model is lighter)
+  normalize_embeddings: true
+  device: "cuda"  # or "cpu"
+
+  # Intelligent caching (AUTOMATIC)
+  use_cache: true  # Automatically reuse embeddings if available
+  cache_dir: "cache"
+  # Note: Embeddings are automatically regenerated if data changes
+
+# Alias for backward compatibility
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+
+# Structural Features
+structural:
+  extractor:
+    recent_window: 5
+    min_history: 2
+    cache_path: "cache/structural_features.pkl"
+  input_dim: 6
+
+# Phylogenetic Graph
+graph:
+  type: "co_failure"
+  min_co_occurrences: 2
+  weight_threshold: 0.1
+  cache_path: "cache/phylogenetic_graph.pkl"
+  build_graph: true
+
+# Model Architecture - Optimized for SBERT (1536 dim)
+model:
+  type: "dual_stream"
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536  # TC (768) + Commit (768)
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  structural:
+    input_dim: 6
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.2
+    activation: "elu"
+
+  fusion:
+    input_dim: 384  # semantic (256) + structural (64) + gnn (128) - adjusted after projection
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.2
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.3
+
+# Training Configuration
+training:
+  num_epochs: 50
+  epochs: 50  # Alias for compatibility
+  batch_size: 32
+  learning_rate: 0.00005  # 5e-5
+  weight_decay: 0.0001    # 1e-4
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001  # 1e-6
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 12
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+# Loss Configuration
+loss:
+  type: "focal"
+  focal:
+    alpha: 0.25
+    gamma: 2.0
+  label_smoothing: 0.0
+
+  # Legacy fields for direct access
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.2, 0.8]
+    step: 0.05
+    optimize_for: "f1_macro"
+
+# Ranking Configuration
+ranking:
+  method: "probability"  # Use model probabilities for ranking
+  reverse: true  # Higher probability = higher priority
+
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System Configuration (aliased as 'hardware' for validator compatibility)
+system:
+  device: "cuda"  # or "cpu"
+  num_workers: 4
+  pin_memory: true
+  use_amp: false  # Automatic Mixed Precision (optional)
+
+  # Reproducibility
+  deterministic: true
+  benchmark: false
+
+# Alias for validator
+hardware:
+  device: "cuda"
+  num_workers: 4
+
+# Logging and Checkpointing
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true

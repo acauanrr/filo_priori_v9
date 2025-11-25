@@ -1,0 +1,230 @@
+# Experimento 05: EXPANDED STRUCTURAL FEATURES (29 features)
+# OBJETIVO: Melhorar APFD de 0.6210 → 0.65-0.70
+#
+# Estratégia:
+# - Usa Weighted CE (vencedor do Exp 04a)
+# - Expande structural features de 6 → 29
+# - Aumenta hidden_dim do structural stream (64 → 128) para acomodar mais features
+# - Mantém todas as outras configurações iguais ao 04a
+#
+# Features Expansion:
+# - PHYLOGENETIC: 4 → 20 features (test age, rates, streaks, trends)
+# - STRUCTURAL: 2 → 9 features (commits, CRs, surge, stability)
+# - TOTAL: 6 → 29 features
+#
+# Impacto Esperado:
+# - APFD: 0.6210 → 0.65-0.70 (+5-13% melhoria)
+# - F1 Macro: 0.5294 → 0.55-0.60
+# - Recall Fail: 0.05 → 0.08-0.15
+
+experiment:
+  name: "experiment_06_feature_selection"
+  version: "6.0"
+  description: "29 structural features (expanded from 6) - ranking improvement"
+  seed: 42
+
+# Data Configuration (identical to 04a)
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text, Commit, Embedding (identical to 04a)
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+
+# Structural Features - EXPANDED TO 29!
+structural:
+  input_dim: 10  # ← CRITICAL: Changed from 6 to 29!
+  extractor:
+    use_v2_5: true  # ← Use StructuralFeatureExtractorV2
+    recent_window: 5
+    very_recent_window: 2  # ← New parameter for V2
+    medium_term_window: 10  # ← New parameter for V2
+    min_history: 2
+    cache_path: "cache/structural_features_v2_5.pkl"  # ← Separate cache for V2
+
+# Graph (identical to 04a)
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/multi_edge_graph.pkl"
+  type: "co_failure"
+
+# Model - ADJUSTED for 29 features
+model:
+  type: "dual_stream"
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  structural:
+    input_dim: 10  # ← CRITICAL: Changed from 6 to 29!
+    hidden_dim: 64  # ← REDUCED from 64 to 128 (double capacity for 4.8x more features)
+    num_layers: 2
+    dropout: 0.1  # Same as semantic
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.1
+    activation: "elu"
+
+  fusion:
+    input_dim: 320  # (256 semantic + 64 structural)
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.2
+
+# Training - IDENTICAL to 04a (Weighted CE vencedor)
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.00003  # 3e-5 (proven optimal)
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # No balanced sampling (proven suboptimal)
+  sampling:
+    use_balanced_sampling: false
+
+  # WEIGHTED CE (vencedor do Exp 04a)
+  loss:
+    type: "weighted_ce"
+    use_class_weights: true  # ← Automatic class weights
+    label_smoothing: 0.0
+
+# Legacy loss config
+loss:
+  type: "weighted_ce"
+  label_smoothing: 0.0
+
+# Evaluation (identical to 04a)
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: false  # ❌ DESABILITADO - Exp 04c mostrou que não ajuda
+    range: [0.01, 0.99]
+    step: 0.01
+    optimize_for: "f1_macro"
+
+# Ranking (identical to 04a)
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System (identical to 04a)
+system:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  use_amp: false
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  num_workers: 4
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_06_feature_selection"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true
