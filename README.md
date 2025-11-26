@@ -279,23 +279,57 @@ View Mermaid diagrams:
 
 ```
 filo-priori-v9/
+├── main.py                            # Main entry point
+├── requirements.txt                   # Dependencies
+├── README.md                          # This file
+│
 ├── configs/                           # Experiment configurations
-│   └── experiment_06_feature_selection.yaml  # Production config
+│   ├── experiment_06_feature_selection.yaml  # Production config
+│   └── experiment_*.yaml              # Other experiment configs
+│
 ├── src/                               # Source code
 │   ├── models/                        # Neural network models
-│   │   └── dual_stream_v8.py          # Main architecture (702 lines)
 │   ├── preprocessing/                 # Feature extraction
 │   ├── phylogenetic/                  # Graph construction
-│   │   └── multi_edge_graph_builder.py
-│   └── evaluation/                    # Metrics (APFD, F1, etc.)
+│   ├── evaluation/                    # Metrics (APFD, F1, etc.)
+│   ├── training/                      # Training utilities
+│   ├── embeddings/                    # SBERT embeddings
+│   ├── baselines/                     # Baseline methods
+│   └── utils/                         # Utility functions
+│
+├── scripts/                           # Analysis and utility scripts
+│   ├── analysis/                      # Experimental analysis
+│   │   ├── run_all_baselines.py       # Baseline comparison
+│   │   ├── run_ablation_study.py      # Ablation study
+│   │   ├── run_temporal_cv.py         # Temporal cross-validation
+│   │   ├── run_sensitivity_analysis.py # Hyperparameter sensitivity
+│   │   └── run_qualitative_analysis.py # Qualitative analysis
+│   └── publication/                   # Paper generation
+│       ├── generate_paper_sections.py # LaTeX sections
+│       └── prepare_paper_submission.py # Final paper materials
+│
+├── paper/                             # Publication materials (ready)
+│   ├── main.tex                       # Paper template
+│   ├── figures/                       # All figures (PDF + PNG)
+│   ├── tables/                        # All LaTeX tables
+│   └── sections/                      # Paper sections
+│
 ├── results/                           # Experimental results
-│   ├── experiment_06_feature_selection/   # Production model
-│   └── publication/                   # Technical reports
-├── figures/                           # Architecture diagrams (Mermaid)
-├── SCIENTIFIC_ANALYSIS_FOR_PUBLICATION.md  # Scientific analysis
-├── REASONING_AGENT_PROMPT.md          # Publication roadmap
-├── main.py                            # Training script
-└── predict.py                         # Inference script
+│   ├── experiment_06_feature_selection/ # Main model results
+│   ├── baselines/                     # Baseline comparison
+│   ├── ablation/                      # Ablation study
+│   ├── temporal_cv/                   # Temporal validation
+│   ├── sensitivity/                   # Sensitivity analysis
+│   ├── qualitative_analysis/          # Qualitative analysis
+│   └── final_report/                  # Consolidated report
+│
+├── docs/                              # Documentation
+│   ├── SCIENTIFIC_ANALYSIS_FOR_PUBLICATION.md
+│   └── REASONING_AGENT_PROMPT.md
+│
+├── datasets/                          # Data files (in .gitignore)
+├── cache/                             # Embeddings cache (in .gitignore)
+└── _archive/                          # Archived old files (in .gitignore)
 ```
 
 ---

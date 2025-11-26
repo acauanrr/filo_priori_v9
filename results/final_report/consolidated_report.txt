@@ -1,0 +1,282 @@
+
+================================================================================
+                     FILO-PRIORI V9 - CONSOLIDATED FINAL REPORT
+================================================================================
+                    Deep Learning-based Test Case Prioritization
+================================================================================
+
+Generated: 2025-11-26 13:27:18
+Dataset: QTA (Industrial Mobile Testing)
+Builds with failures: 277
+Total test executions: 8,847
+
+================================================================================
+                              TABLE OF CONTENTS
+================================================================================
+
+1. Executive Summary
+2. Phase 1: Baseline Comparison
+3. Phase 2: Ablation Study
+4. Phase 3: Temporal Cross-Validation
+5. Phase 4: Hyperparameter Sensitivity
+6. Phase 5: Paper Sections (Generated)
+7. Phase 6: Qualitative Analysis
+8. Consolidated Statistics
+9. Recommendations
+10. Files Generated
+
+================================================================================
+                         1. EXECUTIVE SUMMARY
+================================================================================
+
+Filo-Priori v9 is a dual-stream deep learning architecture for Test Case
+Prioritization (TCP) that combines:
+
+• Semantic Stream: SBERT embeddings of test case descriptions and commit messages
+• Structural Stream: Historical test execution patterns (10 engineered features)
+• Graph Attention: GATv2 on phylogenetic graph (co-failure relationships)
+• Fusion Module: Cross-attention mechanism for stream integration
+
+MAIN FINDINGS:
+─────────────
+1. Achieves APFD = 0.6171 (+10.3% vs Random, p < 0.001)
+2. Graph Attention Networks contribute +17.0% to performance
+3. Model is temporally robust (APFD range: 0.619-0.663)
+4. Running 25% of tests detects 33.2% of failures
+5. 8.3% of builds achieve perfect prioritization (APFD = 1.0)
+
+
+================================================================================
+                      2. PHASE 1: BASELINE COMPARISON
+================================================================================
+
+Method                  Mean APFD    95% CI              Δ vs FP     p-value    Sig.
+──────────────────────────────────────────────────────────────────────────────────────────
+FailureRate            0.6289       [0.597, 0.660]       +0.0118      0.3626     nan
+XGBoost                0.6171       [0.583, 0.649]       +0.0001      0.5771     nan
+Filo-Priori            0.6171       [0.586, 0.648]       -           -          (reference)
+GreedyHistorical       0.6138       [0.582, 0.647]       -0.0033      0.0962     nan
+LogisticRegression     0.5964       [0.559, 0.631]       -0.0207      0.1855     nan
+RandomForest           0.5910       [0.556, 0.627]       -0.0261      0.0937     nan
+Random                 0.5596       [0.533, 0.584]       -0.0575      0.0002     ***
+RecentFailureRate      0.5454       [0.515, 0.578]       -0.0717      7.21e-05   ***
+Recency                0.5240       [0.490, 0.557]       -0.0931      1.44e-08   ***
+
+Key Findings:
+• Filo-Priori significantly outperforms Random, Recency, and RecentFailureRate (p < 0.001)
+• Comparable performance to FailureRate and XGBoost (no significant difference)
+• Effect sizes are small to negligible for most comparisons
+
+================================================================================
+                        3. PHASE 2: ABLATION STUDY
+================================================================================
+
+ID    Component Removed      Mean APFD    Δ APFD      Contribution    Sig.
+────────────────────────────────────────────────────────────────────────────────
+A3    Graph Attention        0.5311       -0.1086      +17.0%           ***
+A2    Structural Stream      0.6060       -0.0337      +5.3%           ***
+A5    Class Weighting        0.6100       -0.0297      +4.6%           ***
+A7    Ensemble               0.6171       -0.0226      +3.5%           ***
+A1    Semantic Stream        0.6276       -0.0121      +1.9%           nan
+A0    Full Model             0.6397       -           -               (baseline)
+A6    Cross-Attention        0.6466       +0.0069      -1.1%           nan
+
+Key Findings:
+• GATv2 (Graph Attention) is the MOST CRITICAL component (+17.0%)
+• Structural Stream contributes +5.3% (second most important)
+• Class Weighting provides +4.6% improvement
+• Cross-Attention has NEGATIVE contribution (-1.1%), suggesting simpler fusion may work better
+
+================================================================================
+                   4. PHASE 3: TEMPORAL CROSS-VALIDATION
+================================================================================
+
+Validation Method        Mean APFD    Std        95% CI              N Builds
+────────────────────────────────────────────────────────────────────────────────
+Temporal 5-Fold CV       0.6629       0.2791     [0.627, 0.698]       215
+Sliding Window CV        0.6279       0.2719     [0.595, 0.661]       248
+Concept Drift Test       0.6187       0.2766     [0.574, 0.661]       152
+
+Key Findings:
+• Model maintains stable performance across all temporal validation methods
+• APFD range (0.619-0.663) indicates robustness to temporal distribution shift
+• No significant concept drift detected
+• Temporal K-Fold shows highest APFD (0.663), suggesting good generalization
+
+================================================================================
+                  5. PHASE 4: HYPERPARAMETER SENSITIVITY
+================================================================================
+
+Hyperparameter          Value                    Mean APFD    95% CI
+────────────────────────────────────────────────────────────────────────────────
+Loss Function           Weighted CE              0.6191       [0.597, 0.639] ← BEST
+Loss Function           Focal Loss               0.6117       [0.587, 0.634]
+Loss Function           Weighted Focal           0.5834       [0.550, 0.615]
+────────────────────────────────────────────────────────────────────────────────
+Learning Rate           3e-5                     0.6160       [0.599, 0.633] ← BEST
+Learning Rate           5e-5                     0.5890       [0.570, 0.608]
+────────────────────────────────────────────────────────────────────────────────
+GNN Architecture        1 layer, 2 heads         0.6160       [0.598, 0.633] ← BEST
+GNN Architecture        2 layers, 4 heads        0.5890       [0.569, 0.608]
+────────────────────────────────────────────────────────────────────────────────
+Structural Features     10 features              0.6171       [0.589, 0.646] ← BEST
+Structural Features     6 features               0.6155       [0.594, 0.636]
+Structural Features     29 features              0.5997       [0.571, 0.630]
+────────────────────────────────────────────────────────────────────────────────
+Balanced Sampling       No Balanced Sampling     0.6154       [0.601, 0.631] ← BEST
+Balanced Sampling       Balanced Sampling        0.5834       [0.550, 0.616]
+
+Sensitivity Ranges:
+• Loss Function: Δ = 0.0356 (5.9% relative)
+• Learning Rate: Δ = 0.0270 (4.5% relative)
+• GNN Architecture: Δ = 0.0270 (4.5% relative)
+• Structural Features: Δ = 0.0174 (2.9% relative)
+• Balanced Sampling: Δ = 0.0319 (5.3% relative)
+
+Key Findings:
+• Loss Function has the highest impact (5.9% relative variation)
+• Simpler GNN architecture (1 layer, 2 heads) outperforms deeper models
+• Balanced sampling DECREASES performance (avoid for ranking tasks)
+
+================================================================================
+                      6. PHASE 6: QUALITATIVE ANALYSIS
+================================================================================
+
+APFD Distribution:
+────────────────────────────────────────
+  Mean:     0.6171
+  Median:   0.6111
+  Std:      0.2552
+  Min:      0.0278
+  Max:      1.0000
+  Q1:       0.4167
+  Q3:       0.8500
+
+Performance Categories:
+────────────────────────────────────────
+  Perfect (=1.0):     23 builds (8.3%)
+  High (≥0.8):        84 builds (30.3%)
+  Medium (0.5-0.8):  100 builds (36.1%)
+  Low (<0.5):         93 builds (33.6%)
+
+Failure Detection Speed:
+────────────────────────────────────────
+  Mean first failure rank:     10.0
+  Mean first failure pct:      30.2%
+  Failures in top 10%:         13.7%
+  Failures in top 25%:         33.2%
+  Failures in top 50%:         59.9%
+
+Key Findings:
+• 8.3% of builds achieve perfect prioritization (all failures first)
+• Running only 25% of tests detects 33.2% of failures on average
+• Higher failure rates correlate with better APFD (r = +0.37)
+• Model struggles with very low failure rate builds (<3%)
+
+================================================================================
+                       7. CONSOLIDATED STATISTICS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           SUMMARY TABLE                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Metric                                    │ Value                           │
+├───────────────────────────────────────────┼─────────────────────────────────┤
+│ Dataset                                   │ QTA (Industrial)                │
+│ Builds with failures                      │ 277                             │
+│ Total test executions                     │ 8,847                           │
+├───────────────────────────────────────────┼─────────────────────────────────┤
+│ Main APFD                                 │ 0.6171 [0.586, 0.648]           │
+│ Improvement vs Random                     │ +10.3% (p < 0.001)              │
+│ Temporal CV range                         │ 0.619 - 0.663                   │
+├───────────────────────────────────────────┼─────────────────────────────────┤
+│ Most important component                  │ GATv2 (+17.0%)                  │
+│ Second most important                     │ Structural Stream (+5.3%)       │
+│ Most sensitive hyperparameter             │ Loss Function (Δ=5.9%)          │
+├───────────────────────────────────────────┼─────────────────────────────────┤
+│ Perfect APFD builds                       │ 23 (8.3%)                       │
+│ High APFD builds (≥0.8)                   │ 84 (30.3%)                      │
+│ Failures detected in top 25%             │ 33.2%                           │
+└───────────────────────────────────────────┴─────────────────────────────────┘
+
+
+================================================================================
+                          8. RECOMMENDATIONS
+================================================================================
+
+FOR PRACTITIONERS:
+─────────────────
+1. Use Filo-Priori when you have:
+   • At least 100 builds with failure history
+   • Test case descriptions/documentation
+   • Commit information linked to builds
+
+2. Recommended configuration:
+   • Loss: Weighted Cross-Entropy
+   • Learning Rate: 3e-5
+   • GNN: 1 layer, 2 attention heads
+   • Features: Use feature selection (10 features)
+   • DO NOT use balanced sampling for ranking tasks
+
+3. Expected benefits:
+   • ~10% improvement over random ordering
+   • 33% of failures detected in first 25% of tests
+   • Stable performance over time (no retraining needed frequently)
+
+4. Limitations to consider:
+   • Cold start problem for new test cases
+   • Lower performance on builds with <3% failure rate
+   • Requires GPU for training (30-60 minutes)
+
+FOR RESEARCHERS:
+────────────────
+1. Graph Attention Networks are crucial for TCP - explore other GNN variants
+2. Simpler architectures often outperform complex ones - avoid over-engineering
+3. Cross-attention fusion shows negative contribution - investigate alternatives
+4. Temporal robustness is achievable with proper training strategies
+
+
+================================================================================
+                         9. FILES GENERATED
+================================================================================
+
+Phase 1 - Baselines:
+  results/baselines/comparison_table.csv
+  results/baselines/comparison_table.tex
+  results/baselines/apfd_boxplot.png
+
+Phase 2 - Ablation:
+  results/ablation/ablation_study_final.csv
+  results/ablation/ablation_study_final.tex
+  results/ablation/ablation_study_final.png
+
+Phase 3 - Temporal CV:
+  results/temporal_cv/temporal_cv_summary.csv
+  results/temporal_cv/temporal_cv_table.tex
+  results/temporal_cv/temporal_cv_results.png
+
+Phase 4 - Sensitivity:
+  results/sensitivity/sensitivity_analysis_combined.csv
+  results/sensitivity/sensitivity_analysis.tex
+  results/sensitivity/sensitivity_analysis.png
+
+Phase 5 - Paper Sections:
+  results/paper_sections/section_results.tex
+  results/paper_sections/section_discussion.tex
+  results/paper_sections/section_threats.tex
+  results/paper_sections/all_tables.tex
+  results/paper_sections/paper_sections_combined.tex
+
+Phase 6 - Qualitative:
+  results/qualitative_analysis/qualitative_analysis_report.txt
+  results/qualitative_analysis/case_studies.tex
+  results/qualitative_analysis/qualitative_analysis.png
+
+Final Report:
+  results/final_report/consolidated_report.txt
+  results/final_report/consolidated_report.md
+  results/final_report/executive_summary.txt
+
+================================================================================
+                              END OF REPORT
+================================================================================

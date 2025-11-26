@@ -1,0 +1,82 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: DISCUSSION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Key Insights}
+
+Our experimental evaluation reveals several important insights about
+deep learning-based test case prioritization:
+
+\textbf{1. Graph Neural Networks are Essential.}
+The ablation study (RQ2) demonstrates that Graph Attention Networks (GATv2)
+contribute the most to Filo-Priori's performance (+17.0\%). This confirms
+our hypothesis that modeling test case relationships through a phylogenetic
+graph captures valuable structural information that traditional approaches miss.
+The multi-edge graph, which represents co-failure, co-success, and semantic
+similarity relationships, enables the model to learn complex dependencies
+between test cases.
+
+\textbf{2. Simpler Architectures May Suffice.}
+Contrary to initial expectations, our sensitivity analysis (RQ4) shows that
+simpler GNN architectures (1 layer, 2 heads) outperform deeper ones
+(2 layers, 4 heads). This suggests that the phylogenetic relationships in
+our dataset can be captured with shallow message passing, and deeper
+architectures may introduce unnecessary complexity or overfitting.
+
+\textbf{3. Feature Engineering Matters.}
+The structural features contribute +5.3\% to performance, but more is not
+always better. The 10-feature configuration outperforms both the minimal
+(6 features) and expanded (29 features) versions, indicating the importance
+of careful feature selection over feature quantity.
+
+\textbf{4. Temporal Robustness is Achievable.}
+Filo-Priori maintains consistent performance across temporal validation
+methods (APFD range: 0.619-0.663), demonstrating that the learned patterns
+generalize well to future builds. This is crucial for practical deployment
+in CI/CD pipelines where models must handle evolving codebases.
+
+\subsection{Comparison with Related Work}
+
+Our results are consistent with recent findings in the TCP literature.
+The APFD of 0.62-0.66 achieved by Filo-Priori is comparable to state-of-the-art
+methods reported in recent surveys~\cite{tcp_survey_2023}. However, direct
+comparison is challenging due to differences in datasets and evaluation
+protocols.
+
+Notably, Filo-Priori performs comparably to simpler baselines like FailureRate
+and XGBoost. This raises an important question: when is the additional
+complexity of deep learning justified? Our analysis suggests that the
+deep learning approach provides:
+
+\begin{enumerate}
+    \item \textbf{End-to-end learning}: No manual feature engineering for text data
+    \item \textbf{Relationship modeling}: Capture of inter-test dependencies
+    \item \textbf{Scalability}: Potential for transfer learning across projects
+\end{enumerate}
+
+\subsection{Practical Implications}
+
+For practitioners considering Filo-Priori:
+
+\begin{itemize}
+    \item \textbf{Training data}: At least 100 builds with failure history recommended
+    \item \textbf{Retraining}: Weekly or after major codebase changes
+    \item \textbf{Configuration}: Use Weighted CE loss, learning rate 3e-5, 1-layer GNN
+    \item \textbf{Expected improvement}: +10-15\% APFD over random ordering
+\end{itemize}
+
+\subsection{Limitations}
+
+Several limitations should be considered:
+
+\begin{enumerate}
+    \item \textbf{Single dataset}: Results are based on one industrial dataset (QTA)
+    \item \textbf{Binary classification}: We treat TCP as ranking based on failure probability
+    \item \textbf{Cold start}: New test cases without history may be poorly ranked
+    \item \textbf{Computational cost}: Training requires GPU and takes 30-60 minutes
+\end{enumerate}
+

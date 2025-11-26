@@ -1,0 +1,141 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CASE STUDIES - QUALITATIVE ANALYSIS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Case Studies}
+\label{sec:case_studies}
+
+We present detailed case studies of builds with varying APFD performance
+to illustrate Filo-Priori's behavior in different scenarios.
+
+
+\subsubsection{Case Study 1: High Performance Build}
+
+\textbf{Build ID:} \texttt{UUG34.20}
+
+\begin{itemize}
+    \item APFD Score: 1.0000
+    \item Total Test Cases: 4
+    \item Total Failures: 4 (100.0\%)
+    \item Optimal APFD: 0.5000
+    \item Gap from Optimal: -0.5000
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Top 10 Prioritized Test Cases for UUG34.20}
+\begin{tabular}{clcc}
+\toprule
+\textbf{Rank} & \textbf{TC Key} & \textbf{Result} & \textbf{Prob.} \\
+\midrule
+1 & MCA-2700042... & \textbf{Fail} & 0.395 \\
+2 & MCA-2700042... & \textbf{Fail} & 0.232 \\
+3 & MCA-2700042... & \textbf{Fail} & 0.232 \\
+4 & MCA-2700042... & \textbf{Fail} & 0.232 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Case Study 2: Low Performance Build}
+
+\textbf{Build ID:} \texttt{T2TV33.13}
+
+\begin{itemize}
+    \item APFD Score: 0.1520
+    \item Total Test Cases: 176
+    \item Total Failures: 4 (2.3\%)
+    \item Optimal APFD: 0.9886
+    \item Gap from Optimal: 0.8366
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Top 10 Prioritized Test Cases for T2TV33.13}
+\begin{tabular}{clcc}
+\toprule
+\textbf{Rank} & \textbf{TC Key} & \textbf{Result} & \textbf{Prob.} \\
+\midrule
+1 & MCA-3144500... & Pass & 0.534 \\
+2 & MCA-3144506... & Pass & 0.534 \\
+3 & MCA-3144503... & Pass & 0.533 \\
+4 & MCA-3144504... & Pass & 0.533 \\
+5 & MCA-3144491... & Pass & 0.532 \\
+6 & MCA-2736014... & Pass & 0.531 \\
+7 & MCA-3144494... & Pass & 0.531 \\
+8 & MCA-3144505... & Pass & 0.531 \\
+9 & MCA-2736019... & Pass & 0.530 \\
+10 & MCA-3582218... & Pass & 0.518 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Case Study 3: Medium Performance Build}
+
+\textbf{Build ID:} \texttt{U1TC34.22-12}
+
+\begin{itemize}
+    \item APFD Score: 0.6111
+    \item Total Test Cases: 18
+    \item Total Failures: 4 (22.2\%)
+    \item Optimal APFD: 0.8889
+    \item Gap from Optimal: 0.2778
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Top 10 Prioritized Test Cases for U1TC34.22-12}
+\begin{tabular}{clcc}
+\toprule
+\textbf{Rank} & \textbf{TC Key} & \textbf{Result} & \textbf{Prob.} \\
+\midrule
+1 & MCA-3178634... & Pass & 0.517 \\
+2 & MCA-2345710... & Pass & 0.500 \\
+3 & MCA-2345710... & Pass & 0.500 \\
+4 & MCA-829313... & Pass & 0.500 \\
+5 & MCA-829313... & Pass & 0.500 \\
+6 & MCA-882... & \textbf{Fail} & 0.500 \\
+7 & MCA-882... & \textbf{Fail} & 0.500 \\
+8 & MCA-944294... & \textbf{Fail} & 0.500 \\
+9 & MCA-944294... & \textbf{Fail} & 0.500 \\
+10 & MCA-3178634... & Pass & 0.406 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Case Study 4: Medium Performance Build}
+
+\textbf{Build ID:} \texttt{U3TZ34.6}
+
+\begin{itemize}
+    \item APFD Score: 0.5773
+    \item Total Test Cases: 262
+    \item Total Failures: 8 (3.1\%)
+    \item Optimal APFD: 0.9847
+    \item Gap from Optimal: 0.4074
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Top 10 Prioritized Test Cases for U3TZ34.6}
+\begin{tabular}{clcc}
+\toprule
+\textbf{Rank} & \textbf{TC Key} & \textbf{Result} & \textbf{Prob.} \\
+\midrule
+1 & MCA-3035591... & Pass & 0.517 \\
+2 & MCA-2586916... & Pass & 0.500 \\
+3 & MCA-2586916... & Pass & 0.500 \\
+4 & MCA-3927275... & Pass & 0.500 \\
+5 & MCA-3927275... & Pass & 0.500 \\
+6 & MCA-3957388... & Pass & 0.500 \\
+7 & MCA-3957388... & Pass & 0.500 \\
+8 & MCA-4413162... & Pass & 0.500 \\
+9 & MCA-4413162... & Pass & 0.500 \\
+10 & MCA-4424954... & Pass & 0.500 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

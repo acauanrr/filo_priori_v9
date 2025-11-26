@@ -84,3 +84,22 @@ datasets/test.csv
 
 # OS-specific
 .fuse_hidden*
+
+# Archive (old files, not needed in repo)
+_archive/
+
+# Cache directory
+cache/
+*.pkl
+
+# Logs
+logs/
+*.log
+
+# Temporary analysis outputs
+*.tmp
+*.bak
+
+# Large result files (can be regenerated)
+results/*/prioritized_test_cases*.csv
+results/*/tmux-buffer.txt

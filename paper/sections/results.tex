@@ -1,0 +1,111 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: RESULTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Results}
+\label{sec:results}
+
+This section presents the experimental results organized by research questions.
+All experiments were conducted on the QTA dataset containing 277 builds with
+at least one failing test case, totaling 8,847 test case executions.
+
+%------------------------------------------------------------------------------
+% RQ1: Effectiveness
+%------------------------------------------------------------------------------
+
+\subsection{RQ1: How effective is Filo-Priori compared to baseline methods?}
+\label{sec:rq1}
+
+Table~\ref{tab:tcp_comparison} presents the comparison of Filo-Priori against
+eight baseline methods. We evaluate effectiveness using the Average Percentage
+of Faults Detected (APFD) metric, with 95\% bootstrap confidence intervals
+and Wilcoxon signed-rank tests for statistical significance.
+
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item Filo-Priori achieves a mean APFD of 0.6171 (95\% CI: [0.586, 0.648])
+    \item This represents a 10.3\% improvement over Random ordering (APFD = 0.5596)
+    \item The improvement is statistically significant ($p < 0.001$, Wilcoxon signed-rank test)
+    \item Filo-Priori performs comparably to FailureRate (0.6289) and XGBoost (0.6171)
+    \item Filo-Priori significantly outperforms Recency-based approaches ($p < 0.001$)
+\end{itemize}
+
+\input{tables/tab_comparison}
+
+
+%------------------------------------------------------------------------------
+% RQ2: Component Contributions
+%------------------------------------------------------------------------------
+
+\subsection{RQ2: What is the contribution of each architectural component?}
+\label{sec:rq2}
+
+To understand the importance of each component in Filo-Priori's architecture,
+we conducted an ablation study. Table~\ref{tab:ablation} shows the impact
+of removing each component on the APFD metric.
+
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item The full model achieves APFD = 0.6397
+    \item \textbf{Graph Attention (GATv2)} is the most critical component, contributing +17.0\% to performance
+    \item The Structural Stream contributes +5.3\%
+    \item Class Weighting contributes +4.6\%
+    \item Cross-Attention shows negative contribution (-1.1\%), suggesting simpler fusion may suffice
+\end{itemize}
+
+\input{tables/tab_ablation}
+
+
+%------------------------------------------------------------------------------
+% RQ3: Temporal Robustness
+%------------------------------------------------------------------------------
+
+\subsection{RQ3: How robust is Filo-Priori across different time periods?}
+\label{sec:rq3}
+
+Software projects evolve over time, and a TCP model trained on historical data
+must generalize to future builds. We evaluated temporal robustness using three
+validation strategies: Temporal K-Fold CV, Sliding Window CV, and Concept Drift
+Analysis.
+
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{Temporal 5-Fold CV}: APFD = 0.6629 (95\% CI: [0.627, 0.698])
+    \item \textbf{Sliding Window CV}: APFD = 0.6279 (95\% CI: [0.595, 0.661])
+    \item \textbf{Concept Drift Test}: APFD = 0.6187 (95\% CI: [0.574, 0.661])
+    \item Performance remains stable across all temporal validation methods (range: 0.619-0.663)
+    \item No significant performance degradation over time, indicating robustness to concept drift
+\end{itemize}
+
+\input{tables/tab_temporal_cv}
+
+
+%------------------------------------------------------------------------------
+% RQ4: Hyperparameter Sensitivity
+%------------------------------------------------------------------------------
+
+\subsection{RQ4: How sensitive is Filo-Priori to hyperparameter choices?}
+\label{sec:rq4}
+
+We analyzed the sensitivity of Filo-Priori to key hyperparameters by comparing
+results across multiple experimental configurations.
+
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{Loss Function}: Weighted Cross-Entropy performs best (APFD = 0.6191), with sensitivity range $\Delta$ = 0.036
+    \item \textbf{Learning Rate}: Lower rate (3e-5) outperforms higher rate (5e-5), $\Delta$ = 0.027
+    \item \textbf{GNN Architecture}: Simpler architecture (1 layer, 2 heads) performs best, $\Delta$ = 0.027
+    \item \textbf{Structural Features}: 10 selected features outperform both 6 (baseline) and 29 (expanded)
+    \item \textbf{Balanced Sampling}: Not recommended for ranking tasks; degrades performance
+\end{itemize}
+
+The model shows moderate sensitivity to hyperparameters, with loss function
+choice having the largest impact (5.9\% relative variation).
+
+\input{tables/tab_sensitivity}
+

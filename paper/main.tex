@@ -1,0 +1,99 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FILO-PRIORI V9 - PAPER TEMPLATE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Target: EMSE / IST (Qualis A)
+%
+% Structure:
+%   - sections/results.tex
+%   - sections/discussion.tex
+%   - sections/threats.tex
+%   - tables/*.tex
+%   - figures/*.pdf
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[review]{elsarticle}
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+% For table notes
+\usepackage{threeparttable}
+
+\journal{Empirical Software Engineering}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Filo-Priori: Deep Learning-based Test Case Prioritization with Graph Attention Networks}
+
+\author[inst1]{Author One}
+\author[inst1]{Author Two}
+\author[inst2]{Author Three}
+
+\affiliation[inst1]{organization={University One},
+            city={City},
+            country={Country}}
+
+\affiliation[inst2]{organization={University Two},
+            city={City},
+            country={Country}}
+
+\begin{abstract}
+Test Case Prioritization (TCP) aims to order test cases to maximize early fault
+detection in Continuous Integration environments. We present Filo-Priori, a
+deep learning approach that combines semantic embeddings, structural features,
+and Graph Attention Networks (GATv2) to model test case relationships through
+a phylogenetic graph. Our evaluation on an industrial dataset (277 builds,
+8,847 test executions) shows that Filo-Priori achieves APFD = 0.6171,
+representing a 10.3\% improvement over random ordering ($p < 0.001$).
+An ablation study reveals that Graph Attention Networks contribute +17.0\%
+to performance. Temporal cross-validation confirms robustness across different
+time periods (APFD range: 0.619--0.663). Running only 25\% of tests detects
+33.2\% of failures on average.
+\end{abstract}
+
+\begin{keyword}
+Test Case Prioritization \sep
+Deep Learning \sep
+Graph Neural Networks \sep
+Continuous Integration \sep
+Software Testing
+\end{keyword}
+
+\end{frontmatter}
+
+%------------------------------------------------------------------------------
+% RESULTS SECTION
+%------------------------------------------------------------------------------
+\input{sections/results}
+
+%------------------------------------------------------------------------------
+% DISCUSSION SECTION
+%------------------------------------------------------------------------------
+\input{sections/discussion}
+
+%------------------------------------------------------------------------------
+% THREATS TO VALIDITY
+%------------------------------------------------------------------------------
+\input{sections/threats}
+
+%------------------------------------------------------------------------------
+% FIGURES
+%------------------------------------------------------------------------------
+\input{figures}
+
+%------------------------------------------------------------------------------
+% REFERENCES
+%------------------------------------------------------------------------------
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

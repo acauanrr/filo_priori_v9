@@ -1,0 +1,22 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study: Contribution of Each Component to Filo-Priori v9 Performance}
+\label{tab:ablation}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Model Variant} & \textbf{Removed Component} & \textbf{Mean APFD} & \textbf{$\Delta$ APFD} & \textbf{Contribution} & \textbf{Sig.} \\
+\midrule
+w/o\ Class Weights & Class Weighting & 0.6100 & -0.0297 & +4.6\% & *** \\
+w/o\ Ensemble & Ensemble (FailureRate) & 0.6171 & -0.0226 & +3.5\% & *** \\
+\textbf{Full Model} & All & \textbf{0.6397} & - & - &  \\
+
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: $\Delta$ APFD shows the change compared to the full model (negative means performance drop).
+\item Contribution shows how much each component adds to the full model's performance.
+\item *** indicates the component's contribution is statistically significant ($\alpha = 0.05$, Holm-corrected).
+\end{tablenotes}
+\end{table}

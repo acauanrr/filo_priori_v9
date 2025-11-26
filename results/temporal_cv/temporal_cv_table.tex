@@ -1,0 +1,22 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Temporal Cross-Validation Results for Filo-Priori v9}
+\label{tab:temporal_cv}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Validation Method} & \textbf{Mean APFD} & \textbf{95\% CI} & \textbf{N Builds} \\
+\midrule
+Temporal 5-Fold CV & 0.6629 & [0.627, 0.698] & 215 \\
+Sliding Window CV & 0.6279 & [0.595, 0.661] & 248 \\
+Concept Drift Test & 0.6187 & [0.574, 0.661] & 152 \\
+
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Temporal 5-Fold: Train on past builds, test on future builds.
+\item Sliding Window: 100-build training window, 20-build test window.
+\item Concept Drift: Train on first half, test across subsequent periods.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,87 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FIGURES - FILO-PRIORI V9
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Auto-generated: 2025-11-26 13:31:16
+%
+% Usage: \input{figures.tex} in your main document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%------------------------------------------------------------------------------
+% Figure 1: APFD Comparison (RQ1)
+%------------------------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/fig_rq1_apfd_comparison.pdf}
+\caption{Box plot comparison of APFD scores across TCP methods on QTA dataset
+(N=277 builds). Filo-Priori achieves competitive performance with traditional
+baselines while significantly outperforming recency-based approaches
+($p < 0.001$, Wilcoxon signed-rank test). Whiskers extend to 1.5 IQR.}
+\label{fig:apfd_comparison}
+\end{figure}
+
+%------------------------------------------------------------------------------
+% Figure 2: Improvement over Random (RQ1)
+%------------------------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig_rq1_improvement.pdf}
+\caption{Relative improvement in APFD over random ordering for each TCP method.
+Filo-Priori achieves +10.3\% improvement, significantly outperforming Random
+($p < 0.001$). Error bars represent 95\% bootstrap confidence intervals.}
+\label{fig:improvement}
+\end{figure}
+
+%------------------------------------------------------------------------------
+% Figure 3: Ablation Study (RQ2)
+%------------------------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/fig_rq2_ablation.pdf}
+\caption{Component contributions to Filo-Priori performance. Graph Attention
+(GATv2) provides the largest contribution (+17.0\%), followed by the Structural
+Stream (+5.3\%) and Class Weighting (+4.6\%). Red bars indicate statistically
+significant contributions ($p < 0.05$, paired t-test).}
+\label{fig:ablation}
+\end{figure}
+
+%------------------------------------------------------------------------------
+% Figure 4: Temporal Cross-Validation (RQ3)
+%------------------------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig_rq3_temporal.pdf}
+\caption{Temporal cross-validation results showing consistent APFD performance
+across different validation strategies. The narrow range (0.619--0.663) indicates
+temporal robustness and minimal concept drift impact. Error bars represent
+95\% bootstrap confidence intervals.}
+\label{fig:temporal_cv}
+\end{figure}
+
+%------------------------------------------------------------------------------
+% Figure 5: Hyperparameter Sensitivity (RQ4)
+%------------------------------------------------------------------------------
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_rq4_sensitivity.pdf}
+\caption{Hyperparameter sensitivity analysis. (a) Loss function has the highest
+impact on performance ($\Delta$ = 5.9\%). (b) Lower learning rate (3e-5)
+outperforms higher rate. (c) Simpler GNN architecture performs better.
+(d) 10 selected features optimal. (e) Balanced sampling degrades performance.
+(f) Summary of optimal configuration.}
+\label{fig:sensitivity}
+\end{figure*}
+
+%------------------------------------------------------------------------------
+% Figure 6: Qualitative Analysis
+%------------------------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/fig_qualitative.pdf}
+\caption{Qualitative analysis of Filo-Priori performance. (a) APFD score
+distribution across 277 builds. (b) First failure detection position distribution.
+(c) Failure detection curve showing that running 25\% of tests detects 33.2\%
+of failures. (d) Relationship between build size and APFD score.}
+\label{fig:qualitative}
+\end{figure}
+

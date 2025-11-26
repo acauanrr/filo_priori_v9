@@ -1,0 +1,74 @@
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    FILO-PRIORI V9 - EXECUTIVE SUMMARY                        ║
+║                                                                              ║
+║           Deep Learning-based Test Case Prioritization System                ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Generated: 2025-11-26 13:27:18
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ MAIN RESULT                                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Filo-Priori v9 achieves APFD = 0.6171 on 277 builds with failures,
+  representing a +10.3% improvement over random ordering (p < 0.001).
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ KEY METRICS                                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────┬────────────────────────────────────────────────────┐
+  │ Metric              │ Value                                              │
+  ├─────────────────────┼────────────────────────────────────────────────────┤
+  │ Mean APFD           │ 0.6171 [0.586, 0.648]                              │
+  │ vs Random           │ +10.3% (p < 0.001) ***                             │
+  │ vs FailureRate      │ -1.9% (p = 0.36, not significant)                  │
+  │ vs XGBoost          │ 0.0% (comparable)                                  │
+  │ Perfect APFD builds │ 23 (8.3%)                                          │
+  │ High APFD builds    │ 84 (30.3%)                                         │
+  │ Failures in top 25% │ 33.2%                                              │
+  └─────────────────────┴────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ARCHITECTURAL INSIGHTS (Ablation Study)                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Component Contributions:
+
+  ████████████████████████████████████  GATv2 (Graph Attention): +17.0% ***
+  ██████████                            Structural Stream:        +5.3% ***
+  █████████                             Class Weighting:          +4.6% ***
+  ███████                               Ensemble:                 +3.5% ***
+  ████                                  Semantic Stream:          +1.9%
+  ▒▒                                    Cross-Attention:          -1.1%
+
+  → Graph Attention Networks are the MOST CRITICAL component
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TEMPORAL ROBUSTNESS                                                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Validation Method         APFD     95% CI
+  ─────────────────────────────────────────
+  Temporal 5-Fold CV        0.6629   [0.627, 0.698]
+  Sliding Window CV         0.6279   [0.595, 0.661]
+  Concept Drift Test        0.6187   [0.574, 0.661]
+
+  → Model is STABLE across temporal validation (range: 0.619-0.663)
+  → No significant concept drift detected
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ RECOMMENDED CONFIGURATION                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Parameter              Recommended Value    Impact
+  ──────────────────────────────────────────────────
+  Loss Function          Weighted CE          High (Δ=5.9%)
+  Learning Rate          3e-5                 Medium (Δ=4.5%)
+  GNN Architecture       1 layer, 2 heads     Medium (Δ=4.5%)
+  Structural Features    10 (selected)        Low (Δ=2.9%)
+  Balanced Sampling      No                   Medium (Δ=5.3%)
+

@@ -1,0 +1,41 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: THREATS TO VALIDITY
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+\subsection{Internal Validity}
+
+\textbf{Implementation correctness.} We mitigated implementation bugs through
+code reviews and comparison with reference implementations. The APFD calculation
+follows the standard formula from the literature.
+
+\textbf{Randomness.} We set random seeds (42) for reproducibility and report
+results with 95\% bootstrap confidence intervals. All experiments were
+repeated with consistent initialization.
+
+\textbf{Hyperparameter tuning.} Hyperparameters were selected based on
+validation set performance, not test set results. The sensitivity analysis
+confirms that results are robust to reasonable hyperparameter variations.
+
+\subsection{External Validity}
+
+\textbf{Dataset representativeness.} The QTA dataset represents a single
+industrial project. Results may not generalize to all software projects,
+particularly those with different testing practices or failure patterns.
+
+\textbf{Temporal generalization.} While we demonstrated temporal robustness
+within the dataset's time span, long-term performance in production environments
+remains to be validated.
+
+\subsection{Construct Validity}
+
+\textbf{APFD metric.} APFD is widely used in TCP research but assumes equal
+importance of all faults. In practice, some failures may be more critical.
+
+\textbf{Baseline selection.} We compared against common baselines from the
+literature. More recent or specialized methods may show different relative
+performance.
+

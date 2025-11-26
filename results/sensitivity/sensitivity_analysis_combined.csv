@@ -1,0 +1,13 @@
+Hyperparameter,Value,Mean APFD,95% CI,N
+Loss Function,Weighted CE,0.6190531015692533,"[0.597, 0.639]",554
+Loss Function,Focal Loss,0.6116540818528167,"[0.587, 0.634]",554
+Loss Function,Weighted Focal,0.5834193097748115,"[0.550, 0.615]",277
+Learning Rate,3e-5,0.616030722124358,"[0.599, 0.633]",831
+Learning Rate,5e-5,0.5890047939151097,"[0.570, 0.608]",831
+GNN Architecture,"1 layer, 2 heads",0.616030722124358,"[0.598, 0.633]",831
+GNN Architecture,"2 layers, 4 heads",0.5890047939151097,"[0.569, 0.608]",831
+Structural Features,10 features,0.6170787419526065,"[0.589, 0.646]",277
+Structural Features,6 features,0.6155067122102338,"[0.594, 0.636]",554
+Structural Features,29 features,0.5996905736881519,"[0.571, 0.630]",277
+Balanced Sampling,No Balanced Sampling,0.615353591711035,"[0.601, 0.631]",1108
+Balanced Sampling,Balanced Sampling,0.5834193097748115,"[0.550, 0.616]",277

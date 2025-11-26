@@ -1,0 +1,5 @@
+apfd_category,num_test_cases,num_failures,failure_rate,num_commits
+Low,42.62,3.57,0.17,1.89
+Medium,74.86,4.52,0.15,1.9
+High,31.75,2.86,0.16,1.81
+Excellent,24.2,2.08,0.5,1.84

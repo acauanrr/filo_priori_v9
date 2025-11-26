@@ -1,0 +1,26 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study: Component Contributions to Filo-Priori v9 Performance}
+\label{tab:ablation}
+\begin{tabular}{llccccc}
+\toprule
+\textbf{ID} & \textbf{Removed Component} & \textbf{Mean APFD} & \textbf{95\% CI} & \textbf{$\Delta$ APFD} & \textbf{Contrib.} & \textbf{Sig.} \\
+\midrule
+A3 & Graph Attention & 0.5311 & [0.506, 0.557] & -0.1086 & +17.0\% & *** \\
+A2 & Structural Stream & 0.6060 & [0.580, 0.632] & -0.0337 & +5.3\% & *** \\
+A5 & Class Weighting & 0.6100 & [0.581, 0.640] & -0.0297 & +4.6\% & *** \\
+A7 & Ensemble & 0.6171 & [0.588, 0.651] & -0.0226 & +3.5\% & *** \\
+A1 & Semantic Stream & 0.6276 & [0.595, 0.658] & -0.0121 & +1.9\% &  \\
+\textbf{A0} & \textbf{All (Full Model)} & \textbf{0.6397} & [0.608, 0.669] & - & - & \\
+A6 & Cross-Attention & 0.6466 & [0.615, 0.674] & +0.0069 & -1.1\% &  \\
+
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: $\Delta$ APFD shows performance change when component is removed (negative = performance drop).
+\item Contribution shows how much each component adds to the full model's performance.
+\item *** indicates statistical significance (paired t-test, $p < 0.05$).
+\end{tablenotes}
+\end{table}
