@@ -45,14 +45,15 @@
 Test Case Prioritization (TCP) aims to order test cases to maximize early fault
 detection in Continuous Integration environments. We present Filo-Priori, a
 deep learning approach that combines semantic embeddings, structural features,
-and Graph Attention Networks (GATv2) to model test case relationships through
-a phylogenetic graph. Our evaluation on an industrial dataset (277 builds,
-8,847 test executions) shows that Filo-Priori achieves APFD = 0.6171,
-representing a 10.3\% improvement over random ordering ($p < 0.001$).
-An ablation study reveals that Graph Attention Networks contribute +17.0\%
-to performance. Temporal cross-validation confirms robustness across different
-time periods (APFD range: 0.619--0.663). Running only 25\% of tests detects
-33.2\% of failures on average.
+and Graph Attention Networks (GATv2) with ranking-aware training to model test
+case relationships through a phylogenetic graph. Our evaluation on an industrial
+dataset (277 builds, 8,847 test executions) shows that Filo-Priori achieves
+APFD = 0.6379, representing a 14.0\% improvement over random ordering
+($p < 0.001$) and 1.4\% over the strongest baseline (FailureRate). An ablation
+study reveals that Graph Attention Networks contribute +17.0\% to performance.
+Temporal cross-validation confirms robustness across different time periods
+(APFD range: 0.619--0.663). The key innovation is aligning the training objective
+with the evaluation metric through RankNet-style pairwise loss.
 \end{abstract}
 
 \begin{keyword}

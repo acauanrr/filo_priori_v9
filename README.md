@@ -118,11 +118,14 @@ filo-priori-v9/
 | Method | Mean APFD | p-value | Effect Size |
 |--------|-----------|---------|-------------|
 | **Filo-Priori** | **0.6379** | - | - |
-| FailureRate | 0.6289 | 0.314 | negligible |
-| XGBoost | 0.6171 | 0.089 | negligible |
-| GreedyHistorical | 0.6138 | 0.041 | negligible |
+| FailureRate | 0.6289 | 0.363 | negligible |
+| XGBoost | 0.6171 | 0.577 | negligible |
+| GreedyHistorical | 0.6138 | 0.096 | negligible |
+| LogisticRegression | 0.5964 | 0.185 | negligible |
+| RandomForest | 0.5910 | 0.094 | negligible |
 | Random | 0.5596 | <0.001 | small |
-| Recency | 0.5240 | <0.001 | medium |
+| RecentFailureRate | 0.5454 | <0.001 | small |
+| Recency | 0.5240 | <0.001 | small |
 
 ### RQ2: Component Contributions (Ablation Study)
 

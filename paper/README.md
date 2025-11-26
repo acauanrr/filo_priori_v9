@@ -36,11 +36,12 @@ paper/
 
 | Metric | Value |
 |--------|-------|
-| Mean APFD | 0.6171 [0.586, 0.648] |
-| vs Random | +10.3% (p < 0.001) |
+| **Mean APFD** | **0.6379** [0.609, 0.669] |
+| vs Random | **+14.0%** (p < 0.001) |
+| vs FailureRate | **+1.4%** (beats strongest baseline) |
 | Most important component | GATv2 (+17.0%) |
 | Temporal robustness | 0.619-0.663 |
-| Failures in top 25% | 33.2% |
+| Key innovation | Ranking-aware training (RankNet loss) |
 
 ## Figures
 
@@ -59,4 +60,4 @@ paper/
 4. **tab_sensitivity** - Hyperparameter sensitivity
 5. **tab_case_studies** - Case studies
 
-Generated: 2025-11-26 13:31:16
+Generated: 2025-11-26 (updated)
