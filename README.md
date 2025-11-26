@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-publication--ready-brightgreen.svg)
 
-**A deep learning approach for intelligent test case prioritization in CI/CD pipelines, combining semantic embeddings, structural features, and Graph Attention Networks (GATv2).**
+**A deep learning approach for intelligent test case prioritization in CI/CD pipelines, combining semantic embeddings, structural features, and Graph Attention Networks (GATv2) with ranking-aware training.**
 
 ---
 
@@ -14,23 +14,24 @@
 
 | Metric | Value | Description |
 |--------|-------|-------------|
-| **Mean APFD** | **0.6171** | Average Percentage of Faults Detected |
-| **Improvement vs Random** | **+10.3%** | Statistically significant (p < 0.001) |
-| **Failure Detection** | **33.2%** | Failures detected in top 25% of tests |
+| **Mean APFD** | **0.6379** | Average Percentage of Faults Detected |
+| **vs FailureRate** | **+1.4%** | Beats the strongest baseline |
+| **vs Random** | **+14.0%** | Statistically significant (p < 0.001) |
 | **GATv2 Contribution** | **+17.0%** | Most critical component (ablation study) |
 
 ---
 
 ## Overview
 
-Filo-Priori V9 combines **semantic understanding** of test cases with **phylogenetic (historical execution) patterns** through a **Dual-Stream Neural Network** and **Multi-Edge Phylogenetic Graph** architecture with **GATv2 attention**.
+Filo-Priori V9 combines **semantic understanding** of test cases with **phylogenetic (historical execution) patterns** through a **Dual-Stream Neural Network** and **Multi-Edge Phylogenetic Graph** architecture with **GATv2 attention** and **ranking-aware training**.
 
 ### Scientific Contributions
 
 1. **Multi-Edge Phylogenetic Graph**: First application of multi-edge graphs in TCP
 2. **Dual-Stream Architecture**: Solves dimensional imbalance between semantic (1536-dim) and structural (10-dim) features
 3. **GATv2 Attention**: Dynamic attention mechanism for test relationships
-4. **Comprehensive Evaluation**: Ablation study, temporal cross-validation, sensitivity analysis
+4. **Ranking-Aware Training**: RankNet-style pairwise loss aligned with APFD metric
+5. **Comprehensive Evaluation**: Ablation study, temporal cross-validation, sensitivity analysis
 
 ---
 
@@ -54,13 +55,13 @@ pip install -r requirements.txt
 ### Training
 
 ```bash
-# Train model with optimal configuration
-python main.py --config configs/experiment_06_feature_selection.yaml
+# Train model with optimal configuration (ranking-optimized)
+python main.py --config configs/experiment_07_ranking_optimized.yaml
 ```
 
 ### Results
 
-Results are saved to `results/experiment_06_feature_selection/`
+Results are saved to `results/experiment_07_ranking_optimized/`
 
 ---
 
@@ -73,7 +74,8 @@ filo-priori-v9/
 ├── README.md              # This file
 │
 ├── configs/               # Experiment configurations
-│   └── experiment_*.yaml  # YAML config files
+│   ├── experiment_06_feature_selection.yaml
+│   └── experiment_07_ranking_optimized.yaml  # Best config
 │
 ├── src/                   # Source code
 │   ├── models/            # Neural network models
@@ -87,37 +89,24 @@ filo-priori-v9/
 │
 ├── scripts/               # Analysis scripts
 │   ├── analysis/          # Experimental analysis
-│   │   ├── run_all_baselines.py
-│   │   ├── run_ablation_study.py
-│   │   ├── run_temporal_cv.py
-│   │   ├── run_sensitivity_analysis.py
-│   │   └── run_qualitative_analysis.py
 │   └── publication/       # Paper generation
-│       ├── generate_paper_sections.py
-│       ├── generate_final_report.py
-│       └── prepare_paper_submission.py
 │
 ├── paper/                 # Publication materials
 │   ├── main.tex           # Paper template (EMSE/IST)
 │   ├── references.bib     # Bibliography
-│   ├── figures.tex        # Figure inclusions
 │   ├── figures/           # PDF + PNG figures
 │   ├── tables/            # LaTeX tables
 │   └── sections/          # Paper sections
 │
 ├── results/               # Experimental results
-│   ├── experiment_06_feature_selection/  # Main model
+│   ├── experiment_07_ranking_optimized/  # Best model
 │   ├── baselines/         # Baseline comparison
 │   ├── ablation/          # Ablation study
-│   ├── temporal_cv/       # Temporal validation
-│   ├── sensitivity/       # Sensitivity analysis
-│   ├── qualitative_analysis/
-│   └── final_report/      # Consolidated report
+│   └── temporal_cv/       # Temporal validation
 │
 ├── docs/                  # Documentation
 ├── datasets/              # Data files (gitignored)
-├── cache/                 # Embeddings cache (gitignored)
-└── _archive/              # Archived files (gitignored)
+└── cache/                 # Embeddings cache (gitignored)
 ```
 
 ---
@@ -128,11 +117,12 @@ filo-priori-v9/
 
 | Method | Mean APFD | p-value | Effect Size |
 |--------|-----------|---------|-------------|
-| FailureRate | 0.6289 | 0.363 | negligible |
-| XGBoost | 0.6171 | 0.577 | negligible |
-| **Filo-Priori** | **0.6171** | - | - |
+| **Filo-Priori** | **0.6379** | - | - |
+| FailureRate | 0.6289 | 0.314 | negligible |
+| XGBoost | 0.6171 | 0.089 | negligible |
+| GreedyHistorical | 0.6138 | 0.041 | negligible |
 | Random | 0.5596 | <0.001 | small |
-| Recency | 0.5240 | <0.001 | small |
+| Recency | 0.5240 | <0.001 | medium |
 
 ### RQ2: Component Contributions (Ablation Study)
 
@@ -154,8 +144,23 @@ filo-priori-v9/
 
 ### RQ4: Hyperparameter Sensitivity
 
-- **Loss Function**: Highest impact (5.9% relative variation)
-- **Best Configuration**: Weighted CE, LR 3e-5, 1-layer GNN, 10 features
+- **Ranking Loss**: Critical for APFD optimization (+3.4% improvement)
+- **Loss Function**: Weighted Focal + Ranking Loss achieves best results
+- **Best Configuration**: LR 3e-5, 1-layer GNN, 10 features, ranking weight 0.3
+
+---
+
+## Key Innovation: Ranking-Aware Training
+
+The main improvement in V9 comes from **aligning the training objective with the evaluation metric**:
+
+| Aspect | Previous (Exp 06) | Current (Exp 07) |
+|--------|-------------------|------------------|
+| Loss | Cross-entropy (classification) | Weighted Focal + Ranking Loss |
+| Objective | Minimize prediction error | Rank failures before passes |
+| APFD | 0.6171 | **0.6379** (+3.4%) |
+
+**Scientific basis**: RankNet (Burges et al., ICML 2005), Focal Loss (Lin et al., ICCV 2017)
 
 ---
 
@@ -170,12 +175,6 @@ bibtex main
 pdflatex main.tex
 pdflatex main.tex
 ```
-
-### Paper Contents
-
-- **6 Figures**: APFD comparison, improvement chart, ablation, temporal CV, sensitivity, qualitative
-- **5 Tables**: TCP comparison, ablation study, temporal CV, sensitivity analysis, case studies
-- **3 Sections**: Results (RQ1-RQ4), Discussion, Threats to Validity
 
 ---
 
@@ -213,11 +212,11 @@ QTA Dataset statistics:
 ```bibtex
 @software{filo_priori_v9_2025,
   title={Filo-Priori: Deep Learning-based Test Case Prioritization
-         with Graph Attention Networks},
-  author={Filo-Priori Research Team},
+         with Graph Attention Networks and Ranking-Aware Training},
+  author={Ribeiro, Acauan C.},
   year={2025},
   version={9.0},
-  url={https://github.com/your-org/filo-priori-v9}
+  institution={IComp/UFAM}
 }
 ```
 

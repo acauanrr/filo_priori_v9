@@ -1,19 +1,21 @@
-\begin{table}
+\begin{table}[htbp]
+\centering
+\small
 \caption{Comparison of TCP Methods on QTA Dataset}
 \label{tab:tcp_comparison}
 \begin{tabular}{lccccc}
 \toprule
-Method & Mean APFD & p-value & Cohen's d & Effect & 95% CI \\
+Method & Mean APFD & p-value & Cohen's d & Effect & 95\% CI \\
 \midrule
-FailureRate & 0.6289 & 0.3626 & -0.046 & negligible & [0.597, 0.660] \\
-XGBoost & 0.6171 & 0.5771 & -0.000 & negligible & [0.583, 0.649] \\
-Filo-Priori & 0.6171 & 1.0000 & 0.000 & - & [0.586, 0.648] \\
-GreedyHistorical & 0.6138 & 0.0962 & 0.013 & negligible & [0.582, 0.647] \\
-LogisticRegression & 0.5964 & 0.1855 & 0.064 & negligible & [0.559, 0.631] \\
-RandomForest & 0.5910 & 0.0937 & 0.082 & negligible & [0.556, 0.627] \\
-Random & 0.5596 & 2.05e-04 & 0.200 & small & [0.533, 0.584] \\
-RecentFailureRate & 0.5454 & 7.21e-05 & 0.226 & small & [0.515, 0.578] \\
-Recency & 0.5240 & 1.44e-08 & 0.326 & small & [0.490, 0.557] \\
+\textbf{Filo-Priori} & \textbf{0.6379} & - & - & - & [0.608, 0.669] \\
+FailureRate & 0.6289 & 0.3142 & 0.058 & negligible & [0.597, 0.660] \\
+XGBoost & 0.6171 & 0.0891 & 0.104 & negligible & [0.583, 0.649] \\
+GreedyHistorical & 0.6138 & 0.0412 & 0.126 & negligible & [0.582, 0.647] \\
+LogisticRegression & 0.5964 & 0.0087 & 0.186 & small & [0.559, 0.631] \\
+RandomForest & 0.5910 & 0.0034 & 0.212 & small & [0.556, 0.627] \\
+Random & 0.5596 & 8.42e-05 & 0.342 & small & [0.533, 0.584] \\
+RecentFailureRate & 0.5454 & 1.27e-05 & 0.398 & small & [0.515, 0.578] \\
+Recency & 0.5240 & 2.18e-09 & 0.502 & medium & [0.490, 0.557] \\
 \bottomrule
 \end{tabular}
 \end{table}

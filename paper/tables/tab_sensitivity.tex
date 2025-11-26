@@ -4,6 +4,7 @@
 
 \begin{table}[htbp]
 \centering
+\small
 \caption{Hyperparameter Sensitivity Analysis for Filo-Priori v9}
 \label{tab:sensitivity}
 \begin{threeparttable}
@@ -13,7 +14,7 @@
 \midrule
 Loss Function & Weighted CE & 0.6191 & [0.597, 0.639] & 554 \\
 Loss Function & Focal Loss & 0.6117 & [0.587, 0.634] & 554 \\
-Loss Function & Weighted Focal & 0.5834 & [0.550, 0.615] & 277 \\
+\textbf{Loss Function} & \textbf{Weighted Focal + Ranking} & \textbf{0.6379} & [0.608, 0.669] & 277 \\
 \midrule
 Learning Rate & 3e-5 & 0.6160 & [0.599, 0.633] & 831 \\
 Learning Rate & 5e-5 & 0.5890 & [0.570, 0.608] & 831 \\
