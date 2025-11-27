@@ -1,6 +1,8 @@
-# Filo-Priori Technical Guide
+# Filo-Priori V9 Technical Guide
 
-Complete technical documentation for the Filo-Priori system.
+Complete technical documentation for the Filo-Priori V9 system.
+
+**Last Updated:** November 2025
 
 ---
 
@@ -12,6 +14,8 @@ Complete technical documentation for the Filo-Priori system.
 4. [Model Architecture](#model-architecture)
 5. [Training Pipeline](#training-pipeline)
 6. [Evaluation Metrics](#evaluation-metrics)
+7. [Loss Functions](#loss-functions)
+8. [Graph Construction](#graph-construction)
 
 ---
 
@@ -39,38 +43,39 @@ Complete technical documentation for the Filo-Priori system.
 ┌──────────┐  ┌──────────────┐  ┌──────────┐
 │   TC     │  │   Commit     │  │Structural│
 │Embeddings│  │  Embeddings  │  │ Features │
-│ (768)    │  │    (768)     │  │   (6)    │
+│ (768)    │  │    (768)     │  │   (10)   │
 └────┬─────┘  └──────┬───────┘  └────┬─────┘
      │               │               │
-     └───────────────┼───────────────┘
-                     │
-                     ↓
+     └───────┬───────┘               │
+             │                       │
+             ↓                       ↓
+┌────────────────────┐   ┌─────────────────────┐
+│  Combined Semantic │   │   Phylogenetic      │
+│   Embeddings       │   │   Graph (Multi-Edge)│
+│   (1536-dim)       │   │   + Features        │
+└─────────┬──────────┘   └──────────┬──────────┘
+          │                         │
+          ↓                         ↓
+┌─────────────────────┐  ┌─────────────────────┐
+│  SEMANTIC STREAM    │  │  STRUCTURAL STREAM  │
+│  MLP: 1536 → 256    │  │  GATv2: 10 → 128    │
+│  2 layers + GELU    │  │  2 heads attention  │
+└─────────┬───────────┘  └──────────┬──────────┘
+          │                         │
+          └───────────┬─────────────┘
+                      │
+                      ↓
          ┌───────────────────────┐
-         │   Dual-Stream Model   │
-         │  ┌─────────────────┐  │
-         │  │ Semantic Branch │  │
-         │  │   (256-dim)     │  │
-         │  └─────────────────┘  │
-         │  ┌─────────────────┐  │
-         │  │Structural Branch│  │
-         │  │   (64-dim)      │  │
-         │  └─────────────────┘  │
-         │  ┌─────────────────┐  │
-         │  │  Graph Branch   │  │
-         │  │  (128-dim GAT)  │  │
-         │  └─────────────────┘  │
+         │    FUSION LAYER       │
+         │  [256 + 64] → 256     │
+         │   2 layers + GELU     │
          └───────────┬───────────┘
                      │
                      ↓
          ┌───────────────────────┐
-         │    Fusion Layer       │
-         │      (256-dim)        │
-         └───────────┬───────────┘
-                     │
-                     ↓
-         ┌───────────────────────┐
-         │     Classifier        │
+         │     CLASSIFIER        │
          │  (Binary: Pass/Fail)  │
+         │   256 → 128 → 2       │
          └───────────┬───────────┘
                      │
                      ↓
@@ -232,33 +237,28 @@ Input: (1536-dim)
 Output: (256-dim)
 ```
 
-**Structural Branch:**
+**Structural Stream (with GATv2):**
 ```python
-Input: (6-dim)
+Input: (10-dim features) + Phylogenetic Graph
    ↓
-[Linear + GELU + Dropout]
+[Linear Projection: 10 → 128]
    ↓
-[Linear + GELU + Dropout]
+[GATv2 Layer] (2 heads, 64-dim per head)
    ↓
-Output: (64-dim)
+[LeakyReLU + Dropout]
+   ↓
+Output: (128-dim → projected to 64-dim)
 ```
 
-**Graph Branch (GAT):**
-```python
-Input: Node features + Adjacency
-   ↓
-[GAT Layer 1] (4 heads, 128-dim)
-   ↓
-[ELU + Dropout]
-   ↓
-[GAT Layer 2] (4 heads, 128-dim)
-   ↓
-Output: (128-dim)
-```
+**GATv2 vs Standard GAT:**
+- **GAT:** attention = softmax(LeakyReLU(a^T [W*h_i || W*h_j]))
+- **GATv2:** attention = softmax(a^T * LeakyReLU(W*[h_i || h_j]))
+- GATv2 applies LeakyReLU AFTER projection (Brody et al., 2022)
+- More expressive, feature-dependent attention
 
 **Fusion + Classification:**
 ```python
-Concat: (256 + 64 + 128 = 448-dim)
+Concat: (256 + 64 = 320-dim)
    ↓
 [Linear + GELU + Dropout] (256-dim)
    ↓
@@ -568,12 +568,157 @@ class CustomLoss(nn.Module):
 
 ---
 
-## References
+## Loss Functions
 
-- [SBERT Paper](https://arxiv.org/abs/1908.10084)
-- [GAT Paper](https://arxiv.org/abs/1710.10903)
-- [Focal Loss Paper](https://arxiv.org/abs/1708.02002)
+### Combined Loss
+
+The V9 system uses a combined loss function:
+
+```python
+Total Loss = 0.7 × Classification Loss + 0.3 × Ranking Loss
+```
+
+### 1. Weighted Focal Loss (Classification)
+
+**Purpose:** Handle extreme class imbalance (37:1 Pass:Fail ratio)
+
+**Formula:**
+```
+FL(p_t) = -α_t × (1 - p_t)^γ × log(p_t)
+```
+
+**Parameters:**
+- α = [0.15, 0.85] (class weights: low for Pass, high for Fail)
+- γ = 2.5 (focusing parameter)
+
+**Benefits:**
+- Down-weights easy examples (well-classified samples)
+- Focuses learning on hard, misclassified examples
+- Superior to standard Cross-Entropy for imbalanced data
+
+**Reference:** Lin et al., "Focal Loss for Dense Object Detection" (ICCV 2017)
+
+### 2. Ranking Loss (RankNet-style)
+
+**Purpose:** Align training objective with APFD evaluation metric
+
+**Formula:**
+```
+L_rank = log(1 + exp(-(s_fail - s_pass - margin)))
+```
+
+**Key Features:**
+- Creates (Fail, Pass) pairs within same Build_ID
+- Uses logits for stability (not probabilities)
+- Margin: 0.5 (minimum separation between classes)
+
+**Hard Negative Mining:**
+- Selects top-5 hardest Pass examples per build
+- 20% hard negative sampling ratio
+- Maximum 50 pairs per build
+- Starts at epoch 3 (after warmup)
+
+**Reference:** Burges et al., "Learning to Rank using Gradient Descent" (ICML 2005)
 
 ---
 
-**Last Updated:** 2024-11-14
+## Graph Construction
+
+### Multi-Edge Phylogenetic Graph
+
+The V9 system constructs a multi-edge graph capturing test relationships:
+
+```
+┌─────────────────────────────────────────┐
+│       Multi-Edge Graph Builder          │
+├─────────────────────────────────────────┤
+│                                         │
+│  Historical Execution Data              │
+│           │                             │
+│           ↓                             │
+│  ┌─────────────────────────────────┐    │
+│  │ 1. Co-Failure Edges (w=1.0)    │    │
+│  │    Tests that fail together     │    │
+│  │    in the same build            │    │
+│  └─────────────────────────────────┘    │
+│           │                             │
+│           ↓                             │
+│  ┌─────────────────────────────────┐    │
+│  │ 2. Co-Success Edges (w=0.5)    │    │
+│  │    Tests that pass together     │    │
+│  │    in the same build            │    │
+│  └─────────────────────────────────┘    │
+│           │                             │
+│           ↓                             │
+│  ┌─────────────────────────────────┐    │
+│  │ 3. Semantic Edges (w=0.3)      │    │
+│  │    Top-k semantically similar   │    │
+│  │    tests (SBERT similarity)     │    │
+│  └─────────────────────────────────┘    │
+│           │                             │
+│           ↓                             │
+│      Combined Graph                     │
+│      (PyG Data object)                  │
+└─────────────────────────────────────────┘
+```
+
+### Configuration Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| min_co_occurrences | 1 | Minimum co-occurrences for edge |
+| weight_threshold | 0.05 | Minimum edge weight |
+| semantic_top_k | 5 | Top-k semantic neighbors |
+| semantic_threshold | 0.75 | Minimum semantic similarity |
+
+### Graph Impact
+
+- **Before multi-edge:** ~0.02% density (sparse, limited information)
+- **After multi-edge:** 0.5-1.0% density (richer connections)
+- **GATv2 benefit:** More edges = better attention propagation
+
+---
+
+## Structural Features (V2.5)
+
+### 10 Selected Features
+
+| Feature | Description | Type |
+|---------|-------------|------|
+| test_age | Builds since first appearance | Numerical |
+| failure_rate | Historical failure percentage | Numerical |
+| recent_failure_rate | Failures in last 5 builds | Numerical |
+| flakiness_rate | Pass/Fail oscillation frequency | Numerical |
+| commit_count | Number of associated commits | Numerical |
+| test_novelty | First appearance flag (0/1) | Binary |
+| consecutive_failures | Current failure streak | Numerical |
+| max_consecutive_failures | Maximum observed streak | Numerical |
+| failure_trend | Trend analysis (-1/0/+1) | Categorical |
+| cr_count | Associated change requests | Numerical |
+
+### Temporal Windows
+
+- **Recent:** Last 5 builds
+- **Very recent:** Last 2 builds
+- **Medium-term:** Last 10 builds
+
+### Feature Selection Process
+
+Features selected from original 29 V2 features based on:
+1. Feature importance analysis
+2. Correlation analysis (remove redundant features)
+3. APFD impact evaluation
+
+---
+
+## References
+
+- [SBERT Paper](https://arxiv.org/abs/1908.10084) - Reimers & Gurevych (2019)
+- [GAT Paper](https://arxiv.org/abs/1710.10903) - Veličković et al. (2018)
+- [GATv2 Paper](https://arxiv.org/abs/2105.14491) - Brody et al. (2022)
+- [Focal Loss Paper](https://arxiv.org/abs/1708.02002) - Lin et al. (2017)
+- [RankNet Paper](https://icml.cc/Conferences/2005/proceedings/papers/012_Learning_BursgesEtAl.pdf) - Burges et al. (2005)
+
+---
+
+**Last Updated:** November 2025
