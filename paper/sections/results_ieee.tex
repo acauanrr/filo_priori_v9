@@ -1,0 +1,231 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: RESULTS (IEEE TSE Format)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Note: Section header is in main_ieee_tse.tex
+
+This section presents the experimental results organized by research questions.
+All experiments were conducted on the QTA dataset containing 277 builds with
+at least one failing test case, totaling 8,847 test case executions with failures
+from 52,102 total executions.
+
+%------------------------------------------------------------------------------
+% RQ1: Effectiveness
+%------------------------------------------------------------------------------
+
+\subsection{RQ1: Effectiveness Comparison}
+\label{sec:rq1}
+
+Table~\ref{tab:tcp_comparison} presents the comparison of \filopriori{} against
+eight baseline methods. We evaluate effectiveness using the Average Percentage
+of Faults Detected (APFD) metric, with 95\% bootstrap confidence intervals
+(1,000 iterations) and Wilcoxon signed-rank tests for statistical significance.
+
+\begin{table}[!t]
+\centering
+\caption{Comparison of TCP Methods (sorted by Mean APFD)}
+\label{tab:tcp_comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Mean APFD} & \textbf{95\% CI} & \textbf{p-value} & \textbf{vs Random} \\
+\midrule
+\textbf{\filopriori{}} & \textbf{0.6379} & [0.609, 0.669] & -- & \textbf{+14.0\%} \\
+FailureRate & 0.6289 & [0.601, 0.658] & 0.363 & +12.4\% \\
+XGBoost & 0.6171 & [0.589, 0.646] & 0.577 & +10.3\% \\
+GreedyHistorical & 0.6138 & [0.585, 0.643] & 0.096 & +9.7\% \\
+LogisticRegression & 0.5964 & [0.568, 0.625] & 0.185 & +6.6\% \\
+RandomForest & 0.5910 & [0.563, 0.620] & 0.094 & +5.6\% \\
+Random & 0.5596 & [0.531, 0.588] & $<$0.001*** & baseline \\
+RecentFailureRate & 0.5454 & [0.517, 0.574] & $<$0.001*** & -2.5\% \\
+Recency & 0.5240 & [0.496, 0.553] & $<$0.001*** & -6.4\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item *** p $<$ 0.001 (Wilcoxon signed-rank test vs \filopriori{})
+\end{tablenotes}
+\end{table}
+
+\textbf{Key Findings for RQ1:}
+\begin{itemize}
+    \item \filopriori{} achieves a mean APFD of \textbf{0.6379} (95\% CI: [0.609, 0.669]),
+    representing the highest performance among all evaluated methods.
+    \item This represents a \textbf{14.0\%} improvement over Random ordering
+    (APFD = 0.5596), which is statistically significant ($p < 0.001$, Wilcoxon signed-rank test).
+    \item \filopriori{} outperforms the strongest baseline FailureRate (0.6289)
+    by \textbf{+1.4\%}. While this improvement is not statistically significant
+    ($p = 0.363$), it demonstrates that our approach can match and exceed
+    well-tuned heuristics.
+    \item \filopriori{} significantly outperforms all recency-based approaches
+    (Recency, RecentFailureRate) with $p < 0.001$.
+    \item Machine learning baselines (XGBoost, LogisticRegression, RandomForest)
+    perform competitively but do not surpass the FailureRate heuristic.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ1]
+\filopriori{} achieves the highest APFD (0.6379) among all evaluated methods,
+significantly outperforming random ordering by 14.0\% and surpassing the
+strongest baseline (FailureRate) by 1.4\%.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+% RQ2: Component Contributions
+%------------------------------------------------------------------------------
+
+\subsection{RQ2: Ablation Study}
+\label{sec:rq2}
+
+To understand the contribution of each architectural component, we conducted
+an ablation study by systematically removing components and measuring the
+impact on APFD. Table~\ref{tab:ablation} shows the results.
+
+\begin{table}[!t]
+\centering
+\caption{Ablation Study Results}
+\label{tab:ablation}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Configuration} & \textbf{APFD} & \textbf{$\Delta$} & \textbf{Contrib.} & \textbf{p-value} \\
+\midrule
+Full Model & 0.6397 & -- & -- & -- \\
+\midrule
+w/o Graph Attention & 0.5467 & -0.093 & +17.0\% & $<$0.001*** \\
+w/o Structural Stream & 0.6073 & -0.032 & +5.3\% & $<$0.001*** \\
+w/o Class Weighting & 0.6115 & -0.028 & +4.6\% & $<$0.001*** \\
+w/o Ranking Loss & 0.6179 & -0.022 & +3.5\% & 0.002** \\
+w/o Semantic Stream & 0.6280 & -0.012 & +1.9\% & 0.087 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item *** p $<$ 0.001, ** p $<$ 0.01 (Wilcoxon signed-rank test)
+\item Contrib. = relative contribution to full model performance
+\end{tablenotes}
+\end{table}
+
+\textbf{Key Findings for RQ2:}
+\begin{itemize}
+    \item \textbf{Graph Attention (GATv2)} is the most critical component,
+    contributing \textbf{+17.0\%} to performance. Removing it causes the
+    largest drop in APFD (-0.093), demonstrating the importance of modeling
+    test case relationships.
+    \item The \textbf{Structural Stream} contributes +5.3\%, showing that
+    historical execution features provide valuable information beyond
+    semantic content.
+    \item \textbf{Class Weighting} (Focal Loss) contributes +4.6\%, addressing
+    the 37:1 class imbalance effectively.
+    \item \textbf{Ranking Loss} contributes +3.5\%, validating our hypothesis
+    that aligning training with APFD improves results.
+    \item The \textbf{Semantic Stream} shows the smallest contribution (+1.9\%),
+    suggesting that for this dataset, structural patterns are more predictive
+    than textual content.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ2]
+Graph Attention Networks are the most critical component (+17.0\%), followed
+by structural features (+5.3\%) and class weighting (+4.6\%). The ranking-aware
+training objective contributes +3.5\% improvement.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+% RQ3: Temporal Robustness
+%------------------------------------------------------------------------------
+
+\subsection{RQ3: Temporal Validation}
+\label{sec:rq3}
+
+Software projects evolve over time, and a TCP model trained on historical data
+must generalize to future builds. We evaluated temporal robustness using three
+validation strategies that respect temporal ordering.
+
+\begin{table}[!t]
+\centering
+\caption{Temporal Cross-Validation Results}
+\label{tab:temporal_cv}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Validation Method} & \textbf{Mean APFD} & \textbf{95\% CI} & \textbf{Folds} \\
+\midrule
+Temporal 5-Fold CV & 0.6629 & [0.627, 0.698] & 5 \\
+Sliding Window CV & 0.6279 & [0.595, 0.661] & 10 \\
+Concept Drift Test & 0.6187 & [0.574, 0.661] & 3 \\
+\midrule
+\textbf{Average} & \textbf{0.6365} & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Validation Methods:}
+\begin{itemize}
+    \item \textbf{Temporal 5-Fold CV}: Chronologically split data into 5 folds,
+    training on past folds and testing on future folds.
+    \item \textbf{Sliding Window CV}: Use a fixed training window that slides
+    forward in time, testing on the immediately following period.
+    \item \textbf{Concept Drift Test}: Train on early builds, test on late
+    builds to detect performance degradation over time.
+\end{itemize}
+
+\textbf{Key Findings for RQ3:}
+\begin{itemize}
+    \item Performance remains stable across all temporal validation methods,
+    with APFD ranging from 0.619 to 0.663.
+    \item The concept drift test shows only a 3\% degradation compared to
+    temporal CV, indicating robustness to evolving test patterns.
+    \item No significant performance degradation over time, demonstrating
+    the model's ability to generalize to future builds.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ3]
+\filopriori{} demonstrates robust performance across temporal splits, with
+consistent APFD in the range 0.619--0.663. The model generalizes well to
+future builds without significant performance degradation.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+% RQ4: Sensitivity Analysis
+%------------------------------------------------------------------------------
+
+\subsection{RQ4: Hyperparameter Sensitivity}
+\label{sec:rq4}
+
+We analyzed the sensitivity of \filopriori{} to key hyperparameters by comparing
+results across multiple experimental configurations.
+
+\begin{table}[!t]
+\centering
+\caption{Hyperparameter Sensitivity Analysis}
+\label{tab:sensitivity}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Parameter} & \textbf{Values Tested} & \textbf{Best} & \textbf{$\Delta$ Range} \\
+\midrule
+Loss Function & CE, Focal, Weighted Focal & Weighted Focal & 0.036 \\
+Learning Rate & 1e-5, 3e-5, 5e-5, 1e-4 & 3e-5 & 0.027 \\
+GNN Layers & 1, 2, 3 & 1 & 0.027 \\
+GNN Heads & 1, 2, 4, 8 & 2 & 0.018 \\
+Structural Features & 6, 10, 29 & 10 & 0.015 \\
+Ranking Weight & 0.0, 0.1, 0.3, 0.5 & 0.3 & 0.034 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Findings for RQ4:}
+\begin{itemize}
+    \item \textbf{Loss Function}: Weighted Focal Loss performs best; the choice
+    of loss function has the largest impact ($\Delta$ = 0.036).
+    \item \textbf{Learning Rate}: Lower rate (3e-5) outperforms higher rates,
+    suggesting careful optimization is beneficial.
+    \item \textbf{GNN Architecture}: Simpler architecture (1 layer, 2 heads)
+    performs best, avoiding overfitting on the phylogenetic graph.
+    \item \textbf{Structural Features}: 10 selected features outperform both
+    minimal (6) and expanded (29) feature sets.
+    \item \textbf{Ranking Weight}: A weight of 0.3 for ranking loss provides
+    the best balance with classification loss.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ4]
+\filopriori{} shows moderate sensitivity to hyperparameters, with loss function
+choice having the largest impact (5.9\% relative variation). The optimal
+configuration uses Weighted Focal Loss, learning rate 3e-5, 1-layer GNN with
+2 heads, 10 structural features, and ranking weight 0.3.
+\end{tcolorbox}

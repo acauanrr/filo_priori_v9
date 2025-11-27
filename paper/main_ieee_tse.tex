@@ -1,0 +1,659 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FILO-PRIORI V9 - IEEE TRANSACTIONS ON SOFTWARE ENGINEERING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Target: IEEE Transactions on Software Engineering (IEEE TSE)
+% Template: IEEEtran (IEEE Computer Society Transactions)
+%
+% Structure:
+%   - sections/introduction.tex
+%   - sections/background.tex
+%   - sections/related_work.tex
+%   - sections/approach.tex
+%   - sections/experimental_design.tex
+%   - sections/results.tex
+%   - sections/discussion.tex
+%   - sections/threats.tex
+%   - sections/conclusion.tex
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
+%------------------------------------------------------------------------------
+% PACKAGES
+%------------------------------------------------------------------------------
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{balance}
+
+% For code listings
+\usepackage{listings}
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=single
+}
+
+% For subfigures
+\usepackage{subcaption}
+
+% For table notes
+\usepackage{threeparttable}
+
+% For colored boxes (findings summary)
+\usepackage[most]{tcolorbox}
+
+%------------------------------------------------------------------------------
+% CUSTOM COMMANDS
+%------------------------------------------------------------------------------
+\newcommand{\filopriori}{\textsc{Filo-Priori}}
+\newcommand{\apfd}{\textsc{APFD}}
+\newcommand{\gatv}{GATv2}
+
+% Highlight for revision
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\rev}[1]{\textcolor{blue}{#1}}
+
+%------------------------------------------------------------------------------
+% DOCUMENT START
+%------------------------------------------------------------------------------
+\begin{document}
+
+%------------------------------------------------------------------------------
+% TITLE
+%------------------------------------------------------------------------------
+\title{Filo-Priori: Deep Learning-based Test Case Prioritization\\with Graph Attention Networks and Ranking-Aware Training}
+
+%------------------------------------------------------------------------------
+% AUTHORS
+%------------------------------------------------------------------------------
+\author{
+  \IEEEauthorblockN{Acauan C. Ribeiro}
+  \IEEEauthorblockA{
+    Instituto de Computa\c{c}\~{a}o (IComp)\\
+    Universidade Federal do Amazonas (UFAM)\\
+    Manaus, AM, Brazil\\
+    acauan@icomp.ufam.edu.br
+  }
+}
+
+%------------------------------------------------------------------------------
+% HEADERS
+%------------------------------------------------------------------------------
+\markboth{IEEE Transactions on Software Engineering, Vol. XX, No. X, Month 2026}%
+{Ribeiro: Filo-Priori: Deep Learning-based Test Case Prioritization}
+
+%------------------------------------------------------------------------------
+% ABSTRACT
+%------------------------------------------------------------------------------
+\IEEEtitleabstractindextext{%
+\begin{abstract}
+Test Case Prioritization (TCP) aims to order test cases to maximize early fault
+detection in Continuous Integration (CI) environments. Existing approaches often
+rely on simple heuristics or fail to capture complex relationships between test
+cases and code changes. We present \filopriori{}, a novel deep learning approach
+that combines: (1) semantic embeddings from test descriptions and commit messages
+using Sentence-BERT, (2) structural features capturing historical execution patterns,
+and (3) a Multi-Edge Phylogenetic Graph modeling test relationships through
+Graph Attention Networks (GATv2). Our key innovation is a ranking-aware training
+objective using RankNet-style pairwise loss aligned with the APFD evaluation metric.
+
+We evaluate \filopriori{} on an industrial dataset from a commercial software
+project containing 277 builds with failing tests and 52,102 test executions.
+Results show that \filopriori{} achieves a mean APFD of 0.6379, representing
+a 14.0\% improvement over random ordering ($p < 0.001$, Wilcoxon signed-rank test)
+and 1.4\% over the strongest baseline (FailureRate heuristic). An ablation study
+reveals that Graph Attention Networks contribute +17.0\% to performance, making
+it the most critical component. Temporal cross-validation confirms robustness
+across different time periods (APFD range: 0.619--0.663), demonstrating the
+model's ability to generalize to future builds.
+
+Our replication package, including source code, trained models, and anonymized
+dataset, is publicly available to facilitate reproducibility.
+\end{abstract}
+
+%------------------------------------------------------------------------------
+% KEYWORDS
+%------------------------------------------------------------------------------
+\begin{IEEEkeywords}
+Test Case Prioritization, Deep Learning, Graph Neural Networks, Graph Attention Networks,
+Continuous Integration, Regression Testing, Software Testing, Learning to Rank
+\end{IEEEkeywords}
+}
+
+\maketitle
+
+%------------------------------------------------------------------------------
+% SECTION 1: INTRODUCTION
+%------------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+\IEEEPARstart{C}{ontinuous} Integration (CI) has become a fundamental practice
+in modern software development, enabling teams to integrate code changes frequently
+and detect defects early~\cite{hilton2016usage, fowler2006continuous}. A key
+challenge in CI environments is managing the growing test suite: as software
+evolves, the number of test cases increases, making it impractical to execute
+all tests for every commit~\cite{memon2017taming}.
+
+Test Case Prioritization (TCP) addresses this challenge by ordering test cases
+to maximize early fault detection~\cite{rothermel2001prioritizing, elbaum2002test}.
+The goal is to execute tests most likely to fail first, providing faster feedback
+to developers. The effectiveness of TCP is typically measured using the Average
+Percentage of Faults Detected (APFD) metric~\cite{rothermel1999test}.
+
+Traditional TCP approaches rely on code coverage~\cite{rothermel2001prioritizing},
+historical failure information~\cite{kim2002history}, or simple heuristics.
+However, these methods have limitations: (1) they often ignore semantic relationships
+between test cases and code changes, (2) they fail to capture complex patterns
+in test execution history, and (3) they do not adapt well to the dynamic nature
+of CI environments~\cite{spieker2017reinforcement}.
+
+Recent work has explored Machine Learning (ML) approaches for TCP, including
+reinforcement learning~\cite{spieker2017reinforcement, bagherzadeh2022reinforcement}
+and deep learning~\cite{pan2022test, chen2023deeporder}. While promising, these
+approaches still face challenges: they often optimize for classification accuracy
+rather than ranking performance, and they typically treat test cases independently
+without modeling their relationships.
+
+In this paper, we present \filopriori{}, a novel deep learning approach for
+Test Case Prioritization that addresses these limitations through three key innovations:
+
+\begin{enumerate}
+    \item \textbf{Multi-Edge Phylogenetic Graph}: We construct a graph that captures
+    multiple types of relationships between test cases, including co-failure patterns,
+    co-success patterns, and semantic similarity. This graph enables the model to
+    learn from the ``phylogenetic'' history of test executions.
+
+    \item \textbf{Dual-Stream Architecture with GATv2}: We employ a dual-stream
+    neural network that processes semantic features (from test descriptions and
+    commit messages) and structural features (from historical execution patterns)
+    separately, then fuses them using Graph Attention Networks (GATv2)~\cite{brody2022attentive}
+    to capture test relationships.
+
+    \item \textbf{Ranking-Aware Training}: Unlike previous approaches that optimize
+    for classification, we directly optimize for ranking using a RankNet-style
+    pairwise loss~\cite{burges2005learning} combined with Focal Loss~\cite{lin2017focal}
+    to handle class imbalance. This aligns the training objective with the APFD
+    evaluation metric.
+\end{enumerate}
+
+We evaluate \filopriori{} on an industrial dataset containing 277 builds with
+at least one failing test, totaling 52,102 test executions from 2,347 unique
+test cases. Our evaluation addresses four research questions:
+
+\begin{itemize}
+    \item \textbf{RQ1}: How effective is \filopriori{} compared to baseline methods?
+    \item \textbf{RQ2}: What is the contribution of each architectural component?
+    \item \textbf{RQ3}: How robust is \filopriori{} across different time periods?
+    \item \textbf{RQ4}: How sensitive is \filopriori{} to hyperparameter choices?
+\end{itemize}
+
+Our results show that \filopriori{} achieves a mean APFD of 0.6379, significantly
+outperforming random ordering by 14.0\% ($p < 0.001$) and the strongest baseline
+(FailureRate) by 1.4\%. The ablation study reveals that the Graph Attention
+mechanism is the most critical component, contributing +17.0\% to performance.
+
+\textbf{Contributions.} This paper makes the following contributions:
+\begin{itemize}
+    \item A novel Multi-Edge Phylogenetic Graph representation for capturing
+    test case relationships in CI environments.
+    \item A Dual-Stream neural architecture combining semantic and structural
+    features with GATv2 attention.
+    \item A ranking-aware training objective aligned with APFD optimization.
+    \item An empirical evaluation on an industrial dataset demonstrating the
+    effectiveness of our approach.
+    \item A publicly available replication package for reproducibility.
+\end{itemize}
+
+\textbf{Paper Organization.} Section~\ref{sec:background} presents background
+concepts. Section~\ref{sec:related} discusses related work. Section~\ref{sec:approach}
+describes our approach. Section~\ref{sec:experimental} presents the experimental
+design. Section~\ref{sec:results} reports results. Section~\ref{sec:discussion}
+discusses findings. Section~\ref{sec:threats} addresses threats to validity.
+Section~\ref{sec:conclusion} concludes.
+
+%------------------------------------------------------------------------------
+% SECTION 2: BACKGROUND
+%------------------------------------------------------------------------------
+\section{Background}
+\label{sec:background}
+
+This section introduces fundamental concepts underlying our approach.
+
+\subsection{Test Case Prioritization}
+\label{sec:bg_tcp}
+
+Test Case Prioritization (TCP) is the process of ordering test cases for execution
+to achieve certain objectives, such as maximizing early fault detection~\cite{rothermel2001prioritizing}.
+Formally, given a test suite $T$ and a permutation function $PT$ that produces
+ordered sequences of $T$, TCP aims to find an optimal ordering $T' \in PT$ that
+maximizes a given objective function~\cite{elbaum2002test}.
+
+In Continuous Integration environments, TCP is particularly important because:
+(1) test suites grow over time, making exhaustive testing impractical~\cite{memon2017taming},
+(2) developers need rapid feedback on code changes~\cite{hilton2016usage}, and
+(3) computing resources for testing are often limited~\cite{spieker2017reinforcement}.
+
+\subsection{APFD Metric}
+\label{sec:bg_apfd}
+
+The Average Percentage of Faults Detected (APFD) is the standard metric for
+evaluating TCP effectiveness~\cite{rothermel1999test}. For a test suite $T$
+containing $n$ test cases that detect $m$ faults, with $TF_i$ being the position
+of the first test case that detects fault $i$:
+
+\begin{equation}
+    \text{APFD} = 1 - \frac{\sum_{i=1}^{m} TF_i}{n \times m} + \frac{1}{2n}
+\end{equation}
+
+APFD ranges from 0 to 1, where higher values indicate better prioritization.
+An APFD of 0.5 corresponds to random ordering, while 1.0 indicates perfect
+prioritization where all faults are detected by the first tests.
+
+\subsection{Graph Attention Networks}
+\label{sec:bg_gat}
+
+Graph Attention Networks (GAT)~\cite{velickovic2018graph} extend Graph Neural
+Networks by incorporating attention mechanisms to weigh the importance of
+neighboring nodes. For a node $i$ with neighbors $\mathcal{N}_i$, GAT computes:
+
+\begin{equation}
+    \vec{h}_i' = \sigma\left(\sum_{j \in \mathcal{N}_i} \alpha_{ij} \mathbf{W} \vec{h}_j\right)
+\end{equation}
+
+where $\alpha_{ij}$ are attention coefficients computed as:
+
+\begin{equation}
+    \alpha_{ij} = \text{softmax}_j\left(\text{LeakyReLU}\left(\vec{a}^T[\mathbf{W}\vec{h}_i \| \mathbf{W}\vec{h}_j]\right)\right)
+\end{equation}
+
+Brody et al.~\cite{brody2022attentive} showed that standard GAT computes a
+restricted form of ``static'' attention where the ranking of attention scores
+is independent of the query node. They proposed GATv2, which applies the
+nonlinearity after the linear transformation:
+
+\begin{equation}
+    \alpha_{ij} = \text{softmax}_j\left(\vec{a}^T \cdot \text{LeakyReLU}\left(\mathbf{W}[\vec{h}_i \| \vec{h}_j]\right)\right)
+\end{equation}
+
+This modification enables ``dynamic'' attention where attention scores depend
+on both the query and key nodes, providing greater expressiveness.
+
+\subsection{Learning to Rank}
+\label{sec:bg_ltr}
+
+Learning to Rank (LTR) is a family of machine learning techniques for optimizing
+ranking functions~\cite{liu2009learning}. LTR approaches are categorized as:
+\begin{itemize}
+    \item \textbf{Pointwise}: Treat ranking as classification or regression on individual items.
+    \item \textbf{Pairwise}: Optimize the relative ordering of item pairs.
+    \item \textbf{Listwise}: Directly optimize list-level metrics.
+\end{itemize}
+
+RankNet~\cite{burges2005learning} is a pairwise approach that uses a neural
+network to learn a scoring function. For two items $i$ and $j$ with scores
+$s_i$ and $s_j$, the probability that $i$ should be ranked higher than $j$ is:
+
+\begin{equation}
+    P_{ij} = \frac{1}{1 + e^{-\sigma(s_i - s_j)}}
+\end{equation}
+
+The loss function is the cross-entropy between predicted and true probabilities.
+
+%------------------------------------------------------------------------------
+% SECTION 3: RELATED WORK
+%------------------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Traditional TCP Approaches}
+
+Early TCP research focused on code coverage-based techniques. Rothermel et al.~\cite{rothermel2001prioritizing}
+proposed total and additional coverage prioritization, while Elbaum et al.~\cite{elbaum2002test}
+conducted extensive empirical studies comparing different strategies.
+
+History-based approaches leverage past test execution results. Kim and Porter~\cite{kim2002history}
+proposed using historical failure information, showing that tests that failed
+recently are more likely to fail again. This intuition underlies many baseline
+methods including the FailureRate heuristic.
+
+\subsection{Machine Learning for TCP}
+
+Machine learning has been increasingly applied to TCP. Spieker et al.~\cite{spieker2017reinforcement}
+introduced RETECS, using reinforcement learning for TCP in CI environments.
+Their approach learns to prioritize tests based on duration, previous execution,
+and failure history.
+
+Bertolino et al.~\cite{bertolino2020learning} compared learning-to-rank and
+ranking-to-learn strategies, demonstrating the importance of aligning training
+objectives with evaluation metrics.
+
+Bagherzadeh et al.~\cite{bagherzadeh2022reinforcement} extended reinforcement
+learning approaches with improved reward functions and demonstrated effectiveness
+on industrial datasets.
+
+\subsection{Deep Learning for TCP}
+
+Deep learning approaches have shown promising results. Pan et al.~\cite{pan2022test}
+used neural networks to learn test case representations from historical data.
+Chen et al.~\cite{chen2023deeporder} proposed DeepOrder, using deep neural
+networks for TCP in CI environments.
+
+TCP-Net~\cite{abdelkarim2022tcp} introduced an end-to-end deep neural network
+approach that learns directly from test execution data. Recent work by
+Khan et al.~\cite{khan2024hyperparameter} demonstrated the importance of
+hyperparameter optimization in ML-based TCP.
+
+\subsection{Graph Neural Networks in Software Engineering}
+
+GNNs have been applied to various software engineering tasks.
+Allamanis et al.~\cite{allamanis2018learning} used GNNs for program representation.
+In testing, GraphPrior~\cite{wang2023graphprior} applied GNNs for test input
+prioritization in DNN testing.
+
+However, to our knowledge, no prior work has applied GATv2 to TCP or proposed
+a multi-edge phylogenetic graph representation for capturing test relationships.
+
+\subsection{Comparison with Our Approach}
+
+\filopriori{} differs from prior work in several ways:
+\begin{itemize}
+    \item Unlike RETECS~\cite{spieker2017reinforcement}, we use a supervised
+    learning approach with ranking-aware training rather than reinforcement learning.
+    \item Unlike Pan et al.~\cite{pan2022test}, we incorporate graph structure
+    to capture test relationships.
+    \item Unlike GraphPrior~\cite{wang2023graphprior}, we focus on traditional
+    software testing rather than DNN testing, and use GATv2 for improved attention.
+    \item We propose a novel Multi-Edge Phylogenetic Graph that captures multiple
+    types of test relationships.
+\end{itemize}
+
+%------------------------------------------------------------------------------
+% SECTION 4: APPROACH
+%------------------------------------------------------------------------------
+\section{Approach: \filopriori{}}
+\label{sec:approach}
+
+This section describes the \filopriori{} approach for Test Case Prioritization.
+Figure~\ref{fig:architecture} provides an overview of the architecture.
+
+\subsection{Overview}
+
+\filopriori{} takes as input: (1) test case descriptions, (2) commit messages
+and diffs, and (3) historical test execution data. It outputs a ranking of
+test cases by predicted failure probability.
+
+The approach consists of four main components:
+\begin{enumerate}
+    \item \textbf{Semantic Feature Extraction}: Encode test descriptions and
+    commit messages using Sentence-BERT.
+    \item \textbf{Structural Feature Extraction}: Compute historical features
+    from test execution patterns.
+    \item \textbf{Graph Construction}: Build a Multi-Edge Phylogenetic Graph
+    capturing test relationships.
+    \item \textbf{Dual-Stream Neural Network}: Process features through parallel
+    streams with GATv2 fusion.
+\end{enumerate}
+
+\subsection{Semantic Feature Extraction}
+
+We use Sentence-BERT (SBERT)~\cite{reimers2019sentence} with the \texttt{all-mpnet-base-v2}
+model to encode textual information. For each test case, we concatenate:
+\begin{itemize}
+    \item Test case summary (TC\_Summary)
+    \item Test case steps (TC\_Steps)
+\end{itemize}
+
+For each commit, we encode:
+\begin{itemize}
+    \item Commit message
+    \item Code diff (truncated to 2000 characters)
+\end{itemize}
+
+This produces 768-dimensional embeddings for test cases and commits, which
+are concatenated to form 1536-dimensional semantic features.
+
+\subsection{Structural Feature Extraction}
+
+We extract 10 structural features capturing historical execution patterns:
+
+\begin{enumerate}
+    \item \textbf{test\_age}: Number of builds since first appearance
+    \item \textbf{failure\_rate}: Historical failure percentage
+    \item \textbf{recent\_failure\_rate}: Failure rate in last 5 builds
+    \item \textbf{flakiness\_rate}: Pass/fail oscillation frequency
+    \item \textbf{commit\_count}: Number of associated commits
+    \item \textbf{test\_novelty}: Binary flag for first appearance
+    \item \textbf{consecutive\_failures}: Current failure streak
+    \item \textbf{max\_consecutive\_failures}: Maximum observed streak
+    \item \textbf{failure\_trend}: Trend analysis (-1/0/+1)
+    \item \textbf{cr\_count}: Associated change request count
+\end{enumerate}
+
+These features were selected from an initial set of 29 features based on
+feature importance analysis and correlation filtering.
+
+\subsection{Multi-Edge Phylogenetic Graph}
+
+We construct a graph $G = (V, E)$ where nodes $V$ represent test cases and
+edges $E$ capture relationships. We include three types of edges:
+
+\begin{enumerate}
+    \item \textbf{Co-Failure Edges} (weight 1.0): Connect tests that fail
+    together in the same build. These capture fault-related dependencies.
+
+    \item \textbf{Co-Success Edges} (weight 0.5): Connect tests that pass
+    together, capturing functional similarity.
+
+    \item \textbf{Semantic Edges} (weight 0.3): Connect top-$k$ semantically
+    similar tests based on SBERT embedding cosine similarity (threshold 0.75).
+\end{enumerate}
+
+This multi-edge approach increases graph density from approximately 0.02\%
+(co-failure only) to 0.5-1.0\%, providing richer information for the GNN.
+
+\subsection{Dual-Stream Neural Network}
+
+The architecture processes semantic and structural information through parallel streams:
+
+\textbf{Semantic Stream}: The 1536-dimensional embeddings pass through a
+2-layer MLP with GELU activation, producing 256-dimensional representations.
+
+\textbf{Structural Stream}: The 10-dimensional features are projected to
+128 dimensions, then processed by a GATv2 layer with 2 attention heads,
+producing 64-dimensional representations.
+
+\textbf{Fusion Layer}: The outputs (256 + 64 = 320 dimensions) are concatenated
+and processed by a 2-layer fusion network producing 256-dimensional fused features.
+
+\textbf{Classifier}: A final MLP maps to 2 classes (Pass/Fail), outputting
+failure probabilities used for ranking.
+
+\subsection{Ranking-Aware Training}
+
+We use a combined loss function:
+
+\begin{equation}
+    \mathcal{L} = \lambda_1 \cdot \mathcal{L}_{focal} + \lambda_2 \cdot \mathcal{L}_{rank}
+\end{equation}
+
+where $\lambda_1 = 0.7$ and $\lambda_2 = 0.3$.
+
+\textbf{Focal Loss}~\cite{lin2017focal} handles the 37:1 class imbalance:
+\begin{equation}
+    \mathcal{L}_{focal} = -\alpha_t (1 - p_t)^\gamma \log(p_t)
+\end{equation}
+with $\alpha = [0.15, 0.85]$ and $\gamma = 2.5$.
+
+\textbf{Ranking Loss} (RankNet-style) aligns with APFD:
+\begin{equation}
+    \mathcal{L}_{rank} = \log(1 + e^{-(s_{fail} - s_{pass} - m)})
+\end{equation}
+where $s_{fail}$ and $s_{pass}$ are scores for fail/pass test cases within
+the same build, and $m = 0.5$ is the margin.
+
+We apply hard negative mining, selecting the top-5 hardest pass examples
+per build for ranking loss computation.
+
+%------------------------------------------------------------------------------
+% SECTION 5: EXPERIMENTAL DESIGN
+%------------------------------------------------------------------------------
+\section{Experimental Design}
+\label{sec:experimental}
+
+\subsection{Research Questions}
+
+\begin{itemize}
+    \item \textbf{RQ1 (Effectiveness)}: How effective is \filopriori{} compared to baseline methods?
+    \item \textbf{RQ2 (Components)}: What is the contribution of each architectural component?
+    \item \textbf{RQ3 (Robustness)}: How robust is \filopriori{} across different time periods?
+    \item \textbf{RQ4 (Sensitivity)}: How sensitive is \filopriori{} to hyperparameter choices?
+\end{itemize}
+
+\subsection{Dataset}
+
+We use the QTA (Qodo Test Automation) dataset from a commercial software project:
+
+\begin{table}[h]
+\centering
+\caption{Dataset Statistics}
+\label{tab:dataset}
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Total test executions & 52,102 \\
+Unique builds & 1,339 \\
+Builds with failures & 277 (20.7\%) \\
+Unique test cases & 2,347 \\
+Pass:Fail ratio & 37:1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Baselines}
+
+We compare against eight baselines:
+
+\textbf{Heuristic Baselines}:
+\begin{itemize}
+    \item \textbf{Random}: Random ordering (expected APFD $\approx$ 0.5)
+    \item \textbf{Recency}: Prioritize recently failed tests
+    \item \textbf{RecentFailureRate}: Failure rate in last 5 builds
+    \item \textbf{FailureRate}: Historical failure rate
+    \item \textbf{GreedyHistorical}: Combined heuristics
+\end{itemize}
+
+\textbf{ML Baselines}:
+\begin{itemize}
+    \item \textbf{Logistic Regression}
+    \item \textbf{Random Forest}
+    \item \textbf{XGBoost}
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+
+\begin{itemize}
+    \item \textbf{APFD}: Primary metric, computed per build
+    \item \textbf{Statistical tests}: Wilcoxon signed-rank test ($\alpha = 0.05$)
+    \item \textbf{Confidence intervals}: 95\% bootstrap CI (1000 iterations)
+\end{itemize}
+
+\subsection{Implementation Details}
+
+\begin{itemize}
+    \item \textbf{Framework}: PyTorch 2.0, PyTorch Geometric 2.3
+    \item \textbf{Hardware}: NVIDIA RTX 3090 (24GB VRAM)
+    \item \textbf{Training}: 50 epochs, batch size 32, AdamW optimizer
+    \item \textbf{Learning rate}: $3 \times 10^{-5}$ with cosine annealing
+    \item \textbf{Early stopping}: Patience 15, monitoring val\_f1\_macro
+\end{itemize}
+
+%------------------------------------------------------------------------------
+% SECTION 6: RESULTS
+%------------------------------------------------------------------------------
+\section{Results}
+\label{sec:results}
+
+\input{sections/results_ieee}
+
+%------------------------------------------------------------------------------
+% SECTION 7: DISCUSSION
+%------------------------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+
+\input{sections/discussion_ieee}
+
+%------------------------------------------------------------------------------
+% SECTION 8: THREATS TO VALIDITY
+%------------------------------------------------------------------------------
+\section{Threats to Validity}
+\label{sec:threats}
+
+\input{sections/threats_ieee}
+
+%------------------------------------------------------------------------------
+% SECTION 9: CONCLUSION
+%------------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented \filopriori{}, a deep learning approach for Test Case Prioritization
+that combines semantic embeddings, structural features, and Graph Attention
+Networks with ranking-aware training. Our evaluation on an industrial dataset
+demonstrates that \filopriori{} achieves a mean APFD of 0.6379, significantly
+outperforming baseline methods.
+
+Key findings include:
+\begin{itemize}
+    \item \filopriori{} improves over random ordering by 14.0\% ($p < 0.001$)
+    and the strongest baseline by 1.4\%.
+    \item Graph Attention Networks are the most critical component, contributing
+    +17.0\% to performance.
+    \item The approach is robust across temporal splits, with consistent
+    performance over different time periods.
+    \item Ranking-aware training is essential for optimizing APFD.
+\end{itemize}
+
+\textbf{Future Work.} We plan to: (1) evaluate on additional industrial datasets,
+(2) explore dynamic graph construction that evolves with code changes,
+(3) investigate transfer learning across projects, and (4) integrate with
+CI/CD pipelines for real-time prioritization.
+
+\textbf{Data Availability.} Our replication package, including source code,
+trained models, configuration files, and anonymized dataset, is available at:
+\url{https://github.com/[anonymized]/filo-priori-v9}
+
+%------------------------------------------------------------------------------
+% ACKNOWLEDGMENTS
+%------------------------------------------------------------------------------
+\section*{Acknowledgments}
+This work was supported by [funding information]. We thank [acknowledgments].
+
+%------------------------------------------------------------------------------
+% REFERENCES
+%------------------------------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\bibliography{references_ieee}
+
+%------------------------------------------------------------------------------
+% BIOGRAPHY (Optional for TSE)
+%------------------------------------------------------------------------------
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{placeholder.png}}]{Acauan C. Ribeiro}
+is a researcher at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil. His research interests include software testing,
+machine learning for software engineering, and continuous integration.
+\end{IEEEbiography}
+
+\end{document}

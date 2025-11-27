@@ -1,0 +1,95 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: THREATS TO VALIDITY (IEEE TSE Format)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We discuss threats to the validity of our study following established guidelines
+for empirical software engineering research~\cite{arcuri2011practical}.
+
+\subsection{Internal Validity}
+
+Internal validity concerns factors that may affect the causal relationship
+between our approach and the observed results.
+
+\textbf{Implementation Correctness}: We mitigated implementation errors through
+unit testing, code review, and comparison with baseline implementations. Our
+replication package allows independent verification.
+
+\textbf{Randomness}: Deep learning involves stochastic elements (weight
+initialization, dropout, batch sampling). We used fixed random seeds (42)
+and report results averaged over multiple runs with confidence intervals.
+
+\textbf{Hyperparameter Selection}: Hyperparameters were selected through grid
+search on validation data, not test data. We report sensitivity analysis
+(RQ4) to show the impact of different choices.
+
+\textbf{Data Leakage}: We ensured strict temporal separation between training
+and test data. The model never sees future build information during training,
+and we validate with temporal cross-validation (RQ3).
+
+\subsection{External Validity}
+
+External validity concerns the generalizability of our findings.
+
+\textbf{Single Dataset}: Our evaluation uses one industrial dataset from a
+commercial project. While the dataset is substantial (52,102 executions,
+2,347 test cases), results may not generalize to all software projects.
+We plan to evaluate on additional datasets in future work.
+
+\textbf{Domain Specificity}: The QTA dataset comes from a specific application
+domain. Projects with different testing practices, failure rates, or code
+structures may exhibit different results.
+
+\textbf{Scale}: Our dataset contains 277 builds with failures. Very large
+projects (e.g., Google-scale~\cite{memon2017taming}) may present different
+challenges that require additional optimizations.
+
+\textbf{Programming Languages}: The dataset contains tests from a specific
+technology stack. Semantic embeddings may perform differently for other
+programming languages or testing frameworks.
+
+\subsection{Construct Validity}
+
+Construct validity concerns whether our measurements accurately reflect the
+concepts we intend to measure.
+
+\textbf{APFD Metric}: We use APFD as the primary metric, which is standard
+in TCP research~\cite{rothermel1999test}. However, APFD assumes equal fault
+severity and detection cost. Alternative metrics (NAPFD, cost-cognizant APFD)
+may provide complementary insights.
+
+\textbf{Statistical Tests}: We use Wilcoxon signed-rank tests with $\alpha = 0.05$
+and report 95\% bootstrap confidence intervals. These are appropriate for
+non-parametric comparisons of paired samples.
+
+\textbf{Baseline Selection}: We compare against eight baselines spanning
+heuristic and ML approaches. While comprehensive, some recent approaches
+(e.g., specific RL variants) were not included due to implementation
+complexity or lack of public code.
+
+\subsection{Conclusion Validity}
+
+Conclusion validity concerns the relationship between treatment and outcome.
+
+\textbf{Statistical Power}: With 277 builds containing failures, we have
+sufficient statistical power to detect meaningful differences. Small effect
+sizes (e.g., 1.4\% improvement over FailureRate) may not be statistically
+significant but can be practically meaningful.
+
+\textbf{Multiple Comparisons}: We compare against multiple baselines without
+correction for multiple testing. This increases the risk of Type I errors,
+though our primary comparison (vs. Random) shows highly significant results
+($p < 0.001$).
+
+\subsection{Reproducibility}
+
+To ensure reproducibility, we provide:
+\begin{itemize}
+    \item Complete source code for \filopriori{} and all baselines
+    \item Configuration files with exact hyperparameters
+    \item Trained model weights
+    \item Anonymized dataset with documentation
+    \item Scripts to reproduce all experiments
+\end{itemize}
+
+All materials are available in our replication package at:
+\url{https://github.com/[anonymized]/filo-priori-v9}

@@ -1,0 +1,110 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SECTION: DISCUSSION (IEEE TSE Format)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section discusses the implications of our findings, analyzes the reasons
+behind \filopriori{}'s effectiveness, and addresses practical considerations.
+
+\subsection{Why Does Graph Attention Matter?}
+
+The ablation study reveals that Graph Attention Networks contribute +17.0\%
+to performance, making it the most critical component. We attribute this to
+several factors:
+
+\textbf{Capturing Test Dependencies}: The phylogenetic graph encodes relationships
+that simple features cannot capture. Tests that co-fail often share underlying
+dependencies on the same code modules, and GATv2 learns to propagate failure
+signals through these connections.
+
+\textbf{Dynamic Attention}: Unlike standard GAT, GATv2~\cite{brody2022attentive}
+computes dynamic attention that depends on both query and key nodes. This
+allows the model to selectively attend to the most relevant neighbors for
+each test case, adapting to different failure patterns.
+
+\textbf{Multi-Edge Information}: Our multi-edge graph combines co-failure,
+co-success, and semantic edges. This provides a richer signal than single-edge
+approaches, increasing graph density from 0.02\% to 0.5-1.0\%.
+
+\subsection{The Role of Ranking-Aware Training}
+
+A key innovation of \filopriori{} is the ranking-aware training objective.
+Traditional TCP approaches using classification losses (e.g., cross-entropy)
+optimize for accuracy, but APFD measures ranking quality. Our combined loss
+function addresses this mismatch:
+
+\begin{equation}
+    \mathcal{L} = 0.7 \cdot \mathcal{L}_{focal} + 0.3 \cdot \mathcal{L}_{rank}
+\end{equation}
+
+The ablation shows that ranking loss contributes +3.5\% improvement. This
+validates our hypothesis that aligning training objectives with evaluation
+metrics improves TCP effectiveness.
+
+\subsection{Comparison with FailureRate Baseline}
+
+\filopriori{} outperforms the FailureRate heuristic by 1.4\%, though not
+statistically significant ($p = 0.363$). This raises an important question:
+\emph{When is a deep learning approach preferable to simple heuristics?}
+
+We observe that \filopriori{} provides advantages in:
+\begin{itemize}
+    \item \textbf{New test cases}: Tests without history benefit from semantic
+    similarity to known failing tests.
+    \item \textbf{Changing patterns}: The model adapts to evolving failure
+    patterns through the graph structure.
+    \item \textbf{Complex dependencies}: The GNN captures multi-hop relationships
+    that simple heuristics miss.
+\end{itemize}
+
+However, the marginal improvement suggests that for datasets with stable
+failure patterns, simpler approaches may be sufficient.
+
+\subsection{Practical Implications}
+
+\textbf{For Practitioners}: \filopriori{} can be integrated into CI/CD pipelines
+to prioritize test execution. The 14\% improvement over random ordering
+translates to faster fault detection, reducing the feedback loop for developers.
+
+\textbf{Computational Cost}: Training requires approximately 2-3 hours on a
+single GPU. Inference is fast ($<$1 second per build), making real-time
+prioritization feasible.
+
+\textbf{Data Requirements}: The approach requires historical test execution
+data with at least 50 builds for effective graph construction. Projects with
+limited history may benefit from transfer learning approaches.
+
+\subsection{Lessons Learned}
+
+\begin{enumerate}
+    \item \textbf{Graph structure matters}: Modeling test relationships through
+    graphs provides substantial benefits over treating tests independently.
+
+    \item \textbf{Simple architectures suffice}: 1-layer GNN with 2 heads
+    outperformed deeper architectures, suggesting that the phylogenetic
+    structure is inherently shallow.
+
+    \item \textbf{Feature selection is important}: 10 carefully selected features
+    outperformed 29 features, indicating that noise reduction improves
+    generalization.
+
+    \item \textbf{Balance classification and ranking}: The combined loss function
+    balances learning to predict failures with learning to rank correctly.
+\end{enumerate}
+
+\subsection{Limitations}
+
+While \filopriori{} demonstrates strong performance, several limitations exist:
+
+\begin{itemize}
+    \item \textbf{Single dataset}: Our evaluation uses one industrial dataset.
+    Generalization to other projects requires further validation.
+
+    \item \textbf{Cold start}: New test cases without semantic similarity to
+    existing tests may not benefit from the graph structure.
+
+    \item \textbf{Graph construction overhead}: Building the phylogenetic graph
+    adds preprocessing time, though this is amortized over multiple predictions.
+
+    \item \textbf{Interpretability}: While ablation studies provide component-level
+    insights, individual predictions remain difficult to explain.
+\end{itemize}
