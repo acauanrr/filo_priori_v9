@@ -23,6 +23,8 @@ The key insight: tests that fail together often indicate related functionality, 
 
 ## Key Results
 
+### Industrial Dataset (Classification Mode)
+
 | Metric | Value | Description |
 |--------|-------|-------------|
 | **Mean APFD** | **0.6413** | Average Percentage of Faults Detected |
@@ -30,11 +32,22 @@ The key insight: tests that fail together often indicate related functionality, 
 | **vs Random** | **+14.6%** | Statistically significant (p < 0.001) |
 | **Graph Attention** | **+17.0%** | Most critical component (ablation) |
 
+### RTPTorrent Dataset (Learning-to-Rank Mode)
+
+| Metric | HikariCP | jsprit |
+|--------|----------|--------|
+| **Model APFD** | **0.7113** | **0.5496** |
+| **vs untreated** | +43.9% | +51.2% |
+| **vs random** | +49.8% | -7.3% |
+| **vs matrix-naive** | -4.2% | +51.5% |
+
 ---
 
 ## Overview
 
-Filo-Priori V9 uses a **dual-stream architecture** for TCP:
+Filo-Priori V9 supports **two operational modes** for different datasets:
+
+### Classification Mode (Industrial Dataset)
 
 | Component | Description |
 |-----------|-------------|
@@ -43,6 +56,15 @@ Filo-Priori V9 uses a **dual-stream architecture** for TCP:
 | **Cross-Attention Fusion** | Bidirectional attention combining modalities |
 | **Weighted Focal Loss** | Handles 37:1 class imbalance |
 
+### Learning-to-Rank Mode (RTPTorrent)
+
+| Component | Description |
+|-----------|-------------|
+| **Semantic Stream** | MLP processing SBERT embeddings (768-dim) |
+| **Structural Stream** | MLP over historical features (2x weight) |
+| **Concatenation Fusion** | Simple feature fusion |
+| **ListNet Loss** | Listwise ranking loss |
+
 ### Key Contributions
 
 1. **Multi-Edge Test Relationship Graph**: Captures co-failure, co-success, and semantic similarity edges
@@ -50,6 +72,8 @@ Filo-Priori V9 uses a **dual-stream architecture** for TCP:
 3. **Cross-Attention Fusion**: Bidirectional attention for dynamic modality combination
 4. **Weighted Focal Loss**: Addresses severe class imbalance (37:1 Pass:Fail ratio)
 5. **Feature Engineering**: 10 discriminative features selected from 29 candidates
+6. **Learning-to-Rank Pipeline**: Dedicated L2R mode with ListNet loss for ranking-focused datasets
+7. **Multi-Dataset Support**: Unified framework supporting Industrial and RTPTorrent datasets
 
 ---
 
@@ -114,18 +138,17 @@ pip install -r requirements.txt
 ### Training
 
 ```bash
-# Train on Industrial Dataset (default)
+# Train on Industrial Dataset (default - Classification Mode)
 python main.py --config configs/experiment_industry.yaml
 
-# Train on RTPTorrent Dataset (download first)
-python scripts/preprocessing/download_rtptorrent.py  # Download 4.1GB
-python scripts/preprocessing/preprocess_rtptorrent.py  # Convert format
-python main.py --config configs/experiment_rtptorrent.yaml
+# Train on RTPTorrent Dataset (Learning-to-Rank Mode)
+python scripts/preprocessing/preprocess_rtptorrent_ranking.py  # Preprocess for L2R
+python main_rtptorrent.py --config configs/experiment_rtptorrent_l2r.yaml
 
 # Cross-dataset evaluation (Train Industry, Test RTPTorrent)
 python main.py --config configs/experiment_cross_dataset.yaml
 
-# Or use best configuration
+# Or use best configuration for Industry
 python main.py --config configs/experiment_07_ranking_optimized.yaml
 ```
 
@@ -146,12 +169,15 @@ Results are saved to `results/<experiment_name>/`:
 
 ```
 filo-priori-v9/
-├── main.py                      # Main entry point (training + evaluation)
+├── main.py                      # Main entry point - Classification mode (Industry)
+├── main_rtptorrent.py           # Main entry point - Learning-to-Rank mode (RTPTorrent)
 ├── requirements.txt             # Python dependencies
 ├── README.md                    # This file
 │
 ├── configs/                     # Experiment configurations (YAML)
-│   ├── experiment_07_ranking_optimized.yaml  # Best config
+│   ├── experiment_industry.yaml          # Industry dataset config
+│   ├── experiment_rtptorrent_l2r.yaml    # RTPTorrent L2R config
+│   ├── experiment_07_ranking_optimized.yaml  # Best Industry config
 │   └── ...
 │
 ├── src/                         # Source code
@@ -176,11 +202,13 @@ filo-priori-v9/
 │   ├── evaluation/              # Metrics calculation
 │   │   ├── apfd.py              # APFD (main ranking metric)
 │   │   ├── metrics.py           # Classification metrics
-│   │   └── threshold_optimizer.py
+│   │   ├── threshold_optimizer.py
+│   │   └── rtptorrent_evaluator.py  # RTPTorrent baselines comparison
 │   │
 │   ├── training/                # Training pipeline
 │   │   ├── trainer.py           # Training loops
-│   │   └── losses.py            # Focal Loss, Weighted Focal Loss
+│   │   ├── losses.py            # Focal Loss, Weighted Focal Loss
+│   │   └── ranking_losses.py    # L2R losses (ListNet, ListMLE, LambdaRank)
 │   │
 │   ├── baselines/               # Baseline implementations
 │   │   ├── heuristic_baselines.py  # Random, Recency, FailureRate
@@ -190,6 +218,8 @@ filo-priori-v9/
 │
 ├── scripts/                     # Analysis and visualization scripts
 │   ├── analysis/                # Experimental analysis
+│   ├── preprocessing/           # Dataset preprocessing
+│   │   └── preprocess_rtptorrent_ranking.py  # RTPTorrent L2R preprocessing
 │   └── publication/             # Paper generation
 │
 ├── paper/                       # Publication materials (LaTeX)
@@ -199,8 +229,8 @@ filo-priori-v9/
 │   └── sections/                # Paper sections
 │
 ├── results/                     # Experimental results
-│   ├── experiment_hybrid_phylogenetic/   # Best results (APFD 0.6413)
-│   ├── experiment_07_ranking_optimized/  # GATv2 results
+│   ├── experiment_hybrid_phylogenetic/   # Best Industry results (APFD 0.6413)
+│   ├── experiment_rtptorrent_l2r/        # RTPTorrent L2R results
 │   ├── baselines/               # Baseline comparison
 │   ├── ablation/                # Ablation study
 │   └── temporal_cv/             # Temporal cross-validation
@@ -211,8 +241,8 @@ filo-priori-v9/
 │   │   ├── test.csv
 │   │   └── README.md
 │   ├── 02_rtptorrent/           # RTPTorrent open-source dataset
-│   │   ├── raw/                 # Original downloaded data
-│   │   ├── processed/           # Converted to Filo-Priori format
+│   │   ├── raw/MSR2/            # Original downloaded data
+│   │   ├── processed_ranking/   # Preprocessed for L2R
 │   │   └── README.md
 │   └── README.md
 │
@@ -376,11 +406,14 @@ Filo-Priori V9 supports multiple datasets for comprehensive evaluation:
 | Statistic | Value |
 |-----------|-------|
 | Projects | 20 Java projects |
+| Total Executions | 23.1M |
+| Unique Builds | ~110K |
+| Failure Rate | 0.20% (very sparse) |
 | Source | Travis CI build logs |
 | Reference | Mattis et al., MSR 2020 |
 | DOI | https://doi.org/10.1145/3379597.3387458 |
 | License | CC BY 4.0 |
-| **Semantic Info** | Limited (test names only) |
+| **Semantic Info** | Limited (test class names only) |
 
 **Data Fields (Unified Format):**
 - `Build_ID`: Build identifier
@@ -389,6 +422,102 @@ Filo-Priori V9 supports multiple datasets for comprehensive evaluation:
 - `TC_Steps`: Test case steps (optional)
 - `TE_Test_Result`: Pass/Fail verdict
 - `commit`: Associated commit messages
+
+---
+
+## Learning-to-Rank Mode (RTPTorrent)
+
+Due to the different characteristics of RTPTorrent (sparse failures, limited semantic info), we provide a dedicated **Learning-to-Rank pipeline** optimized for this dataset.
+
+### Key Differences from Classification Mode
+
+| Aspect | Classification (Industry) | Ranking (RTPTorrent) |
+|--------|---------------------------|----------------------|
+| **Objective** | Predict Pass/Fail | Rank tests by failure likelihood |
+| **Loss Function** | Weighted Focal Loss | ListNet (listwise cross-entropy) |
+| **Evaluation** | F1, Accuracy, APFD | APFD only (per-build) |
+| **Semantic Features** | Rich (descriptions, commits) | Limited (class names) |
+| **Structural Features** | 10 features | 9 historical features |
+| **Model** | DualStreamV8 + GAT | Two-stream MLP (semantic + structural) |
+
+### L2R Architecture
+
+```
+                    FILO-PRIORI L2R: TWO-STREAM RANKING MODEL
+    =====================================================================
+
+    INPUTS                        STREAMS                       OUTPUT
+    ------                        -------                       ------
+
+    [Semantic Input]             +------------------+
+    Test Class Name   ---------> |  SEMANTIC MLP    | ----+
+    (SBERT 768-dim)              |  [768→128→64]    |     |
+                                 +------------------+     |
+                                                          |     +------------+
+                                                          +---->| FUSION     |
+    [Structural Input]           +------------------+     |     | Concat     |
+    9 Historical     ----------> |  STRUCTURAL MLP  | ----+     | [192→128]  |
+    Features                     |  [9→64→64]       |           +------------+
+    (weight: 2x)                 +------------------+                  |
+                                                                       v
+                                                               +---------------+
+                                                               | SCORER        |
+                                                               | MLP [128→64→1]|
+                                                               +---------------+
+                                                                       |
+                                                                       v
+                                                               [Ranking Score]
+                                                               (per test)
+
+    LOSS: ListNet = -sum(P_true * log(P_pred))
+    where P = softmax(scores) over tests in each build
+```
+
+### Historical Features (L2R)
+
+```
+Per-test features extracted from execution history:
+├── total_executions      (build count for this test)
+├── total_failures        (cumulative failure count)
+├── failure_rate          (total_failures / total_executions)
+├── recent_failures       (failures in last 5 builds)
+├── recent_executions     (executions in last 5 builds)
+├── avg_duration          (average test duration)
+├── last_failure_recency  (builds since last failure)
+├── is_new_test           (first appearance flag)
+└── duration              (current execution duration)
+```
+
+### Available L2R Loss Functions
+
+| Loss | Type | Description |
+|------|------|-------------|
+| **ListNet** | Listwise | Cross-entropy on top-1 probabilities (default) |
+| **ListMLE** | Listwise | Maximum likelihood for permutation |
+| **LambdaRank** | Pairwise | NDCG-aware gradient weighting |
+| **ApproxNDCG** | Listwise | Differentiable NDCG approximation |
+| **MSE** | Pointwise | Direct regression to relevance |
+
+### RTPTorrent Baselines (7 strategies)
+
+The RTPTorrent dataset comes with 7 pre-computed baseline orderings:
+
+| Baseline | Description |
+|----------|-------------|
+| `untreated` | Original test order |
+| `random` | Random permutation |
+| `recently-failed` | Tests that failed recently first |
+| `optimal-failure` | Oracle: perfect failure ordering |
+| `optimal-failure-duration` | Oracle: failure + short duration |
+| `matrix-naive` | Co-failure matrix approach |
+| `matrix-conditional-prob` | Conditional probability matrix |
+
+### L2R Results (Small Projects)
+
+| Project | Builds | Model APFD | vs untreated | vs random |
+|---------|--------|------------|--------------|-----------|
+| **HikariCP** | 4 | **0.7113** | +43.9% | +49.8% |
+| **jsprit** | 3 | **0.5496** | +51.2% | -7.3% |
 
 ---
 
@@ -469,16 +598,20 @@ python scripts/publication/generate_paper_figures.py
 python scripts/precompute_embeddings_sbert.py
 ```
 
-### Prepare RTPTorrent Dataset
+### Prepare RTPTorrent Dataset (Learning-to-Rank)
 ```bash
-# Download from Zenodo (4.1GB)
-python scripts/preprocessing/download_rtptorrent.py
+# Download dataset (4.1GB) - place in datasets/02_rtptorrent/raw/MSR2/
 
-# Convert to Filo-Priori format
-python scripts/preprocessing/preprocess_rtptorrent.py
+# Preprocess for Learning-to-Rank
+python scripts/preprocessing/preprocess_rtptorrent_ranking.py
 
-# Optional: Process specific project only
-python scripts/preprocessing/preprocess_rtptorrent.py --project commons-math
+# Run L2R experiment
+python main_rtptorrent.py --config configs/experiment_rtptorrent_l2r.yaml
+
+# Results include per-project reports with baseline comparisons
+ls results/experiment_rtptorrent_l2r/
+# report_*.txt - Human-readable comparisons
+# results_*.json - Detailed metrics and statistics
 ```
 
 ---
@@ -547,4 +680,17 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Status | Version | Last Updated |
 |--------|---------|--------------|
-| Publication Ready | V9.1 | November 2025 |
+| Publication Ready | V9.2 | November 2025 |
+
+### Changelog
+
+**V9.2 (November 2025)**
+- Added Learning-to-Rank mode for RTPTorrent dataset
+- Implemented ListNet, ListMLE, LambdaRank, ApproxNDCG losses
+- Added RTPTorrent evaluator with 7 baseline comparisons
+- New `main_rtptorrent.py` for L2R experiments
+
+**V9.1 (November 2025)**
+- Initial publication-ready version
+- Dual-stream architecture with GAT
+- Industrial dataset support
