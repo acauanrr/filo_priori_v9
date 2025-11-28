@@ -1,0 +1,32 @@
+======================================================================
+RTPTORRENT EVALUATION REPORT
+Project: brettwooldridge@HikariCP
+======================================================================
+
+📊 MODEL RESULTS:
+  Builds evaluated: 4
+  Mean APFD: 0.7113
+  Median APFD: 0.6905
+  Std APFD: 0.2539
+  Mean First Failure Position: 3.0
+
+📈 BASELINE COMPARISON:
+----------------------------------------------------------------------
+Strategy                   Mean APFD  Improvement  Better?
+----------------------------------------------------------------------
+untreated                     0.4944      +43.87%        ✓
+random                        0.4748      +49.82%        ✓
+recently-failed               0.7857       -9.47%        ✗
+optimal-failure               0.7857       -9.47%        ✗
+optimal-failure-duration      0.5476      +29.89%        ✓
+matrix-naive                  0.7423       -4.17%        ✗
+matrix-conditional-prob       0.7423       -4.17%        ✗
+----------------------------------------------------------------------
+Filo-Priori (Model)           0.7113   (baseline)
+
+📉 APFD@k RESULTS:
+  APFD@5: 0.4750
+  APFD@10: 0.6406
+  APFD@20: 0.7516
+
+======================================================================

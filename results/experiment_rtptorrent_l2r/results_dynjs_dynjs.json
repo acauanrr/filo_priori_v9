@@ -1,0 +1,34 @@
+{
+  "model": {},
+  "baselines": {
+    "untreated": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "random": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "recently-failed": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "optimal-failure": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "optimal-failure-duration": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "matrix-naive": {
+      "mean_apfd": null,
+      "n_builds": 0
+    },
+    "matrix-conditional-prob": {
+      "mean_apfd": null,
+      "n_builds": 0
+    }
+  },
+  "comparison": {}
+}

@@ -1,5 +1,5 @@
-Optimal Threshold: 0.5000
+Optimal Threshold: 0.4400
 Strategy: f1_macro
-Validation F1 Macro: 0.5093
+Validation F1 Macro: 0.5229
 Validation Recall (Not-Pass): 0.0000
 Validation Recall (Pass): 0.0000
