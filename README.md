@@ -35,22 +35,22 @@ Traditional TCP approaches treat software history as a linear time series. We pr
 
 ## Overview
 
-Filo-Priori V9 introduces a **bio-inspired paradigm** for TCP, combining:
-- **Phylo-Encoder LITE**: GGNN-based encoding of the Git DAG with phylogenetic distance kernels (2 layers, 128-dim)
-- **Code-Encoder**: GATv2 attention over semantic code embeddings (proven architecture)
-- **Phylogenetic Distance Kernel**: Novel distance metric with learnable temperature parameter
-- **Ranking-Aware Training**: Combined Focal Loss + RankNet + Phylogenetic Regularization (0.05 weight)
+Filo-Priori V9 introduces a **bio-inspired hybrid architecture** for TCP:
 
-**Best Configuration**: Hybrid mode (PhyloEncoder + GATv2, without HierarchicalAttention) achieves optimal performance.
+| Component | Description |
+|-----------|-------------|
+| **Phylo-Encoder LITE** | GGNN (2 layers, 128-dim) over Git DAG with learnable temperature |
+| **GATv2 Encoder** | Graph Attention Network over test co-failure graph |
+| **Cross-Attention Fusion** | Combines phylo + structural + semantic features |
+| **Ranking Loss** | RankNet-style pairwise loss aligned with APFD metric |
 
 ### Scientific Contributions
 
 1. **Phylogenetic Metaphor**: First application of computational phylogenetics to TCP, treating Git DAG as evolutionary tree
-2. **Phylogenetic Distance Kernel**: Novel distance metric incorporating shortest paths and merge complexity
-3. **Phylo-Encoder (GGNN)**: Gated Graph Neural Network for temporal propagation through commit history
-4. **Hierarchical Attention**: Multi-scale attention mechanism (micro/meso/macro) for comprehensive feature capture
-5. **Phylogenetic Regularization**: Novel loss component encouraging evolutionary consistency in predictions
-6. **Comprehensive Evaluation**: Ablation study, temporal validation, sensitivity analysis on industrial data
+2. **Phylogenetic Distance Kernel**: Novel distance metric with learnable temperature parameter
+3. **Phylo-Encoder (GGNN)**: Gated Graph Neural Network for failure propagation through commit history
+4. **Phylogenetic Regularization**: Loss component encouraging evolutionary consistency in predictions
+5. **Hybrid Architecture**: Combines proven GATv2 with novel phylogenetic encoding for best results
 
 ---
 
@@ -285,18 +285,14 @@ Multi-Edge Phylogenetic Graph:
 ### Loss Function (Combined)
 
 ```python
-Total Loss = 0.7 × Weighted Focal Loss + 0.3 × Ranking Loss
+Total Loss = 0.7 × Focal + 0.3 × Ranking + 0.05 × PhyloReg
 ```
 
-**Weighted Focal Loss** (Lin et al., 2017):
-- Handles 37:1 class imbalance
-- α = [0.15, 0.85] (per-class weights)
-- γ = 2.5 (focusing parameter)
-
-**Ranking Loss** (RankNet, Burges et al., 2005):
-- Creates (Fail, Pass) pairs within same Build_ID
-- Hard Negative Mining: Top-5 hardest Pass cases
-- Margin: 0.5
+| Component | Weight | Purpose |
+|-----------|--------|---------|
+| **Focal Loss** | 0.7 | Handles 37:1 class imbalance (α=0.75, γ=2.5) |
+| **Ranking Loss** | 0.3 | RankNet pairwise loss aligned with APFD |
+| **Phylo Regularization** | 0.05 | Encourages evolutionary consistency |
 
 ### Key Hyperparameters
 
@@ -353,7 +349,6 @@ Total Loss = 0.7 × Weighted Focal Loss + 0.3 × Ranking Loss
 - **Ranking Loss**: Critical for APFD optimization (+3.4% improvement)
 - **GATv2**: Most important component (+17.0% from ablation)
 - **PhyloEncoder LITE**: Adds +0.5% while providing scientific novelty
-- **HierarchicalAttention**: Overhead without improvement (removed in hybrid)
 - **Feature Selection**: 10 features sufficient (V2.5 extractor)
 - **Learning Rate**: 3e-5 proven optimal (very sensitive)
 

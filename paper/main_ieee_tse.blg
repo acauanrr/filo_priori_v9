@@ -1,0 +1,61 @@
+This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main_ieee_tse.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: references_ieee.bib
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty journal in rothermel1999test
+Warning--empty journal in felsenstein2004phylogenetics
+Warning--empty journal in dig2006automated
+Warning--empty journal in arcuri2011practical
+
+Done.
+You've used 36 entries,
+            4087 wiz_defined-function locations,
+            1008 strings with 14557 characters,
+and the built_in function-call counts, 27811 in all, are:
+= -- 2118
+> -- 756
+< -- 214
++ -- 401
+- -- 139
+* -- 1334
+:= -- 4032
+add.period$ -- 84
+call.type$ -- 36
+change.case$ -- 37
+chr.to.int$ -- 513
+cite$ -- 40
+duplicate$ -- 2002
+empty$ -- 2380
+format.name$ -- 173
+if$ -- 6532
+int.to.chr$ -- 0
+int.to.str$ -- 36
+missing$ -- 372
+newline$ -- 133
+num.names$ -- 36
+pop$ -- 925
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 2114
+stack$ -- 0
+substring$ -- 1227
+swap$ -- 1563
+text.length$ -- 43
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 36
+warning$ -- 4
+while$ -- 132
+width$ -- 38
+write$ -- 353
+(There were 4 warnings)
