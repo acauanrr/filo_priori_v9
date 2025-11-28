@@ -1,0 +1,304 @@
+# =============================================================================
+# EXPERIMENTO HIBRIDO: FILO-PRIORI - BEST OF BOTH WORLDS
+# =============================================================================
+# OBJETIVO: Combinar arquitetura GATv2 comprovada (exp_07) com componentes
+#           filogeneticos selecionados para maximizar performance E contribuicao
+#           cientifica para publicacao IEEE TSE.
+#
+# ESTRATEGIA:
+# 1. BASE: Arquitetura do exp_07 (APFD 0.6379) - COMPROVADA
+# 2. ADICAO: PhyloEncoder LITE (2 layers) - CONTRIBUICAO CIENTIFICA
+# 3. ADICAO: PhylogeneticDistanceKernel - CONTRIBUICAO CIENTIFICA
+# 4. ADICAO: PhyloRegularization (weight=0.05) - CONTRIBUICAO CIENTIFICA
+# 5. REMOCAO: HierarchicalAttention - NAO AJUDOU, OVERHEAD
+#
+# HIPOTESE: Componentes filogeneticos LITE melhoram ou mantem performance
+#           enquanto fornecem contribuicao cientifica genuina.
+#
+# TARGET: APFD >= 0.64 (manter ou superar exp_07)
+#
+# CONTRIBUICOES CIENTIFICAS:
+# - PhyloEncoder: GGNN que trata Git DAG como arvore filogenetica
+# - Distance Kernel: Kernel com temperatura aprendivel para pesos filogeneticos
+# - PhyloReg Loss: Regularizacao que incentiva consistencia evolutiva
+#
+# =============================================================================
+
+experiment:
+  name: "experiment_hybrid_phylogenetic"
+  version: "9.1"
+  description: "Hybrid model: GATv2 (proven) + PhyloEncoder LITE (novel contribution)"
+  seed: 42
+
+# =============================================================================
+# DATA CONFIGURATION (identico ao exp_07)
+# =============================================================================
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# =============================================================================
+# TEXT & EMBEDDING (identico ao exp_07)
+# =============================================================================
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+
+# =============================================================================
+# STRUCTURAL FEATURES (identico ao exp_07)
+# =============================================================================
+structural:
+  input_dim: 10
+  extractor:
+    use_v2_5: true
+    recent_window: 5
+    very_recent_window: 2
+    medium_term_window: 10
+    min_history: 2
+    cache_path: "cache/structural_features_v2_5.pkl"
+
+# =============================================================================
+# GRAPH CONFIGURATION (identico ao exp_07)
+# =============================================================================
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/multi_edge_graph.pkl"
+  type: "co_failure"
+
+# =============================================================================
+# MODEL ARCHITECTURE - HIBRIDO
+# =============================================================================
+model:
+  type: "phylogenetic_dual_stream"  # Usa PhylogeneticDualStreamModel
+  num_classes: 2
+
+  # Semantic Stream (IDENTICO ao exp_07)
+  semantic:
+    input_dim: 1536      # Combined TC + Commit embeddings
+    hidden_dim: 256      # IDENTICO
+    num_layers: 2        # IDENTICO
+    dropout: 0.1         # IDENTICO (exp_07 usava 0.1)
+    activation: "gelu"
+
+  # Structural Stream GATv2 (IDENTICO ao exp_07 - COMPROVADO)
+  structural:
+    input_dim: 10        # 10 selected features
+    hidden_dim: 64       # IDENTICO ao exp_07
+    num_heads: 2         # IDENTICO ao exp_07
+    dropout: 0.1         # IDENTICO ao exp_07
+    activation: "elu"
+    use_edge_weights: true
+
+  # PhyloEncoder LITE (CONTRIBUICAO CIENTIFICA - SIMPLIFICADO)
+  phylo:
+    enabled: true                    # HABILITAR PhyloEncoder
+    input_dim: 768                   # SBERT embeddings
+    hidden_dim: 128                  # REDUZIDO (era 256) - mais leve
+    output_dim: 128                  # REDUZIDO (era 256) - mais leve
+    num_layers: 2                    # REDUZIDO (era 3) - PhyloEncoder LITE
+    dropout: 0.1
+    use_distance_kernel: true        # MANTER - contribuicao cientifica
+    decay_factor: 0.9                # MANTER - parametro filogenetico
+    learnable_temperature: true      # MANTER - temperatura aprendivel (NOVEL)
+
+  # Hierarchical Attention - DESABILITADO (nao ajudou)
+  hierarchical_attention:
+    enabled: false                   # REMOVER - overhead sem ganho
+
+  # Fusion configuration
+  fusion:
+    type: "cross_attention"          # MANTER cross-attention
+    hidden_dim: 256
+    num_heads: 4
+    dropout: 0.1
+    phylo_reg_weight: 0.05           # REDUZIDO (era 0.1) - menos regularizacao
+
+  # Classifier (IDENTICO ao exp_07)
+  classifier:
+    input_dim: 512
+    hidden_dims: [128, 64]           # IDENTICO ao exp_07: [128]
+    num_classes: 2
+    dropout: 0.2                     # IDENTICO ao exp_07
+
+  # GNN config (para compatibilidade - usado pelo GATv2)
+  gnn:
+    type: "GAT"
+    hidden_dim: 128                  # IDENTICO ao exp_07
+    num_layers: 1                    # IDENTICO ao exp_07
+    num_heads: 2                     # IDENTICO ao exp_07
+    dropout: 0.1                     # IDENTICO ao exp_07
+    activation: "elu"
+
+# =============================================================================
+# TRAINING CONFIGURATION (IDENTICO ao exp_07 - COMPROVADO)
+# =============================================================================
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 32                     # IDENTICO ao exp_07
+  learning_rate: 0.00003             # 3e-5 - IDENTICO ao exp_07 (proven optimal)
+  weight_decay: 0.0001               # IDENTICO ao exp_07
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 15                     # IDENTICO ao exp_07
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # Sampling (IDENTICO ao exp_07)
+  sampling:
+    use_balanced_sampling: false
+
+  # Loss Configuration - IDENTICO ao exp_07
+  loss:
+    type: "weighted_focal"
+    use_class_weights: true
+    focal_alpha: 0.75                # IDENTICO ao exp_07
+    focal_gamma: 2.5                 # IDENTICO ao exp_07
+    label_smoothing: 0.0
+
+  # Ranking Loss - IDENTICO ao exp_07 (CRITICO para APFD!)
+  ranking:
+    enabled: true
+    use_grouped_sampler: true
+    weight: 0.3                      # IDENTICO ao exp_07
+    loss_type: "logistic"
+    score_type: "logit"
+    margin: 0.5
+    hard_negative_top_k: 5
+    hard_negative_percent: 0.2
+    max_pairs_per_build: 50
+    start_epoch: 3
+
+# Legacy loss config
+loss:
+  type: "weighted_focal"
+  focal_alpha: 0.75
+  focal_gamma: 2.5
+  label_smoothing: 0.0
+
+# =============================================================================
+# EVALUATION CONFIGURATION
+# =============================================================================
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+    - "apfd"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+  temporal_cv:
+    enabled: false
+    n_folds: 5
+
+  save_predictions: true
+  save_rankings: true
+
+# Ranking Configuration
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# =============================================================================
+# SYSTEM CONFIGURATION
+# =============================================================================
+system:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  use_amp: false
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  mixed_precision: false
+  num_workers: 4
+  pin_memory: true
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_hybrid_phylogenetic"
+  save_model: true
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true
+  log_level: "INFO"

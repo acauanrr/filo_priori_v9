@@ -1,0 +1,291 @@
+# =============================================================================
+# Experimento Phylogenetic: FILO-PRIORI V9 - ARQUITETURA FILOGENETICA
+# =============================================================================
+# OBJETIVO: Implementar arquitetura filogenetica completa para IEEE TSE
+# TARGET:   APFD >= 0.65 com abordagem bio-inspirada
+#
+# ARQUITETURA:
+# 1. PhyloEncoder (GGNN) - Processa Git DAG como arvore filogenetica
+# 2. Hierarchical Attention (Micro/Meso/Macro) - Multi-scale attention
+# 3. Cross-Attention Fusion - Funde streams semantico e estrutural
+# 4. Combined Loss: Focal + Ranking + Phylo-Regularization
+#
+# CONTRIBUICAO CIENTIFICA:
+# - Primeira aplicacao de filogenetica computacional para TCP
+# - Kernel de distancia filogenetica com temperatura aprendivel
+# - Atencao hierarquica em tres escalas
+#
+# =============================================================================
+
+experiment:
+  name: "experiment_phylogenetic_v9"
+  version: "9.0"
+  description: "Full phylogenetic architecture with GGNN and hierarchical attention"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/train.csv"
+  test_path: "datasets/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text Configuration
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Embedding Configuration
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 128
+
+# Structural Features - 10 selected features
+structural:
+  input_dim: 10
+  extractor:
+    use_v2_5: true
+    recent_window: 5
+    very_recent_window: 2
+    medium_term_window: 10
+    min_history: 2
+    cache_path: "cache/structural_features_v2_5.pkl"
+
+# Graph Configuration
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/phylogenetic_graph.pkl"
+  type: "co_failure"
+
+# =============================================================================
+# MODEL ARCHITECTURE - PHYLOGENETIC DUAL-STREAM
+# =============================================================================
+model:
+  type: "phylogenetic_dual_stream"  # Usa PhylogeneticDualStreamModel
+  num_classes: 2
+
+  # Semantic Stream (processes text embeddings)
+  semantic:
+    input_dim: 1536  # Combined TC + Commit embeddings
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.3
+    activation: "gelu"
+
+  # Structural Stream (GATv2 over test graph)
+  structural:
+    input_dim: 10  # 10 selected features
+    hidden_dim: 256
+    num_heads: 2
+    dropout: 0.3
+    activation: "elu"
+    use_edge_weights: true
+
+  # PhyloEncoder (GGNN over Git DAG)
+  phylo:
+    enabled: true
+    input_dim: 768  # CodeBERT/SBERT embeddings
+    hidden_dim: 256
+    output_dim: 256
+    num_layers: 3
+    dropout: 0.1
+    use_distance_kernel: true
+    decay_factor: 0.9
+    learnable_temperature: true
+
+  # Hierarchical Attention
+  hierarchical_attention:
+    enabled: true
+    hidden_dim: 256
+    num_heads: 4
+    dropout: 0.1
+
+  # Fusion configuration
+  fusion:
+    type: "cross_attention"
+    hidden_dim: 256
+    num_heads: 4
+    dropout: 0.1
+    phylo_reg_weight: 0.1  # Weight for phylogenetic regularization
+
+  # Classifier
+  classifier:
+    input_dim: 512
+    hidden_dims: [128, 64]
+    num_classes: 2
+    dropout: 0.4
+
+  # GNN config (for compatibility)
+  gnn:
+    type: "GAT"
+    hidden_dim: 256
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.1
+    activation: "elu"
+
+# =============================================================================
+# TRAINING CONFIGURATION
+# =============================================================================
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.00003  # 3e-5 (proven optimal)
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # Sampling configuration
+  sampling:
+    use_balanced_sampling: false
+
+  # Loss Configuration - Combined Loss
+  loss:
+    type: "weighted_focal"
+    use_class_weights: true
+    focal_alpha: 0.75  # High weight for minority class (Fail)
+    focal_gamma: 2.5   # Focus on hard examples
+    label_smoothing: 0.0
+
+  # Ranking Loss (RankNet-style)
+  ranking:
+    enabled: true
+    use_grouped_sampler: true
+    weight: 0.3  # 30% of total loss
+    loss_type: "logistic"
+    score_type: "logit"
+    margin: 0.5
+    hard_negative_top_k: 5
+    hard_negative_percent: 0.2
+    max_pairs_per_build: 50
+    start_epoch: 3
+
+# Legacy loss config (for compatibility)
+loss:
+  type: "weighted_focal"
+  focal_alpha: 0.75
+  focal_gamma: 2.5
+  label_smoothing: 0.0
+
+# =============================================================================
+# EVALUATION CONFIGURATION
+# =============================================================================
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+    - "apfd"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+  temporal_cv:
+    enabled: false
+    n_folds: 5
+
+  save_predictions: true
+  save_rankings: true
+
+# Ranking Configuration
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System Configuration
+system:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  use_amp: false
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  mixed_precision: false
+  num_workers: 4
+  pin_memory: true
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_phylogenetic_v9"
+  save_model: true
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true
+  log_level: "INFO"

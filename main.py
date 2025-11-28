@@ -46,7 +46,8 @@ from preprocessing.structural_feature_extractor_v2_5 import StructuralFeatureExt
 from preprocessing.structural_feature_imputation import impute_structural_features
 from embeddings import EmbeddingManager
 from phylogenetic.phylogenetic_graph_builder import build_phylogenetic_graph
-from models.dual_stream_v8 import create_model_v8
+from phylogenetic.git_dag_builder import GitDAGBuilder, build_git_dag
+from models.model_factory import create_model
 from training.losses import FocalLoss, create_loss_function
 from evaluation.metrics import compute_metrics
 from evaluation.apfd import generate_apfd_report, print_apfd_summary, generate_prioritized_csv
@@ -431,6 +432,35 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
                 cache_path=graph_cache_path
             )
 
+    # Build Git DAG for phylogenetic model (if enabled)
+    git_dag = None
+    git_dag_embeddings = None
+    model_type = config.get('model', {}).get('type', 'dual_stream_v8')
+    phylo_enabled = config.get('model', {}).get('phylo', {}).get('enabled', False)
+
+    if model_type == 'phylogenetic_dual_stream' or phylo_enabled:
+        logger.info("\n1.6b: Building Git DAG for PhyloEncoder...")
+        git_dag_config = config.get('git_dag', {})
+
+        git_dag_cache = git_dag_config.get('cache_path', 'cache/git_dag.pkl') if sample_size is None else None
+
+        git_dag = build_git_dag(
+            df_train,
+            max_commits=git_dag_config.get('max_commits', 5000),
+            temporal_window=git_dag_config.get('temporal_window', 10),
+            cache_path=git_dag_cache
+        )
+
+        logger.info(f"  Git DAG built: {git_dag}")
+
+        # Generate commit embeddings
+        logger.info("  Generating commit embeddings for Git DAG...")
+        git_dag_embeddings = git_dag.get_commit_embeddings(
+            embedding_manager=embedding_manager,
+            device='cuda' if torch.cuda.is_available() else 'cpu'
+        )
+        logger.info(f"  Commit embeddings: {git_dag_embeddings.shape}")
+
     logger.info("\n✓ Data preparation complete!")
 
     # Package data
@@ -479,7 +509,9 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     logger.info(f"  Val: {(val_data['global_indices'] != -1).sum()}/{len(val_data['global_indices'])} in graph")
     logger.info(f"  Test: {(test_data['global_indices'] != -1).sum()}/{len(test_data['global_indices'])} in graph")
 
-    return train_data, val_data, test_data, graph_builder, edge_index, edge_weights, class_weights, data_loader, embedding_manager, commit_extractor, extractor, len(all_tc_keys)
+    return (train_data, val_data, test_data, graph_builder, edge_index, edge_weights,
+            class_weights, data_loader, embedding_manager, commit_extractor, extractor,
+            len(all_tc_keys), git_dag, git_dag_embeddings)
 
 
 def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_size: int,
@@ -597,7 +629,9 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
     return train_loader, val_loader, test_loader
 
 
-def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_weights, all_structural_features, num_nodes_global):
+def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_weights,
+                all_structural_features, num_nodes_global,
+                phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None):
     """
     Train for one epoch using subgraph extraction
 
@@ -606,9 +640,15 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
         edge_weights: Edge weights for full graph
         all_structural_features: All structural features [N_total, 6] for full-graph GAT processing
         num_nodes_global: Total number of nodes in the full graph (e.g., 161)
+        phylo_embeddings: Optional commit embeddings for PhyloEncoder [M, 768]
+        phylo_edge_index: Optional Git DAG edges [2, E_dag]
+        phylo_path_lengths: Optional path lengths for phylo distance [E_dag]
     """
     model.train()
     total_loss = 0.0
+
+    # Check if model is phylogenetic
+    is_phylogenetic = hasattr(model, 'use_phylo_encoder') and model.use_phylo_encoder
 
     # Move full graph structure to device
     edge_index = edge_index.to(device)
@@ -645,19 +685,33 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
         # Get structural features for the batch nodes (from full graph features)
         batch_structural_features = all_structural_features_device[global_indices_valid]
 
-        # Process structural stream with GAT on SUBGRAPH
-        structural_embeddings = model.structural_stream(
-            batch_structural_features,
-            sub_edge_index,
-            sub_edge_weights
-        )
+        # Use different forward path based on model type
+        if is_phylogenetic:
+            # PhylogeneticDualStreamModel uses full forward()
+            logits = model(
+                semantic_input=embeddings_valid,
+                structural_input=batch_structural_features,
+                edge_index=sub_edge_index,
+                edge_weights=sub_edge_weights,
+                phylo_input=phylo_embeddings,
+                phylo_edge_index=phylo_edge_index,
+                phylo_path_lengths=phylo_path_lengths
+            )
+        else:
+            # DualStreamModelV8 uses component-by-component forward
+            # Process structural stream with GAT on SUBGRAPH
+            structural_embeddings = model.structural_stream(
+                batch_structural_features,
+                sub_edge_index,
+                sub_edge_weights
+            )
 
-        # Process semantic stream
-        semantic_features = model.semantic_stream(embeddings_valid)
+            # Process semantic stream
+            semantic_features = model.semantic_stream(embeddings_valid)
 
-        # Fuse and classify
-        fused_features = model.fusion(semantic_features, structural_embeddings)
-        logits = model.classifier(fused_features)
+            # Fuse and classify
+            fused_features = model.fusion(semantic_features, structural_embeddings)
+            logits = model.classifier(fused_features)
 
         # Compute loss
         loss = criterion(logits, labels_valid)
@@ -675,7 +729,8 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
 
 @torch.no_grad()
 def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_structural_features, num_nodes_global,
-             return_full_probs=False, dataset_size=None):
+             return_full_probs=False, dataset_size=None,
+             phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None):
     """
     Evaluate model using subgraph extraction
 
@@ -686,6 +741,9 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         num_nodes_global: Total number of nodes in the full graph (e.g., 161)
         return_full_probs: If True, returns probabilities for ALL samples (filling orphans with [0.5, 0.5])
         dataset_size: Total dataset size (required if return_full_probs=True)
+        phylo_embeddings: Optional commit embeddings for PhyloEncoder [M, 768]
+        phylo_edge_index: Optional Git DAG edges [2, E_dag]
+        phylo_path_lengths: Optional path lengths for phylo distance [E_dag]
     """
     model.eval()
     total_loss = 0.0
@@ -693,6 +751,9 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     all_labels = []
     all_probs = []
     all_batch_indices = []  # Track original batch indices
+
+    # Check if model is phylogenetic
+    is_phylogenetic = hasattr(model, 'use_phylo_encoder') and model.use_phylo_encoder
 
     # Move full graph structure to device
     edge_index = edge_index.to(device)
@@ -735,19 +796,33 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         # Get structural features for the batch nodes (from full graph features)
         batch_structural_features = all_structural_features_device[global_indices_valid]
 
-        # Process structural stream with GAT on SUBGRAPH
-        structural_embeddings = model.structural_stream(
-            batch_structural_features,
-            sub_edge_index,
-            sub_edge_weights
-        )
+        # Use different forward path based on model type
+        if is_phylogenetic:
+            # PhylogeneticDualStreamModel uses full forward()
+            logits = model(
+                semantic_input=embeddings_valid,
+                structural_input=batch_structural_features,
+                edge_index=sub_edge_index,
+                edge_weights=sub_edge_weights,
+                phylo_input=phylo_embeddings,
+                phylo_edge_index=phylo_edge_index,
+                phylo_path_lengths=phylo_path_lengths
+            )
+        else:
+            # DualStreamModelV8 uses component-by-component forward
+            # Process structural stream with GAT on SUBGRAPH
+            structural_embeddings = model.structural_stream(
+                batch_structural_features,
+                sub_edge_index,
+                sub_edge_weights
+            )
 
-        # Process semantic stream
-        semantic_features = model.semantic_stream(embeddings_valid)
+            # Process semantic stream
+            semantic_features = model.semantic_stream(embeddings_valid)
 
-        # Fuse and classify
-        fused_features = model.fusion(semantic_features, structural_embeddings)
-        logits = model.classifier(fused_features)
+            # Fuse and classify
+            fused_features = model.fusion(semantic_features, structural_embeddings)
+            logits = model.classifier(fused_features)
 
         # Compute loss
         loss = criterion(logits, labels_valid)
@@ -825,7 +900,8 @@ def main():
 
     # Prepare data
     (train_data, val_data, test_data, graph_builder, edge_index, edge_weights,
-     class_weights, data_loader, embedding_manager, commit_extractor, extractor, num_nodes_global) = prepare_data(config, args.sample_size)
+     class_weights, data_loader, embedding_manager, commit_extractor, extractor,
+     num_nodes_global, git_dag, git_dag_embeddings) = prepare_data(config, args.sample_size)
 
     # Extract train data for STEP 6 imputation
     train_embeddings = train_data['embeddings']
@@ -835,6 +911,24 @@ def main():
     # Move graph structure to device
     edge_index = edge_index.to(device)
     edge_weights = edge_weights.to(device)
+
+    # Prepare Git DAG data for PhyloEncoder (if available)
+    phylo_edge_index = None
+    phylo_edge_weights = None
+    phylo_path_lengths = None
+    phylo_embeddings = None
+
+    if git_dag is not None and git_dag_embeddings is not None:
+        logger.info("\nPreparing Git DAG data for PhyloEncoder...")
+        dag_data = git_dag.get_graph_data()
+        phylo_edge_index = dag_data['edge_index'].to(device)
+        phylo_edge_weights = dag_data['edge_weights'].to(device)
+        phylo_path_lengths = dag_data['path_lengths'].to(device)
+        # Clone embeddings to allow autograd (they were created in inference mode)
+        phylo_embeddings = git_dag_embeddings.clone().detach().to(device)
+        phylo_embeddings.requires_grad_(False)  # Keep as fixed embeddings
+        logger.info(f"  Phylo edge_index: {phylo_edge_index.shape}")
+        logger.info(f"  Phylo embeddings: {phylo_embeddings.shape}")
 
     # Extract structural features for GAT processing
     # IMPORTANT: For subgraph extraction, we always use the FULL training graph features (161 nodes)
@@ -862,7 +956,7 @@ def main():
     logger.info("STEP 2: MODEL INITIALIZATION")
     logger.info("="*70)
 
-    model = create_model_v8(config['model']).to(device)
+    model = create_model(config['model']).to(device)
 
     # Loss function (using new unified create_loss_function)
     logger.info("\nInitializing loss function...")
@@ -924,10 +1018,20 @@ def main():
 
     for epoch in range(config['training']['num_epochs']):
         # Train
-        train_loss = train_epoch(model, train_loader, criterion, optimizer, device, edge_index, edge_weights, train_structural_features, num_nodes_global)
+        train_loss = train_epoch(
+            model, train_loader, criterion, optimizer, device,
+            edge_index, edge_weights, train_structural_features, num_nodes_global,
+            phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+            phylo_path_lengths=phylo_path_lengths
+        )
 
         # Validate (use TRAIN structural features for graph structure)
-        val_loss, val_metrics, _ = evaluate(model, val_loader, criterion, device, edge_index, edge_weights, train_structural_features, num_nodes_global)
+        val_loss, val_metrics, _ = evaluate(
+            model, val_loader, criterion, device,
+            edge_index, edge_weights, train_structural_features, num_nodes_global,
+            phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+            phylo_path_lengths=phylo_path_lengths
+        )
 
         # Update scheduler
         scheduler.step()
@@ -984,7 +1088,9 @@ def main():
             _, _, val_probs = evaluate(
                 model, val_loader, criterion, device, edge_index, edge_weights,
                 train_structural_features, num_nodes_global,
-                return_full_probs=True, dataset_size=len(val_data['df'])
+                return_full_probs=True, dataset_size=len(val_data['df']),
+                phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+                phylo_path_lengths=phylo_path_lengths
             )
 
         val_labels = val_data['labels']
@@ -1048,7 +1154,9 @@ def main():
     test_loss, test_metrics, test_probs = evaluate(
         model, test_loader, criterion, device, edge_index, edge_weights,
         train_structural_features, num_nodes_global,
-        return_full_probs=True, dataset_size=len(test_data['df'])
+        return_full_probs=True, dataset_size=len(test_data['df']),
+        phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+        phylo_path_lengths=phylo_path_lengths
     )
 
     logger.info("\nTest Results with default threshold (0.5):")
@@ -1326,7 +1434,9 @@ def main():
         _, _, all_probs_full = evaluate(
             model, test_loader_full, criterion, device, edge_index, edge_weights,
             train_structural_features, num_nodes_global,
-            return_full_probs=True, dataset_size=len(test_df_full)
+            return_full_probs=True, dataset_size=len(test_df_full),
+            phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+            phylo_path_lengths=phylo_path_lengths
         )
 
         logger.info(f"✅ Predictions generated: {all_probs_full.shape}")

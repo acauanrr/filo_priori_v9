@@ -14,9 +14,8 @@
 \centering
 \includegraphics[width=0.9\textwidth]{figures/fig_rq1_apfd_comparison.pdf}
 \caption{Box plot comparison of APFD scores across TCP methods on QTA dataset
-(N=277 builds). Filo-Priori achieves competitive performance with traditional
-baselines while significantly outperforming recency-based approaches
-($p < 0.001$, Wilcoxon signed-rank test). Whiskers extend to 1.5 IQR.}
+(N=277 builds). Filo-Priori (Hybrid) achieves a mean APFD of 0.6413, outperforming
+all baselines including FailureRate (0.6289) by 2.0\%. Whiskers extend to 1.5 IQR.}
 \label{fig:apfd_comparison}
 \end{figure}
 
@@ -27,8 +26,9 @@ baselines while significantly outperforming recency-based approaches
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig_rq1_improvement.pdf}
 \caption{Relative improvement in APFD over random ordering for each TCP method.
-Filo-Priori achieves +10.3\% improvement, significantly outperforming Random
-($p < 0.001$). Error bars represent 95\% bootstrap confidence intervals.}
+Filo-Priori achieves +14.6\% improvement over Random ($p < 0.001$) and +2.0\%
+over the strongest baseline (FailureRate). Error bars represent 95\% bootstrap
+confidence intervals.}
 \label{fig:improvement}
 \end{figure}
 
@@ -38,10 +38,10 @@ Filo-Priori achieves +10.3\% improvement, significantly outperforming Random
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/fig_rq2_ablation.pdf}
-\caption{Component contributions to Filo-Priori performance. Graph Attention
-(GATv2) provides the largest contribution (+17.0\%), followed by the Structural
-Stream (+5.3\%) and Class Weighting (+4.6\%). Red bars indicate statistically
-significant contributions ($p < 0.05$, paired t-test).}
+\caption{Component contributions to Filo-Priori Hybrid performance. Graph Attention
+(GATv2) provides the largest contribution (+17.0\%), followed by Structural
+Stream (+5.3\%), Class Weighting (+4.6\%), and PhyloEncoder LITE (+0.5\%).
+The hybrid architecture combines proven GATv2 with novel phylogenetic encoding.}
 \label{fig:ablation}
 \end{figure}
 

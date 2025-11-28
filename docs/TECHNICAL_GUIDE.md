@@ -2,88 +2,121 @@
 
 Complete technical documentation for the Filo-Priori V9 system.
 
+**Paradigm:** Bio-inspired Phylogenetic Approach to Test Case Prioritization
+
 **Last Updated:** November 2025
 
 ---
 
 ## Table of Contents
 
-1. [System Architecture](#system-architecture)
-2. [Embedding System](#embedding-system)
-3. [Caching Mechanism](#caching-mechanism)
-4. [Model Architecture](#model-architecture)
-5. [Training Pipeline](#training-pipeline)
-6. [Evaluation Metrics](#evaluation-metrics)
-7. [Loss Functions](#loss-functions)
-8. [Graph Construction](#graph-construction)
+1. [Phylogenetic Approach](#phylogenetic-approach)
+2. [System Architecture](#system-architecture)
+3. [Embedding System](#embedding-system)
+4. [Caching Mechanism](#caching-mechanism)
+5. [Model Architecture](#model-architecture)
+6. [Training Pipeline](#training-pipeline)
+7. [Evaluation Metrics](#evaluation-metrics)
+8. [Loss Functions](#loss-functions)
+9. [Graph Construction](#graph-construction)
+
+---
+
+## Phylogenetic Approach
+
+### Conceptual Foundation
+
+Filo-Priori treats software evolution as a **phylogenetic tree**, drawing from computational biology. This paradigm shift provides a principled framework for modeling software history.
+
+### Mapping: Biology → Software Engineering
+
+| Biological Concept | Software Equivalent | Implementation |
+|--------------------|---------------------|----------------|
+| Taxon/Species | Commit/Version | Node in Git DAG |
+| DNA Sequence | Source Code / AST | Code embeddings |
+| Mutation (SNP) | Code Diff | Edge weights |
+| Phylogenetic Tree | Git DAG | Graph structure |
+| Phylogenetic Signal | Failure Autocorrelation | Attention weights |
+| Common Ancestor | Merge Base | Synchronization point |
+
+### Phylogenetic Distance Kernel
+
+The evolutionary distance between commits is computed as:
+
+```
+d_phylo(c_i, c_j) = shortest_path(c_i, c_j) × β^(n_merges)
+```
+
+Where:
+- `shortest_path(c_i, c_j)`: Shortest path in the Git DAG
+- `n_merges`: Number of merge commits on the path
+- `β = 0.9`: Decay factor (merges "reset" divergence)
+
+### Key Insight
+
+The phylogenetic metaphor provides:
+1. **Mathematical foundations** (distance kernels, signal propagation)
+2. **Inductive bias** (evolutionary proximity ⟹ behavioral similarity)
+3. **Principled regularization** (predictions should be consistent with evolution)
 
 ---
 
 ## System Architecture
 
-### Overview
+### Overview: Phylogenetic Neural Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Data Loading                            │
-│  (train.csv, test.csv) → pandas DataFrames                  │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ↓
-┌─────────────────────────────────────────────────────────────┐
-│              Embedding Manager (with Cache)                 │
-│  • Checks cache validity                                     │
-│  • Loads from cache OR generates new embeddings             │
-│  • Saves to cache for future use                            │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-      ┌───────────────┼───────────────┐
-      │               │               │
-      ↓               ↓               ↓
-┌──────────┐  ┌──────────────┐  ┌──────────┐
-│   TC     │  │   Commit     │  │Structural│
-│Embeddings│  │  Embeddings  │  │ Features │
-│ (768)    │  │    (768)     │  │   (10)   │
-└────┬─────┘  └──────┬───────┘  └────┬─────┘
-     │               │               │
-     └───────┬───────┘               │
-             │                       │
-             ↓                       ↓
-┌────────────────────┐   ┌─────────────────────┐
-│  Combined Semantic │   │   Phylogenetic      │
-│   Embeddings       │   │   Graph (Multi-Edge)│
-│   (1536-dim)       │   │   + Features        │
-└─────────┬──────────┘   └──────────┬──────────┘
-          │                         │
-          ↓                         ↓
-┌─────────────────────┐  ┌─────────────────────┐
-│  SEMANTIC STREAM    │  │  STRUCTURAL STREAM  │
-│  MLP: 1536 → 256    │  │  GATv2: 10 → 128    │
-│  2 layers + GELU    │  │  2 heads attention  │
-└─────────┬───────────┘  └──────────┬──────────┘
-          │                         │
-          └───────────┬─────────────┘
-                      │
-                      ↓
-         ┌───────────────────────┐
-         │    FUSION LAYER       │
-         │  [256 + 64] → 256     │
-         │   2 layers + GELU     │
-         └───────────┬───────────┘
-                     │
-                     ↓
-         ┌───────────────────────┐
-         │     CLASSIFIER        │
-         │  (Binary: Pass/Fail)  │
-         │   256 → 128 → 2       │
-         └───────────┬───────────┘
-                     │
-                     ↓
-         ┌───────────────────────┐
-         │  Failure Probability  │
-         │  → Test Case Ranking  │
-         └───────────────────────┘
+                    FILO-PRIORI: PHYLOGENETIC ARCHITECTURE
+    =====================================================================
+
+    INPUTS                        ENCODERS                      OUTPUT
+    ------                        --------                      ------
+
+    [Git DAG]                +------------------+
+    Commits +                |  PHYLO-ENCODER   |
+    Branches +  -----------> |  (GGNN Temporal) | ----+
+    Merges                   |  Phylo Distance  |     |
+                             +------------------+     |
+                                                      |     +---------------+
+    [Source Code]            +------------------+     +---> | CROSS-        |
+    AST/CFG +                |  CODE-ENCODER    |     |     | ATTENTION     |
+    Diffs +     -----------> |  (GATv2+CodeBERT)| ----+     | FUSION        |
+    Coverage                 |  Semantic Embed. |           |               |
+                             +------------------+           +-------+-------+
+                                                                    |
+    [Test History]           +------------------+                   v
+    Pass/Fail +              | HIERARCHICAL     |           +---------------+
+    Flakiness + -----------> | ATTENTION        | ----+     | RANKING       |
+    Exec Time                | (Micro/Meso/Macro|     +---> | MODULE        |
+                             +------------------+           | P(fail|test)  |
+                                                            +---------------+
+                                                                    |
+                                                                    v
+                                                            [Prioritized List]
+                                                            T' = {t1, t2, ..., tn}
 ```
+
+### Module Details
+
+**1. Phylo-Encoder (GGNN Temporal)**
+- Processes Git DAG as phylogenetic tree
+- Computes evolutionary distances between commits
+- Propagates failure signals weighted by phylogenetic distance
+
+**2. Code-Encoder (GATv2 + CodeBERT)**
+- Semantic embeddings via CodeBERT/SBERT
+- Multi-edge graph (co-failure, co-success, semantic)
+- Dynamic attention (GATv2) over test relationships
+
+**3. Hierarchical Attention**
+- Micro: Token-level attention in code
+- Meso: Method/call-graph attention
+- Macro: Commit history attention
+
+**4. Ranking Module**
+- Cross-attention fusion of all representations
+- Combined loss: Focal + RankNet + Phylo-Regularization
+- Outputs failure probability for ranking
 
 ---
 
@@ -570,12 +603,14 @@ class CustomLoss(nn.Module):
 
 ## Loss Functions
 
-### Combined Loss
+### Combined Loss (Phylogenetic)
 
-The V9 system uses a combined loss function:
+The V9 system uses a three-component loss function:
 
 ```python
-Total Loss = 0.7 × Classification Loss + 0.3 × Ranking Loss
+Total Loss = λ₁ × Focal Loss + λ₂ × Ranking Loss + λ₃ × Phylo Regularization
+
+Where: λ₁ = 0.6, λ₂ = 0.3, λ₃ = 0.1
 ```
 
 ### 1. Weighted Focal Loss (Classification)
@@ -619,6 +654,27 @@ L_rank = log(1 + exp(-(s_fail - s_pass - margin)))
 - Starts at epoch 3 (after warmup)
 
 **Reference:** Burges et al., "Learning to Rank using Gradient Descent" (ICML 2005)
+
+### 3. Phylogenetic Regularization
+
+**Purpose:** Encourage predictions consistent with evolutionary structure
+
+**Formula:**
+```
+L_phylo = Σ w_phylo(c_i, c_j) × |p(c_i) - p(c_j)|
+
+Where:
+- (c_i, c_j) ∈ edges of Git DAG
+- w_phylo = exp(-d_phylo(c_i, c_j))
+- p(c) = predicted failure probability
+```
+
+**Key Insight:**
+- Phylogenetically close commits should have similar failure predictions
+- Encodes inductive bias: evolutionary proximity ⟹ behavioral similarity
+- Helps smooth predictions across the evolutionary tree
+
+**Reference:** Inspired by phylogenetic comparative methods (Felsenstein, 2004)
 
 ---
 
@@ -713,12 +769,30 @@ Features selected from original 29 V2 features based on:
 
 ## References
 
+### Core Technologies
 - [SBERT Paper](https://arxiv.org/abs/1908.10084) - Reimers & Gurevych (2019)
 - [GAT Paper](https://arxiv.org/abs/1710.10903) - Veličković et al. (2018)
 - [GATv2 Paper](https://arxiv.org/abs/2105.14491) - Brody et al. (2022)
+- [GGNN Paper](https://arxiv.org/abs/1511.05493) - Li et al. (2016)
+
+### Loss Functions
 - [Focal Loss Paper](https://arxiv.org/abs/1708.02002) - Lin et al. (2017)
 - [RankNet Paper](https://icml.cc/Conferences/2005/proceedings/papers/012_Learning_BursgesEtAl.pdf) - Burges et al. (2005)
+
+### Phylogenetic Foundations
+- [Inferring Phylogenies](https://www.sinauer.com/media/wysiwyg/samples/InferringPhylogenies.pdf) - Felsenstein (2004)
+- [Change Impact Graphs](https://doi.org/10.1016/j.infsof.2009.06.002) - German et al. (2009)
+- [Origin Analysis](https://doi.org/10.1109/TSE.2005.32) - Godfrey & Zou (2005)
+
+### Code Intelligence
+- [CodeBERT](https://arxiv.org/abs/2002.08155) - Feng et al. (2020)
+- [GraphCodeBERT](https://arxiv.org/abs/2009.08366) - Guo et al. (2021)
+
+### TCP State-of-the-Art
+- [RETECS](https://doi.org/10.1145/3092703.3092709) - Spieker et al. (2017)
+- [NodeRank](https://doi.org/10.1007/s10664-024-10453-4) - van Soest et al. (2024)
 
 ---
 
 **Last Updated:** November 2025
+**Paradigm Version:** Phylogenetic V1.0

@@ -49,9 +49,18 @@ def load_baseline_apfd():
 
 
 def load_experiment_07_apfd():
-    """Load APFD values from experiment 07 (ranking optimized)."""
-    df = pd.read_csv(RESULTS_DIR / "experiment_07_ranking_optimized" / "apfd_per_build_FULL_testcsv.csv")
-    return df['apfd'].tolist()
+    """Load APFD values from experiment hybrid (best results)."""
+    # Use hybrid experiment results (APFD 0.6413)
+    hybrid_path = RESULTS_DIR / "experiment_hybrid_phylogenetic" / "apfd_per_build_FULL_testcsv.csv"
+    if hybrid_path.exists():
+        df = pd.read_csv(hybrid_path)
+        print(f"  Loaded hybrid experiment: mean APFD = {df['apfd'].mean():.4f}")
+        return df['apfd'].tolist()
+    else:
+        # Fallback to experiment 07
+        df = pd.read_csv(RESULTS_DIR / "experiment_07_ranking_optimized" / "apfd_per_build_FULL_testcsv.csv")
+        print(f"  Warning: Using exp_07 fallback: mean APFD = {df['apfd'].mean():.4f}")
+        return df['apfd'].tolist()
 
 
 def generate_fig_rq1_comparison():
@@ -66,7 +75,7 @@ def generate_fig_rq1_comparison():
 
     # Order methods by mean APFD
     methods_data = {
-        'Filo-Priori\n(Ours)': exp07_apfd,
+        'Filo-Priori\n(Hybrid)': exp07_apfd,  # Updated to Hybrid
         'FailureRate': baseline_data['FailureRate'],
         'XGBoost': baseline_data['XGBoost'],
         'GreedyHist.': baseline_data['GreedyHistorical'],
@@ -88,7 +97,7 @@ def generate_fig_rq1_comparison():
     data_list = [methods_data[m] for m in sorted_methods]
 
     # Colors: highlight our method
-    colors = ['#2ecc71' if 'Ours' in m else '#3498db' for m in sorted_methods]
+    colors = ['#2ecc71' if 'Hybrid' in m else '#3498db' for m in sorted_methods]
 
     # Create box plot
     bp = ax.boxplot(data_list, patch_artist=True, labels=sorted_methods)
@@ -103,7 +112,7 @@ def generate_fig_rq1_comparison():
 
     # Reference lines
     ax.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5, label='Random baseline (0.5)')
-    ax.axhline(y=means['Filo-Priori\n(Ours)'], color='#2ecc71', linestyle=':', alpha=0.7)
+    ax.axhline(y=means['Filo-Priori\n(Hybrid)'], color='#2ecc71', linestyle=':', alpha=0.7)
 
     ax.set_ylabel('APFD Score', fontweight='bold')
     ax.set_xlabel('TCP Method', fontweight='bold')

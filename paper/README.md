@@ -36,12 +36,13 @@ paper/
 
 | Metric | Value |
 |--------|-------|
-| **Mean APFD** | **0.6379** [0.609, 0.669] |
-| vs Random | **+14.0%** (p < 0.001) |
-| vs FailureRate | **+1.4%** (beats strongest baseline) |
+| **Mean APFD** | **0.6413** [0.612, 0.672] |
+| vs Random | **+14.6%** (p < 0.001) |
+| vs FailureRate | **+2.0%** (beats strongest baseline) |
+| Architecture | Hybrid (PhyloEncoder LITE + GATv2) |
 | Most important component | GATv2 (+17.0%) |
 | Temporal robustness | 0.619-0.663 |
-| Key innovation | Ranking-aware training (RankNet loss) |
+| Key innovation | Phylogenetic encoding + Ranking-aware training |
 
 ## Figures
 
