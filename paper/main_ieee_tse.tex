@@ -113,11 +113,13 @@ with Graph Attention Networks (GAT) for structural feature learning;
 (3) \textbf{Cross-Attention Fusion} for dynamic modality combination; and
 (4) \textbf{Weighted Focal Loss} for handling severe class imbalance (37:1).
 
-We evaluate \filopriori{} on an industrial dataset containing 277 builds with
-failing tests and 52,102 test executions. Results show a mean APFD of 0.6413,
-representing 14.6\% improvement over random ordering ($p < 0.001$) and 2.0\%
-over the strongest baseline. Ablation reveals Graph Attention contributes +17.0\%
-to performance. Temporal validation confirms robustness (APFD: 0.619--0.663).
+We evaluate \filopriori{} on two complementary datasets: an industrial dataset
+(52,102 test executions, 277 builds with failures) and the RTPTorrent open-source
+benchmark (20 Java projects, 100k+ builds). On the industrial dataset, results
+show a mean APFD of 0.6413, representing 14.6\% improvement over random ordering
+($p < 0.001$) and 2.0\% over the strongest baseline. Ablation reveals Graph
+Attention contributes +17.0\% to performance. Temporal validation confirms
+robustness (APFD: 0.619--0.663).
 
 This work demonstrates the effectiveness of combining semantic and structural
 information for TCP through graph neural networks. Our replication package is publicly available.
@@ -707,14 +709,19 @@ the loss toward the minority class.
     \item \textbf{RQ4 (Sensitivity)}: How sensitive is \filopriori{} to hyperparameter choices?
 \end{itemize}
 
-\subsection{Dataset}
+\subsection{Datasets}
 
-We use the QTA (Qodo Test Automation) dataset from a commercial software project:
+We evaluate \filopriori{} on two datasets with complementary characteristics:
+
+\textbf{Dataset 1: Industrial QTA Dataset.} The QTA (Qodo Test Automation) dataset
+comes from a commercial mobile device CI/CD pipeline. This dataset provides rich
+semantic information including detailed test descriptions, test steps, and commit
+messages. Table~\ref{tab:dataset_qta} summarizes its statistics.
 
 \begin{table}[h]
 \centering
-\caption{Dataset Statistics}
-\label{tab:dataset}
+\caption{Industrial QTA Dataset Statistics}
+\label{tab:dataset_qta}
 \begin{tabular}{lr}
 \toprule
 \textbf{Statistic} & \textbf{Value} \\
@@ -724,9 +731,36 @@ Unique builds & 1,339 \\
 Builds with failures & 277 (20.7\%) \\
 Unique test cases & 2,347 \\
 Pass:Fail ratio & 37:1 \\
+Semantic info & Rich (descriptions, commits) \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\textbf{Dataset 2: RTPTorrent Open-Source Dataset.} To evaluate generalization,
+we use the RTPTorrent dataset~\cite{mattis2020rtptorrent}, an open-source benchmark
+from MSR 2020 containing test execution histories from 20 Java projects on GitHub
+with over 100,000 Travis CI build logs. This dataset has limited semantic information
+(test names only) but provides diverse projects for cross-domain evaluation.
+
+\begin{table}[h]
+\centering
+\caption{RTPTorrent Dataset Statistics}
+\label{tab:dataset_rtptorrent}
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Projects & 20 Java projects \\
+Source & Travis CI build logs \\
+Semantic info & Limited (test names) \\
+License & CC BY 4.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The complementary nature of these datasets enables comprehensive evaluation:
+the industrial dataset tests semantic feature utilization while RTPTorrent
+tests structural feature effectiveness and cross-project generalization.
 
 \subsection{Baselines}
 
@@ -819,8 +853,8 @@ The ablation study reveals that Graph Attention is the most critical component,
 validating our hypothesis that modeling test relationships through graphs is
 more effective than treating tests as independent entities.
 
-\textbf{Future Work.} We plan to: (1) evaluate on additional industrial datasets
-with different test suite characteristics, (2) investigate dynamic graph
+\textbf{Future Work.} We plan to: (1) conduct full experiments on the RTPTorrent
+dataset to evaluate cross-project generalization, (2) investigate dynamic graph
 construction that evolves with the test suite, (3) explore cross-project transfer
 learning using pre-trained embeddings, and (4) develop real-time prioritization
 integrated with CI/CD pipelines.

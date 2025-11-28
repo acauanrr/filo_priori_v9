@@ -77,6 +77,7 @@ results/**/embeddings/*.npy
 datasets/*.csv
 datasets/train.csv
 datasets/test.csv
+datasets/*
 
 # Experiment results (keep configs, delete large outputs)
 # results/*/checkpoints/

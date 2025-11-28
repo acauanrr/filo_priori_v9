@@ -1,169 +1,188 @@
-# Experimento 04b: Focal Loss APENAS
-# ALTERNATIVA - Sem Class Weights, Sem Sampling
+# Filo-Priori - Cross-Dataset Evaluation Configuration
+# Train on Industrial Dataset, Test on RTPTorrent (and vice-versa)
 #
-# Estratégia:
-# - Focal Loss cuida do imbalance sozinho (alpha=0.5, gamma=2.0)
-# - SEM class weights extras (diferente de 04a)
-# - SEM balanced sampling
-# - Modelo simplificado (igual 04a)
-#
-# Objetivo:
-# - Comparar Weighted CE (04a) vs Focal Loss (04b)
-# - Verificar se Focal melhora Recall Not-Pass
-# - Meta: F1 Macro > 0.30, Recall Not-Pass > 0.15
-#
-# Diferença vs 04a:
-# - 04a: Weighted CE + class weights [19.13, 0.51]
-# - 04b: Focal Loss (alpha=0.5, gamma=2.0) SEM class weights
+# Purpose: Evaluate generalization capability across different domains
+# This demonstrates the model's ability to transfer knowledge between:
+# - Industrial CI/CD environment (rich semantic data)
+# - Open-source Java projects (limited semantic data)
 
 experiment:
-  name: "experiment_04b_focal_only"
-  version: "4.0b"
-  description: "Focal Loss apenas - sem class weights, sem sampling"
+  name: "filo_priori_cross_dataset"
+  version: "2.0.0"
+  description: "Cross-dataset evaluation: Industry -> RTPTorrent"
   seed: 42
 
-# Data Configuration (igual 04a)
+# Data Configuration
+# OPTION 1: Train on Industry, Test on RTPTorrent
 data:
-  train_path: "datasets/train.csv"
-  test_path: "datasets/test.csv"
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/02_rtptorrent/processed/test.csv"
+
+  # For reverse direction (Train RTPTorrent, Test Industry), use:
+  # train_path: "datasets/02_rtptorrent/processed/train.csv"
+  # test_path: "datasets/01_industry/test.csv"
+
   train_split: 0.8
   val_split: 0.1
   test_split: 0.1
   random_seed: 42
+
   binary_classification: true
   binary_strategy: "pass_vs_fail"
   binary_positive_class: "Pass"
   binary_negative_class: "Fail"
+
   smote:
     enabled: false
 
-# Text, Commit, Embedding (igual 04a)
+# Text Processing (balanced for both datasets)
 text:
-  num_commits_to_keep: 5
-  max_commit_length: 2000
-  max_summary_length: 500
-  max_steps_length: 1000
+  num_commits_to_keep: 3
+  max_commit_length: 1000
+  max_summary_length: 300
+  max_steps_length: 500
 
+# Commit Extraction
 commit:
-  max_commits_per_tc: 10
-  include_commit_metadata: true
+  max_commits_per_tc: 5
+  include_commit_metadata: false
 
+# Semantic Embeddings with SBERT
 embedding:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
-  max_length: 384
+
+  max_length: 256
   batch_size: 128
   normalize_embeddings: true
   device: "cuda"
-  use_cache: true
-  cache_dir: "cache"
 
+  use_cache: true
+  cache_dir: "cache/cross_dataset"
+
+# Alias for backward compatibility
 semantic:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
-  max_length: 384
+  max_length: 256
   batch_size: 128
 
+# Structural Features
 structural:
   extractor:
     recent_window: 5
     min_history: 2
-    cache_path: "cache/structural_features.pkl"
+    cache_path: "cache/cross_dataset/structural_features.pkl"
   input_dim: 6
 
-# Graph (igual 04a - menos denso)
+# Multi-Edge Graph (note: cross-dataset may have limited graph utility)
 graph:
   build_graph: true
   use_multi_edge: true
-  edge_types: [co_failure, co_success, semantic]
+
+  edge_types:
+    - co_failure
+    - co_success
+    - semantic
+
   edge_weights:
     co_failure: 1.0
     co_success: 0.5
     semantic: 0.3
+
   min_co_occurrences: 1
   weight_threshold: 0.05
-  semantic_top_k: 5
-  semantic_threshold: 0.75
-  cache_path: "cache/multi_edge_graph.pkl"
+
+  semantic_top_k: 10
+  semantic_threshold: 0.7
+
+  cache_path: "cache/cross_dataset/multi_edge_graph.pkl"
   type: "co_failure"
 
-# Model (igual 04a - simplificado)
+# Model Architecture
 model:
   type: "dual_stream"
   num_classes: 2
+
   semantic:
     input_dim: 1536
     hidden_dim: 256
     num_layers: 2
-    dropout: 0.1
+    dropout: 0.2  # Slightly higher dropout for cross-domain
     activation: "gelu"
+
   structural:
     input_dim: 6
     hidden_dim: 64
     num_layers: 2
-    dropout: 0.1
+    dropout: 0.2
     activation: "gelu"
+
   gnn:
     type: "GAT"
     hidden_dim: 128
-    num_layers: 1
-    num_heads: 2
-    dropout: 0.1
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.25
     activation: "elu"
+
   fusion:
     input_dim: 384
     hidden_dim: 256
     num_layers: 2
-    dropout: 0.15
+    dropout: 0.25
     activation: "gelu"
+
   classifier:
     input_dim: 256
     hidden_dim: 128
     num_classes: 2
-    dropout: 0.2
+    dropout: 0.35
 
-# Training - FOCAL APENAS
+# Training Configuration
 training:
   num_epochs: 50
   epochs: 50
   batch_size: 32
-  learning_rate: 0.00003
-  weight_decay: 0.0001
+  learning_rate: 0.00005
+  weight_decay: 0.0002  # Slightly higher for regularization
+
   optimizer: "adamw"
   scheduler:
     type: "cosine"
     eta_min: 0.000001
   warmup_epochs: 5
+
   gradient_clip: 1.0
   accumulation_steps: 1
+
   early_stopping:
     patience: 15
     min_delta: 0.001
     monitor: "val_f1_macro"
     mode: "max"
 
-  # SEM SAMPLING
   sampling:
-    use_balanced_sampling: false
+    use_balanced_sampling: true
+    minority_weight: 1.0
+    majority_weight: 0.05
 
-  # FOCAL LOSS SEM CLASS WEIGHTS
   loss:
-    type: "focal"
-    focal_alpha: 0.5          # Moderado
-    focal_gamma: 2.0
-    use_class_weights: false  # ← SEM class weights!
-    label_smoothing: 0.0
+    type: "weighted_focal"
+    focal_alpha: 0.75
+    focal_gamma: 3.0
+    label_smoothing: 0.05  # Add label smoothing for cross-domain
 
 # Legacy loss config
 loss:
-  type: "focal"
-  focal_alpha: 0.5
-  focal_gamma: 2.0
-  label_smoothing: 0.0
+  type: "weighted_focal"
+  focal_alpha: 0.75
+  focal_gamma: 3.0
+  label_smoothing: 0.05
 
-# Evaluation, Ranking, System (igual 04a)
+# Evaluation
 evaluation:
   metrics:
     - "accuracy"
@@ -173,27 +192,30 @@ evaluation:
     - "f1_weighted"
     - "auprc_macro"
     - "auroc"
+
   threshold_search:
-    enabled: false  # ❌ DESABILITADO - Experimento 04c mostrou que threshold optimization não ajuda
-                    # Threshold 0.80 piorou F1 Macro (-1.6%)
-                    # Usar threshold default 0.5 para comparação justa com 04a
+    enabled: true
     range: [0.01, 0.99]
     step: 0.01
     optimize_for: "f1_macro"
 
+# Ranking Configuration
 ranking:
   method: "probability"
   reverse: true
+
   apfd_calculation:
     enabled: true
     fault_column: "verdict"
     fault_value: "Fail"
 
+# System Configuration
 system:
   device: "cuda"
   num_workers: 4
   pin_memory: true
   use_amp: false
+
   deterministic: true
   benchmark: false
 
@@ -201,6 +223,7 @@ hardware:
   device: "cuda"
   num_workers: 4
 
+# Logging and Checkpointing
 logging:
   level: "INFO"
   log_dir: "logs"
@@ -213,7 +236,7 @@ checkpoint:
   mode: "max"
 
 output:
-  results_dir: "results/experiment_04b_focal_only"
+  results_dir: "results/experiment_cross_dataset"
   save_predictions: true
   save_rankings: true
   save_apfd: true

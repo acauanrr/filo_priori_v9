@@ -195,6 +195,12 @@ N.~Reimers and I.~Gurevych, ``Sentence-bert: Sentence embeddings using siamese
   Methods in Natural Language Processing (EMNLP)}.\hskip 1em plus 0.5em minus
   0.4em\relax ACL, 2019, pp. 3982--3992.
 
+\bibitem{mattis2020rtptorrent}
+T.~Mattis, T.~Rausch, and M.~Rinard, ``{RTPTorrent}: An open-source dataset for
+  evaluating regression test prioritization,'' in \emph{Proceedings of the 17th
+  International Conference on Mining Software Repositories (MSR)}.\hskip 1em
+  plus 0.5em minus 0.4em\relax ACM, 2020, pp. 558--562.
+
 \bibitem{arcuri2011practical}
 A.~Arcuri and L.~Briand, ``A practical guide for using statistical tests to
   assess randomized algorithms in software engineering,'' pp. 1--10, 2011.

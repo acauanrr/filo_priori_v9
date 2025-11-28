@@ -8,6 +8,9 @@
 
 ```
 scripts/
+├── preprocessing/         # Dataset preprocessing scripts
+│   ├── download_rtptorrent.py     # Download RTPTorrent from Zenodo
+│   └── preprocess_rtptorrent.py   # Convert to Filo-Priori format
 ├── analysis/              # Experimental analysis scripts
 ├── publication/           # Paper generation scripts
 │   ├── generate_paper_figures.py
@@ -16,6 +19,28 @@ scripts/
 ├── compare_experiments_quick.sh  # Quick metrics comparison
 └── README.md              # This file
 ```
+
+---
+
+## Preprocessing Scripts
+
+### RTPTorrent Dataset
+
+```bash
+# Step 1: Download from Zenodo (4.1 GB)
+python scripts/preprocessing/download_rtptorrent.py
+
+# Step 2: Convert to Filo-Priori format
+python scripts/preprocessing/preprocess_rtptorrent.py
+
+# Optional: Process specific project
+python scripts/preprocessing/preprocess_rtptorrent.py --project commons-math
+
+# List available projects
+python scripts/preprocessing/preprocess_rtptorrent.py --list-projects
+```
+
+Output location: `datasets/02_rtptorrent/processed/`
 
 ---
 

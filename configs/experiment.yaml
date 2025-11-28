@@ -15,8 +15,8 @@ experiment:
 
 # Data Configuration
 data:
-  train_path: "datasets/train.csv"
-  test_path: "datasets/test.csv"
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
 
   train_split: 0.8
   val_split: 0.1

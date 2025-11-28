@@ -1,32 +1,20 @@
-# Experimento 05: EXPANDED STRUCTURAL FEATURES (29 features)
-# OBJETIVO: Melhorar APFD de 0.6210 → 0.65-0.70
-#
-# Estratégia:
-# - Usa Weighted CE (vencedor do Exp 04a)
-# - Expande structural features de 6 → 29
-# - Aumenta hidden_dim do structural stream (64 → 128) para acomodar mais features
-# - Mantém todas as outras configurações iguais ao 04a
-#
-# Features Expansion:
-# - PHYLOGENETIC: 4 → 20 features (test age, rates, streaks, trends)
-# - STRUCTURAL: 2 → 9 features (commits, CRs, surge, stability)
-# - TOTAL: 6 → 29 features
-#
-# Impacto Esperado:
-# - APFD: 0.6210 → 0.65-0.70 (+5-13% melhoria)
-# - F1 Macro: 0.5294 → 0.55-0.60
-# - Recall Fail: 0.05 → 0.08-0.15
+# =============================================================================
+# Experimento Industry - BASEADO NO EXPERIMENT_07_RANKING_OPTIMIZED
+# =============================================================================
+# Configuração IDÊNTICA ao exp07 que alcançou APFD = 0.6413
+# Ajustes apenas para RTX 4060 (8GB VRAM)
+# =============================================================================
 
 experiment:
-  name: "experiment_06_feature_selection"
-  version: "6.0"
-  description: "29 structural features (expanded from 6) - ranking improvement"
+  name: "experiment_industry"
+  version: "1.0"
+  description: "Industry dataset experiment - based on exp07 config"
   seed: 42
 
-# Data Configuration (identical to 04a)
+# Data Configuration (identical to exp 07)
 data:
-  train_path: "datasets/train.csv"
-  test_path: "datasets/test.csv"
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
   train_split: 0.8
   val_split: 0.1
   test_split: 0.1
@@ -38,7 +26,7 @@ data:
   smote:
     enabled: false
 
-# Text, Commit, Embedding (identical to 04a)
+# Text and Embedding (identical to exp 07)
 text:
   num_commits_to_keep: 5
   max_commit_length: 2000
@@ -49,36 +37,37 @@ commit:
   max_commits_per_tc: 10
   include_commit_metadata: true
 
+# Embedding - AJUSTADO PARA RTX 4060 (8GB VRAM)
 embedding:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
   max_length: 384
-  batch_size: 128
+  batch_size: 32  # REDUZIDO de 128 para RTX 4060
   normalize_embeddings: true
   device: "cuda"
   use_cache: true
-  cache_dir: "cache"
+  cache_dir: "cache/01_industry"
 
 semantic:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
   max_length: 384
-  batch_size: 128
+  batch_size: 32  # REDUZIDO de 128 para RTX 4060
 
-# Structural Features - EXPANDED TO 29!
+# Structural Features - V2.5 with 10 features (CRÍTICO!)
 structural:
-  input_dim: 10  # ← CRITICAL: Changed from 6 to 29!
+  input_dim: 10
   extractor:
-    use_v2_5: true  # ← Use StructuralFeatureExtractorV2
+    use_v2_5: true  # CRÍTICO: Usar v2.5!
     recent_window: 5
-    very_recent_window: 2  # ← New parameter for V2
-    medium_term_window: 10  # ← New parameter for V2
+    very_recent_window: 2
+    medium_term_window: 10
     min_history: 2
-    cache_path: "cache/structural_features_v2_5.pkl"  # ← Separate cache for V2
+    cache_path: "cache/01_industry/structural_features_v2_5.pkl"
 
-# Graph (identical to 04a)
+# Graph Configuration (identical to exp 07)
 graph:
   build_graph: true
   use_multi_edge: true
@@ -91,10 +80,10 @@ graph:
   weight_threshold: 0.05
   semantic_top_k: 5
   semantic_threshold: 0.75
-  cache_path: "cache/multi_edge_graph.pkl"
+  cache_path: "cache/01_industry/multi_edge_graph.pkl"
   type: "co_failure"
 
-# Model - ADJUSTED for 29 features
+# Model Architecture (same as exp 07)
 model:
   type: "dual_stream"
   num_classes: 2
@@ -107,22 +96,22 @@ model:
     activation: "gelu"
 
   structural:
-    input_dim: 10  # ← CRITICAL: Changed from 6 to 29!
-    hidden_dim: 64  # ← REDUCED from 64 to 128 (double capacity for 4.8x more features)
+    input_dim: 10  # V2.5 has 10 features
+    hidden_dim: 64
     num_layers: 2
-    dropout: 0.1  # Same as semantic
+    dropout: 0.1
     activation: "gelu"
 
   gnn:
     type: "GAT"
     hidden_dim: 128
-    num_layers: 1
+    num_layers: 1  # Simple works best
     num_heads: 2
     dropout: 0.1
     activation: "elu"
 
   fusion:
-    input_dim: 320  # (256 semantic + 64 structural)
+    input_dim: 320
     hidden_dim: 256
     num_layers: 2
     dropout: 0.15
@@ -134,7 +123,9 @@ model:
     num_classes: 2
     dropout: 0.2
 
-# Training - IDENTICAL to 04a (Weighted CE vencedor)
+# =============================================================================
+# TRAINING - CONFIGURAÇÃO IDÊNTICA AO EXP07 (que funcionou!)
+# =============================================================================
 training:
   num_epochs: 50
   epochs: 50
@@ -157,22 +148,39 @@ training:
     monitor: "val_f1_macro"
     mode: "max"
 
-  # No balanced sampling (proven suboptimal)
+  # SEM balanced sampling (exp07 não usava)
   sampling:
     use_balanced_sampling: false
 
-  # WEIGHTED CE (vencedor do Exp 04a)
+  # WEIGHTED FOCAL LOSS (configuração exp07)
   loss:
-    type: "weighted_ce"
-    use_class_weights: true  # ← Automatic class weights
+    type: "weighted_focal"
+    use_class_weights: true  # Usa pesos automáticos
+    focal_alpha: 0.75
+    focal_gamma: 2.5
     label_smoothing: 0.0
+
+  # RANKING LOSS HABILITADO (CRÍTICO!)
+  ranking:
+    enabled: true
+    use_grouped_sampler: true
+    weight: 0.3
+    loss_type: "logistic"
+    score_type: "logit"
+    margin: 0.5
+    hard_negative_top_k: 5
+    hard_negative_percent: 0.2
+    max_pairs_per_build: 50
+    start_epoch: 3
 
 # Legacy loss config
 loss:
-  type: "weighted_ce"
+  type: "weighted_focal"
+  focal_alpha: 0.75
+  focal_gamma: 2.5
   label_smoothing: 0.0
 
-# Evaluation (identical to 04a)
+# Threshold Optimization (exp07)
 evaluation:
   metrics:
     - "accuracy"
@@ -184,12 +192,12 @@ evaluation:
     - "auroc"
 
   threshold_search:
-    enabled: false  # ❌ DESABILITADO - Exp 04c mostrou que não ajuda
-    range: [0.01, 0.99]
-    step: 0.01
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
     optimize_for: "f1_macro"
 
-# Ranking (identical to 04a)
+# Ranking
 ranking:
   method: "probability"
   reverse: true
@@ -198,10 +206,10 @@ ranking:
     fault_column: "verdict"
     fault_value: "Fail"
 
-# System (identical to 04a)
+# System - AJUSTADO PARA RTX 4060
 system:
   device: "cuda"
-  num_workers: 4
+  num_workers: 2  # REDUZIDO de 4
   pin_memory: true
   use_amp: false
   deterministic: true
@@ -209,7 +217,7 @@ system:
 
 hardware:
   device: "cuda"
-  num_workers: 4
+  num_workers: 2  # REDUZIDO de 4
 
 logging:
   level: "INFO"
@@ -223,7 +231,7 @@ checkpoint:
   mode: "max"
 
 output:
-  results_dir: "results/experiment_06_feature_selection"
+  results_dir: "results/experiment_industry"
   save_predictions: true
   save_rankings: true
   save_apfd: true

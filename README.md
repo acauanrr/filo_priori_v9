@@ -114,11 +114,19 @@ pip install -r requirements.txt
 ### Training
 
 ```bash
-# Train model with optimal configuration
-python main.py --config configs/experiment_07_ranking_optimized.yaml
+# Train on Industrial Dataset (default)
+python main.py --config configs/experiment_industry.yaml
 
-# Or use the convenience script
-./run_experiment.sh
+# Train on RTPTorrent Dataset (download first)
+python scripts/preprocessing/download_rtptorrent.py  # Download 4.1GB
+python scripts/preprocessing/preprocess_rtptorrent.py  # Convert format
+python main.py --config configs/experiment_rtptorrent.yaml
+
+# Cross-dataset evaluation (Train Industry, Test RTPTorrent)
+python main.py --config configs/experiment_cross_dataset.yaml
+
+# Or use best configuration
+python main.py --config configs/experiment_07_ranking_optimized.yaml
 ```
 
 ### Results
@@ -198,8 +206,15 @@ filo-priori-v9/
 │   └── temporal_cv/             # Temporal cross-validation
 │
 ├── datasets/                    # Data files (gitignored)
-│   ├── train.csv
-│   └── test.csv
+│   ├── 01_industry/             # Industrial QTA dataset
+│   │   ├── train.csv
+│   │   ├── test.csv
+│   │   └── README.md
+│   ├── 02_rtptorrent/           # RTPTorrent open-source dataset
+│   │   ├── raw/                 # Original downloaded data
+│   │   ├── processed/           # Converted to Filo-Priori format
+│   │   └── README.md
+│   └── README.md
 │
 └── cache/                       # Embeddings cache (gitignored)
 ```
@@ -341,9 +356,11 @@ Weighted Focal Loss: L = -alpha * w_t * (1 - p_t)^gamma * log(p_t)
 
 ---
 
-## Dataset
+## Datasets
 
-**QTA Dataset (Qodo Test Automation)**
+Filo-Priori V9 supports multiple datasets for comprehensive evaluation:
+
+### Dataset 1: Industrial QTA (Qodo Test Automation)
 
 | Statistic | Value |
 |-----------|-------|
@@ -352,13 +369,26 @@ Weighted Focal Loss: L = -alpha * w_t * (1 - p_t)^gamma * log(p_t)
 | Builds with Failures | 277 (20.7%) |
 | Unique Test Cases | 2,347 |
 | Pass:Fail Ratio | 37:1 (highly imbalanced) |
+| **Semantic Info** | Rich (test descriptions, commit messages) |
 
-**Data Fields:**
-- `TE_Summary`: Test execution summary
-- `TC_Steps`: Test case steps
-- `Commit_Message`: Associated commit messages
-- `TE_Test_Result`: Pass/Fail verdict
+### Dataset 2: RTPTorrent (Open-Source)
+
+| Statistic | Value |
+|-----------|-------|
+| Projects | 20 Java projects |
+| Source | Travis CI build logs |
+| Reference | Mattis et al., MSR 2020 |
+| DOI | https://doi.org/10.1145/3379597.3387458 |
+| License | CC BY 4.0 |
+| **Semantic Info** | Limited (test names only) |
+
+**Data Fields (Unified Format):**
 - `Build_ID`: Build identifier
+- `TC_Key`: Test case identifier
+- `TE_Summary`: Test execution summary
+- `TC_Steps`: Test case steps (optional)
+- `TE_Test_Result`: Pass/Fail verdict
+- `commit`: Associated commit messages
 
 ---
 
@@ -437,6 +467,18 @@ python scripts/publication/generate_paper_figures.py
 ### Precompute Embeddings
 ```bash
 python scripts/precompute_embeddings_sbert.py
+```
+
+### Prepare RTPTorrent Dataset
+```bash
+# Download from Zenodo (4.1GB)
+python scripts/preprocessing/download_rtptorrent.py
+
+# Convert to Filo-Priori format
+python scripts/preprocessing/preprocess_rtptorrent.py
+
+# Optional: Process specific project only
+python scripts/preprocessing/preprocess_rtptorrent.py --project commons-math
 ```
 
 ---

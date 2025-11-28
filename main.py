@@ -842,8 +842,8 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     avg_loss = total_loss / max(len(loader), 1)
     all_preds = np.array(all_preds)
     all_labels = np.array(all_labels)
-    all_probs = np.array(all_probs)
-    all_batch_indices = np.array(all_batch_indices)
+    all_probs = np.array(all_probs) if len(all_probs) > 0 else np.empty((0, 2))
+    all_batch_indices = np.array(all_batch_indices, dtype=np.int64)  # Ensure int type for indexing
 
     # Compute metrics on valid samples only
     if len(all_preds) > 0:
@@ -866,7 +866,8 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     # If requested, create full probability array with default values for orphans
     if return_full_probs and dataset_size is not None:
         full_probs = np.full((dataset_size, 2), 0.5)  # Default: [0.5, 0.5] (maximum uncertainty)
-        full_probs[all_batch_indices] = all_probs  # Fill in actual predictions
+        if len(all_batch_indices) > 0 and len(all_probs) > 0:
+            full_probs[all_batch_indices] = all_probs  # Fill in actual predictions
         return avg_loss, metrics, full_probs
     else:
         return avg_loss, metrics, all_probs

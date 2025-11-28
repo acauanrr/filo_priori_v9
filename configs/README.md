@@ -4,11 +4,37 @@
 
 ---
 
+## Datasets Configurations
+
+Filo-Priori supports multiple datasets for evaluation:
+
+| Config | Dataset | Description |
+|--------|---------|-------------|
+| `experiment_industry.yaml` | Industrial QTA | Main industrial dataset (52K executions) |
+| `experiment_rtptorrent.yaml` | RTPTorrent | Open-source MSR 2020 dataset (20 Java projects) |
+| `experiment_cross_dataset.yaml` | Cross-Dataset | Train Industry / Test RTPTorrent |
+
+### Data Paths:
+
+```yaml
+# Industrial Dataset
+data:
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
+
+# RTPTorrent Dataset (after preprocessing)
+data:
+  train_path: "datasets/02_rtptorrent/processed/train.csv"
+  test_path: "datasets/02_rtptorrent/processed/test.csv"
+```
+
+---
+
 ## Current Best Configuration
 
 **File:** `experiment_07_ranking_optimized.yaml`
 
-This configuration achieves the best results (APFD = 0.6413) and is recommended for new experiments.
+This configuration achieves the best results (APFD = 0.6413) on the Industrial dataset.
 
 ### Key Settings:
 
@@ -32,64 +58,89 @@ This configuration achieves the best results (APFD = 0.6413) and is recommended 
 
 ## Usage
 
-### Run Best Configuration:
+### Run on Industrial Dataset (default):
 
 ```bash
-python main.py --config configs/experiment_07_ranking_optimized.yaml
+python main.py --config configs/experiment_industry.yaml
 ```
 
-### Run Specific Experiment:
+### Run on RTPTorrent Dataset:
 
 ```bash
-python main.py --config configs/<experiment_name>.yaml
+# First, download and preprocess the dataset
+python scripts/preprocessing/download_rtptorrent.py
+python scripts/preprocessing/preprocess_rtptorrent.py
+
+# Then run the experiment
+python main.py --config configs/experiment_rtptorrent.yaml
 ```
+
+### Run Cross-Dataset Evaluation:
+
+```bash
+python main.py --config configs/experiment_cross_dataset.yaml
+```
+
+---
+
+## Configuration Files
+
+| File | Purpose | Dataset |
+|------|---------|---------|
+| `experiment_industry.yaml` | Industrial evaluation | 01_industry |
+| `experiment_rtptorrent.yaml` | RTPTorrent evaluation | 02_rtptorrent |
+| `experiment_cross_dataset.yaml` | Cross-domain evaluation | Industry -> RTPTorrent |
+| `experiment_improved.yaml` | General improved settings | 01_industry |
+| `experiment_07_ranking_optimized.yaml` | Best performing config | 01_industry |
+| `experiment_phylogenetic.yaml` | Phylogenetic variant (experimental) | 01_industry |
 
 ---
 
 ## Configuration Structure
 
 ```yaml
+# Experiment metadata
+experiment:
+  name: "experiment_name"
+  version: "2.0.0"
+
 # Data paths
 data:
-  train_path: "datasets/train.csv"
-  test_path: "datasets/test.csv"
-  output_dir: "results/<experiment_name>/"
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
 
 # Embedding configuration
 embedding:
   model_name: "sentence-transformers/all-mpnet-base-v2"
-  tc_fields: ["TE_Summary", "TC_Steps"]
-  commit_fields: ["Commit_Message"]
+  cache_dir: "cache/01_industry"
 
 # Model architecture
 model:
-  type: "dual_stream_v8"
-  semantic_dim: 256
-  structural_dim: 256
-  fusion_type: "cross_attention"
-  structural_stream:
-    layer_type: "gat"
+  type: "dual_stream"
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+  structural:
+    input_dim: 6
+    hidden_dim: 64
+  gnn:
+    type: "GAT"
     num_layers: 1
     num_heads: 2
-    dropout: 0.3
 
 # Training configuration
 training:
   num_epochs: 50
   batch_size: 32
   learning_rate: 3.0e-5
-  weight_decay: 1.0e-4
   loss:
     type: "weighted_focal"
     focal_alpha: 0.75
     focal_gamma: 2.5
-  early_stopping:
-    patience: 15
-    monitor: "val_f1_macro"
 
-# Hardware
-hardware:
-  device: "cuda"
+# Output paths
+output:
+  results_dir: "results/experiment_name"
 ```
 
 ---
@@ -98,7 +149,7 @@ hardware:
 
 | Type | Description | File |
 |------|-------------|------|
-| `dual_stream_v8` | Main model (SBERT + GAT + CrossAttention) | `src/models/dual_stream_v8.py` |
+| `dual_stream` | Main model (SBERT + GAT + CrossAttention) | `src/models/dual_stream_v8.py` |
 
 ---
 
@@ -113,32 +164,40 @@ hardware:
 
 ---
 
-## Hyperparameter Sensitivity
+## Dataset-Specific Recommendations
 
-Based on ablation study (see paper):
+### Industrial Dataset:
+- Rich semantic information (test descriptions, commit messages)
+- 37:1 class imbalance
+- Recommended: `focal_gamma: 2.5-3.0`, balanced sampling
 
-| Parameter | Most Sensitive | Recommended |
-|-----------|---------------|-------------|
-| Loss type | Yes (+5.9%) | weighted_focal |
-| Focal gamma | Yes (+5.5%) | 2.5 |
-| Learning rate | Yes (+4.4%) | 3e-5 |
-| GNN layers | Medium (+4.4%) | 1 |
-| GNN heads | Low (+2.9%) | 2 |
+### RTPTorrent Dataset:
+- Limited semantic information (test names only)
+- Varies by project
+- Recommended: Rely more on structural features
+- Use smaller embedding batch sizes
+
+### Cross-Dataset:
+- Higher dropout for regularization
+- Label smoothing (0.05)
+- Separate cache directories per dataset
 
 ---
 
 ## Creating New Experiments
 
-1. Copy the best configuration:
+1. Copy a base configuration:
    ```bash
-   cp configs/experiment_07_ranking_optimized.yaml configs/experiment_NEW.yaml
+   cp configs/experiment_industry.yaml configs/experiment_NEW.yaml
    ```
 
 2. Modify parameters as needed
 
-3. Update `output_dir` to new results directory
+3. Update `output.results_dir` to new results directory
 
-4. Run:
+4. Update `cache_dir` paths if needed
+
+5. Run:
    ```bash
    python main.py --config configs/experiment_NEW.yaml
    ```

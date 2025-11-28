@@ -71,21 +71,45 @@ class DataLoader:
         # Make a copy
         df = df.copy()
 
-        # Handle missing values
+        # Handle missing values - only require TE_Summary and TE_Test_Result
+        # TC_Steps is optional (empty in some datasets like RTPTorrent)
         initial_len = len(df)
-        df = df.dropna(subset=['TE_Summary', 'TC_Steps', 'TE_Test_Result'])
-        logger.info(f"Dropped {initial_len - len(df)} rows with missing critical fields")
+        required_cols = ['TE_Summary', 'TE_Test_Result']
+
+        # Only include TC_Steps in dropna if it has actual data in the dataset
+        if 'TC_Steps' in df.columns:
+            non_empty_steps = df['TC_Steps'].notna() & (df['TC_Steps'].astype(str).str.strip() != '')
+            if non_empty_steps.sum() > len(df) * 0.1:  # More than 10% have data
+                required_cols.append('TC_Steps')
+                logger.info("TC_Steps has significant data - including in validation")
+            else:
+                logger.info("TC_Steps is mostly empty - making it optional")
+                df['TC_Steps'] = df['TC_Steps'].fillna("")
+
+        df = df.dropna(subset=required_cols)
+        logger.info(f"Dropped {initial_len - len(df)} rows with missing critical fields ({required_cols})")
 
         # Clean text fields
         df['TE_Summary'] = df['TE_Summary'].astype(str).str.strip()
         df['TC_Steps'] = df['TC_Steps'].astype(str).str.strip()
 
         # Process commit field (it's in array format as string)
-        df['commit_processed'] = df['commit'].apply(self._process_commit_field)
+        if 'commit' in df.columns:
+            df['commit_processed'] = df['commit'].apply(self._process_commit_field)
+        else:
+            df['commit_processed'] = ""
+            logger.info("'commit' column not found - using empty string")
 
-        # Process CR fields (also in array format)
-        df['CR_Type_processed'] = df['CR_Type'].apply(self._extract_from_list)
-        df['CR_Component_processed'] = df['CR_Component_Name'].apply(self._extract_from_list)
+        # Process CR fields (also in array format) - optional for some datasets
+        if 'CR_Type' in df.columns:
+            df['CR_Type_processed'] = df['CR_Type'].apply(self._extract_from_list)
+        else:
+            df['CR_Type_processed'] = ""
+
+        if 'CR_Component_Name' in df.columns:
+            df['CR_Component_processed'] = df['CR_Component_Name'].apply(self._extract_from_list)
+        else:
+            df['CR_Component_processed'] = ""
 
         # Clean target variable
         df['TE_Test_Result'] = df['TE_Test_Result'].str.strip()
@@ -234,15 +258,26 @@ class DataLoader:
             df: DataFrame with 'label' column
 
         Returns:
-            Array of class weights
+            Array of class weights (always 2 elements for binary classification)
         """
         from sklearn.utils.class_weight import compute_class_weight
 
+        unique_classes = np.unique(df['label'])
         class_weights = compute_class_weight(
             class_weight='balanced',
-            classes=np.unique(df['label']),
+            classes=unique_classes,
             y=df['label']
         )
+
+        # Ensure we always have 2 weights for binary classification
+        if len(class_weights) == 1:
+            logger.warning(f"Only one class found in data. Adding default weight for missing class.")
+            if unique_classes[0] == 0:
+                # Only class 0 (Fail) present, add weight for class 1 (Pass)
+                class_weights = np.array([class_weights[0], 1.0])
+            else:
+                # Only class 1 (Pass) present, add weight for class 0 (Fail)
+                class_weights = np.array([1.0, class_weights[0]])
 
         logger.info(f"Class weights: {class_weights}")
         return class_weights

@@ -219,7 +219,7 @@ def create_loss_function(config: dict, class_weights: Optional[torch.Tensor] = N
 
     Args:
         config: Configuration dictionary
-        class_weights: Optional class weights tensor
+        class_weights: Optional class weights tensor (auto-computed)
 
     Returns:
         Loss function module

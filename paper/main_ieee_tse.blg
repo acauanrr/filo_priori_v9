@@ -16,45 +16,45 @@ Warning--empty journal in dig2006automated
 Warning--empty journal in arcuri2011practical
 
 Done.
-You've used 32 entries,
+You've used 33 entries,
             4087 wiz_defined-function locations,
-            992 strings with 14023 characters,
-and the built_in function-call counts, 25673 in all, are:
-= -- 1972
-> -- 696
-< -- 207
-+ -- 371
-- -- 126
-* -- 1243
-:= -- 3707
-add.period$ -- 75
-call.type$ -- 32
-change.case$ -- 34
-chr.to.int$ -- 495
-cite$ -- 35
-duplicate$ -- 1834
-empty$ -- 2157
-format.name$ -- 158
-if$ -- 6028
+            997 strings with 14269 characters,
+and the built_in function-call counts, 26593 in all, are:
+= -- 2042
+> -- 717
+< -- 216
++ -- 383
+- -- 129
+* -- 1286
+:= -- 3830
+add.period$ -- 78
+call.type$ -- 33
+change.case$ -- 35
+chr.to.int$ -- 519
+cite$ -- 36
+duplicate$ -- 1897
+empty$ -- 2240
+format.name$ -- 162
+if$ -- 6250
 int.to.chr$ -- 0
-int.to.str$ -- 32
-missing$ -- 338
-newline$ -- 121
-num.names$ -- 32
-pop$ -- 827
+int.to.str$ -- 33
+missing$ -- 348
+newline$ -- 124
+num.names$ -- 33
+pop$ -- 853
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1947
+skip$ -- 2017
 stack$ -- 0
-substring$ -- 1182
-swap$ -- 1459
-text.length$ -- 42
+substring$ -- 1239
+swap$ -- 1511
+text.length$ -- 43
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 32
+type$ -- 33
 warning$ -- 3
-while$ -- 124
-width$ -- 34
-write$ -- 322
+while$ -- 129
+width$ -- 35
+write$ -- 331
 (There were 3 warnings)

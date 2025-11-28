@@ -1,26 +1,26 @@
-# Filo-Priori - Experimento 03: Balanced Weights
-# CORREÇÃO DO COLAPSO INVERTIDO
+# Filo-Priori - RTPTorrent Dataset Configuration
+# Dataset: Open-source regression test prioritization dataset (MSR 2020)
 #
-# Mudanças vs Experimento 02:
-# - focal_alpha: 0.75 → 0.25 (3x redução)
-# - focal_gamma: 3.0 → 2.0 (redução)
-# - majority_weight: 0.05 → 0.2 (5:1 vs 20:1 ratio)
+# Source: https://zenodo.org/records/3712290
+# Paper: Mattis et al., "RTPTorrent: An Open-source Dataset for Evaluating
+#        Regression Test Prioritization", MSR 2020
 #
-# Impacto esperado:
-# - Total weight ratio: 112x → ~30x (4x redução)
-# - Sampling minority: 35% → 17% (mais realista)
-# - F1 Macro: 0.025 → 0.40-0.50
+# Features:
+# - 20 open-source Java projects
+# - 100,000+ Travis CI build logs
+# - Limited semantic information (test names only)
+# - Good for evaluating structural features
 
 experiment:
-  name: "experiment_03_balanced_weights"
-  version: "3.0.0"
-  description: "Correção de weights para evitar colapso invertido"
+  name: "filo_priori_rtptorrent"
+  version: "2.0.0"
+  description: "RTPTorrent open-source dataset evaluation"
   seed: 42
 
 # Data Configuration
 data:
-  train_path: "datasets/train.csv"
-  test_path: "datasets/test.csv"
+  train_path: "datasets/02_rtptorrent/processed/train.csv"
+  test_path: "datasets/02_rtptorrent/processed/test.csv"
 
   train_split: 0.8
   val_split: 0.1
@@ -35,49 +35,50 @@ data:
   smote:
     enabled: false
 
-# Text Processing
+# Text Processing (adapted for RTPTorrent - less rich text)
 text:
-  num_commits_to_keep: 5
-  max_commit_length: 2000
-  max_summary_length: 500
-  max_steps_length: 1000
+  num_commits_to_keep: 3
+  max_commit_length: 500
+  max_summary_length: 200
+  max_steps_length: 0  # TC_Steps is empty for RTPTorrent
 
 # Commit Extraction
 commit:
-  max_commits_per_tc: 10
-  include_commit_metadata: true
+  max_commits_per_tc: 5
+  include_commit_metadata: false
 
 # Semantic Embeddings with SBERT
+# OPTIMIZED FOR RTX 4060 (8GB VRAM)
 embedding:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
 
-  max_length: 384
-  batch_size: 128
+  max_length: 128  # Shorter since text is simpler
+  batch_size: 32  # REDUCED from 256 - prevents OOM on 8GB VRAM
   normalize_embeddings: true
   device: "cuda"
 
   use_cache: true
-  cache_dir: "cache"
+  cache_dir: "cache/02_rtptorrent"
 
 # Alias for backward compatibility
 semantic:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
-  max_length: 384
-  batch_size: 128
+  max_length: 128
+  batch_size: 32  # REDUCED - RTX 4060 optimization
 
-# Structural Features
+# Structural Features (more important for RTPTorrent)
 structural:
   extractor:
     recent_window: 5
     min_history: 2
-    cache_path: "cache/structural_features.pkl"
+    cache_path: "cache/02_rtptorrent/structural_features.pkl"
   input_dim: 6
 
-# Phylogenetic Graph - Multi-Edge (MANTIDO - Funcionou perfeitamente!)
+# Multi-Edge Graph
 graph:
   build_graph: true
   use_multi_edge: true
@@ -94,11 +95,12 @@ graph:
 
   min_co_occurrences: 1
   weight_threshold: 0.05
+
   semantic_top_k: 10
   semantic_threshold: 0.7
 
-  cache_path: "cache/multi_edge_graph.pkl"
-  type: "co_failure"  # Legacy (ignored)
+  cache_path: "cache/02_rtptorrent/multi_edge_graph.pkl"
+  type: "co_failure"
 
 # Model Architecture
 model:
@@ -140,12 +142,14 @@ model:
     num_classes: 2
     dropout: 0.3
 
-# Training Configuration - WEIGHTS CORRIGIDOS
+# Training Configuration
+# NOTE: Current processed dataset is very small (514 samples, 1 project)
+# Need to reprocess with more projects for meaningful training
 training:
   num_epochs: 50
   epochs: 50
-  batch_size: 32
-  learning_rate: 0.00005
+  batch_size: 16  # REDUCED - small dataset + RTX 4060 optimization
+  learning_rate: 0.0001  # Slightly higher LR
   weight_decay: 0.0001
 
   optimizer: "adamw"
@@ -158,36 +162,27 @@ training:
   accumulation_steps: 1
 
   early_stopping:
-    patience: 12
+    patience: 15
     min_delta: 0.001
     monitor: "val_f1_macro"
     mode: "max"
 
-  # CORREÇÃO 1: Balanced Sampling MENOS agressivo
   sampling:
     use_balanced_sampling: true
     minority_weight: 1.0
-    majority_weight: 0.2    # ↑ de 0.05 (5:1 vs 20:1)
-                            # Minority: ~17% vs 35% antes
+    majority_weight: 0.1  # Adjust based on actual class ratio
 
-  # CORREÇÃO 2: Weighted Focal Loss MENOS agressivo
   loss:
     type: "weighted_focal"
-
-    # Reduzir focal parameters
-    focal_alpha: 0.25       # ↓ de 0.75 (3x redução)
-    focal_gamma: 2.0        # ↓ de 3.0
-
+    focal_alpha: 0.75
+    focal_gamma: 2.5  # Slightly lower gamma
     label_smoothing: 0.0
 
-    # Class weights automáticos (~19:1) mantidos
-    # Total weight ratio esperado: ~30x vs 112x antes
-
-# Legacy loss config (for backward compatibility)
+# Legacy loss config
 loss:
   type: "weighted_focal"
-  focal_alpha: 0.25
-  focal_gamma: 2.0
+  focal_alpha: 0.75
+  focal_gamma: 2.5
   label_smoothing: 0.0
 
 # Evaluation
@@ -218,19 +213,19 @@ ranking:
     fault_value: "Fail"
 
 # System Configuration
+# OPTIMIZED FOR RTX 4060 (8GB VRAM)
 system:
   device: "cuda"
-  num_workers: 4
+  num_workers: 2  # REDUCED from 4 - prevents memory pressure
   pin_memory: true
-  use_amp: false
+  use_amp: true  # ENABLED - reduces VRAM usage by ~40%
 
   deterministic: true
   benchmark: false
 
-# Alias for validator
 hardware:
   device: "cuda"
-  num_workers: 4
+  num_workers: 2  # REDUCED - matches system config
 
 # Logging and Checkpointing
 logging:
@@ -245,7 +240,7 @@ checkpoint:
   mode: "max"
 
 output:
-  results_dir: "results/experiment_03_balanced_weights"
+  results_dir: "results/experiment_rtptorrent"
   save_predictions: true
   save_rankings: true
   save_apfd: true
