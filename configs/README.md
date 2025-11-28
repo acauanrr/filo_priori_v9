@@ -1,150 +1,91 @@
-# Configurações - configs/
+# Configurations - configs/
 
-**Última atualização:** 2025-11-05
-**Status:** ✅ LIMPO E ORGANIZADO
-
----
-
-## 📂 Estrutura Atual
-
-Este diretório contém **12 configurações ativas** usadas pelos experimentos do projeto.
-
-### Experimentos Principais (9 configs):
-
-| Arquivo | Experimento | Status | Resultados |
-|---------|-------------|--------|------------|
-| `experiment_008_gatv2.yaml` | GATv2 Implementation | ✅ Executado | `results/experiment_008_gatv2/` |
-| `experiment_009_attention_pooling.yaml` | Attention Pooling | ✅ Executado | `results/experiment_009_attention_pooling/` |
-| `experiment_010_bidirectional_fusion.yaml` | Bidirectional Fusion | ✅ Executado | `results/experiment_010_bidirectional_fusion/` |
-| `experiment_011_improved_classifier.yaml` | Improved Classifier | ✅ Executado | `results/experiment_011_improved_classifier/` |
-| `experiment_012_best_practices.yaml` | Best Practices | ✅ Executado | `results/experiment_012_best_practices/` |
-| `experiment_014_ranking_fix.yaml` | Ranking Fix | ✅ Executado | `results/experiment_014_ranking_fix/` |
-| `experiment_015_gatv2_rewired.yaml` | GATv2 + Rewired Graph | ✅ Executado | `results/experiment_015_gatv2_rewired/` |
-| `experiment_016_optimized.yaml` | Optimized Loss & Rewiring | ✅ Executado | `results/experiment_016_optimized_*` |
-| `experiment_017_ranking_corrected.yaml` | Ranking Corrected | ✅ **ATUAL** | `results/experiment_017_ranking_corrected_*` |
-
-### Rewiring Configs (3 configs):
-
-| Arquivo | Usado Por | Descrição |
-|---------|-----------|-----------|
-| `rewiring_015.yaml` | Exp 015 | k=10, keep_ratio=0.0 |
-| `rewiring_016.yaml` | Exp 016 | k=15, keep_ratio=0.2 |
-| `rewiring_017.yaml` | Exp 017 | k=20, keep_ratio=0.2 |
+**Last Updated:** 2025-11-28
 
 ---
 
-## 🎯 Config Atual
+## Current Best Configuration
 
-**Experimento mais recente:** `experiment_017_ranking_corrected.yaml`
+**File:** `experiment_07_ranking_optimized.yaml`
 
-**Usado em:**
-- `run_experiment_017.sh` (script principal)
-- `main.py` (default atualizado)
+This configuration achieves the best results (APFD = 0.6413) and is recommended for new experiments.
 
-**Características:**
-- Focal loss: [0.15, 0.85]
-- Rewiring: k=20, keep_ratio=0.2
-- Binary classification: Pass (0) vs Fail (1)
-- Multi-field embeddings
-- GATv2 + Rewired graph
+### Key Settings:
+
+| Category | Setting | Value |
+|----------|---------|-------|
+| **Model** | Type | `dual_stream_v8` |
+| **Semantic** | SBERT model | `all-mpnet-base-v2` |
+| **Structural** | Layer type | GATConv |
+| **Structural** | Layers | 1 |
+| **Structural** | Heads | 2 |
+| **Loss** | Type | `weighted_focal` |
+| **Loss** | Alpha | 0.75 |
+| **Loss** | Gamma | 2.5 |
+| **Training** | Learning rate | 3e-5 |
+| **Training** | Weight decay | 1e-4 |
+| **Training** | Batch size | 32 |
+| **Training** | Epochs | 50 |
+| **Training** | Early stopping | patience=15 |
 
 ---
 
-## 📖 Uso
+## Usage
 
-### Executar Experimento Atual:
+### Run Best Configuration:
 
 ```bash
-# Usando default (exp 017)
-python main.py
-
-# Ou explicitamente
-python main.py --config configs/experiment_017_ranking_corrected.yaml
+python main.py --config configs/experiment_07_ranking_optimized.yaml
 ```
 
-### Executar Experimento Específico:
+### Run Specific Experiment:
 
 ```bash
-# Experimento 015
-python main.py --config configs/experiment_015_gatv2_rewired.yaml
-
-# Experimento 012
-python main.py --config configs/experiment_012_best_practices.yaml
-```
-
-### Executar com Script de Shell:
-
-```bash
-# Experimento 017 (completo com rewiring)
-./run_experiment_017.sh
+python main.py --config configs/<experiment_name>.yaml
 ```
 
 ---
 
-## 🗂️ Arquivos Arquivados
-
-### Configs Obsoletos:
-
-Movidos para `archive_old/configs/obsolete/` (12 arquivos):
-- `config.yaml`
-- `config_experiment_003.yaml`
-- `config_experiment_004.yaml`
-- `config_experiment_004_moderate.yaml`
-- `config_experiment_006.yaml`
-- `config_improved.yaml`
-- `experiment_009_denoising_gate.yaml`
-- `experiment_009b_adaptive_denoising.yaml`
-- `experiment_010_graph_rewiring.yaml`
-- `experiment_013_pass_vs_fail.yaml`
-- `experiment_017_ranking_margin.yaml`
-- `rewiring_config.yaml`
-
-**Motivo:** Sem resultados correspondentes ou substituídos por versões mais recentes.
-
-### Configs de Planejamento:
-
-Movidos para `docs/phases/` (3 arquivos):
-- `phase_1_stabilization.yaml`
-- `phase_2_architectural_refinement.yaml`
-- `phase_3_hyperparameter_optimization.yaml`
-
-**Motivo:** Documentação de planejamento, não configs executáveis.
-
----
-
-## 📋 Estrutura de um Config
-
-Exemplo de estrutura típica:
+## Configuration Structure
 
 ```yaml
-# Dados
+# Data paths
 data:
   train_path: "datasets/train.csv"
   test_path: "datasets/test.csv"
-  output_dir: "results/experiment_XXX/"
-  binary_classification: true
+  output_dir: "results/<experiment_name>/"
 
-# Embeddings
+# Embedding configuration
 embedding:
-  model_name: "BAAI/bge-large-en-v1.5"
-  use_multi_field: true
-  fields: [summary, steps, commits, CR]
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  tc_fields: ["TE_Summary", "TC_Steps"]
+  commit_fields: ["Commit_Message"]
 
-# Modelo
+# Model architecture
 model:
-  semantic_stream: {...}
+  type: "dual_stream_v8"
+  semantic_dim: 256
+  structural_dim: 256
+  fusion_type: "cross_attention"
   structural_stream:
-    layer_type: "gatv2"
-    num_gnn_layers: 2
+    layer_type: "gat"
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.3
 
-# Treinamento
+# Training configuration
 training:
-  num_epochs: 20
-  batch_size: 64
-  learning_rate: 5.0e-5
+  num_epochs: 50
+  batch_size: 32
+  learning_rate: 3.0e-5
+  weight_decay: 1.0e-4
   loss:
-    type: "focal"
-    focal_alpha: [0.15, 0.85]
+    type: "weighted_focal"
+    focal_alpha: 0.75
+    focal_gamma: 2.5
+  early_stopping:
+    patience: 15
+    monitor: "val_f1_macro"
 
 # Hardware
 hardware:
@@ -153,62 +94,55 @@ hardware:
 
 ---
 
-## 🔄 Histórico de Limpeza
+## Model Types
 
-**2025-11-05:**
-- ✅ Limpeza inicial: 27 → 12 configs (redução de 55%)
-- ✅ Arquivados 12 configs obsoletos
-- ✅ Movidos 3 configs de planejamento para docs/
-- ✅ Atualizado default em `main.py`
-- ✅ Criado `README.md` (este arquivo)
+| Type | Description | File |
+|------|-------------|------|
+| `dual_stream_v8` | Main model (SBERT + GAT + CrossAttention) | `src/models/dual_stream_v8.py` |
 
 ---
 
-## 📚 Documentação Relacionada
+## Loss Types
 
-- **Análise Completa:** `CONFIG_CLEANUP_ANALYSIS.md` (raiz do projeto)
-- **Refatoração Geral:** `REFACTORING_SUMMARY.md`
-- **Status Implementação:** `IMPLEMENTATION_COMPLETE.md`
-- **Planejamento de Fases:** `docs/phases/phase_*.yaml`
-
----
-
-## ⚠️ Notas Importantes
-
-### 1. Criar Novo Experimento:
-
-Ao criar novo experimento (ex: 018):
-1. Copiar config mais recente como base
-2. Modificar parâmetros necessários
-3. Atualizar `experiment.experiment_id` no YAML
-4. Salvar como `experiment_018_<descricao>.yaml`
-
-### 2. Rewiring Configs:
-
-Configs de rewiring são sempre separados e referenciados pelos experimentos principais.
-
-### 3. Manter Limpo:
-
-- ✅ Não criar configs temporários
-- ✅ Arquivar configs de experimentos abandonados
-- ✅ Manter nomenclatura consistente: `experiment_XXX_<descricao>.yaml`
+| Type | Description | Usage |
+|------|-------------|-------|
+| `weighted_focal` | Weighted Focal Loss | Best for class imbalance (37:1) |
+| `focal` | Focal Loss | Alternative without class weights |
+| `ce` | Cross Entropy | Standard classification |
+| `weighted_ce` | Weighted Cross Entropy | With class weights |
 
 ---
 
-## 🆘 Suporte
+## Hyperparameter Sensitivity
 
-**Dúvidas sobre configs?**
-- Ver documentação completa em `CONFIG_CLEANUP_ANALYSIS.md`
-- Consultar experimentos anteriores em `results/`
-- Verificar logs de execução
+Based on ablation study (see paper):
 
-**Restaurar config arquivado:**
-```bash
-# Copiar de archive_old para configs/
-cp archive_old/configs/obsolete/config_XXX.yaml configs/
-```
+| Parameter | Most Sensitive | Recommended |
+|-----------|---------------|-------------|
+| Loss type | Yes (+5.9%) | weighted_focal |
+| Focal gamma | Yes (+5.5%) | 2.5 |
+| Learning rate | Yes (+4.4%) | 3e-5 |
+| GNN layers | Medium (+4.4%) | 1 |
+| GNN heads | Low (+2.9%) | 2 |
 
 ---
 
-**Mantido por:** Equipe do Projeto
-**Última verificação:** 2025-11-05
+## Creating New Experiments
+
+1. Copy the best configuration:
+   ```bash
+   cp configs/experiment_07_ranking_optimized.yaml configs/experiment_NEW.yaml
+   ```
+
+2. Modify parameters as needed
+
+3. Update `output_dir` to new results directory
+
+4. Run:
+   ```bash
+   python main.py --config configs/experiment_NEW.yaml
+   ```
+
+---
+
+**Maintained by:** Filo-Priori Team

@@ -1,4 +1,4 @@
-# Filo-Priori V9: A Phylogenetic Approach to Test Case Prioritization
+# Filo-Priori V9: A Dual-Stream Deep Learning Approach to Test Case Prioritization
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
@@ -6,19 +6,18 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-IEEE--TSE--submission-brightgreen.svg)
 
-**A bio-inspired deep learning approach that treats software evolution as a phylogenetic tree, using the Git DAG to model evolutionary relationships between commits for intelligent test case prioritization.**
+**A dual-stream deep learning approach that combines semantic understanding of test cases with structural patterns learned from execution history using Graph Attention Networks.**
 
-## Paradigm Shift: From Linear History to Phylogenetic Trees
+## The Challenge: Test Case Relationships
 
-Traditional TCP approaches treat software history as a linear time series. We propose a fundamental reconceptualization: **software evolution is a phylogenetic tree**, where commits are taxa and the Git DAG captures evolutionary relationships.
+Traditional TCP approaches treat test cases as independent entities. We propose combining two complementary information sources:
 
-| Biological Concept | Software Equivalent |
-|--------------------|---------------------|
-| Taxon/Species | Commit/Version |
-| DNA Sequence | Source Code / AST |
-| Mutation (SNP) | Code Diff |
-| Phylogenetic Tree | Git DAG |
-| Phylogenetic Signal | Failure Autocorrelation |
+| Feature Type | Description | Examples |
+|--------------|-------------|----------|
+| **Semantic** | What tests do | Test descriptions, commit messages |
+| **Structural** | How tests behave | Failure rates, co-failure patterns, trends |
+
+The key insight: tests that fail together often indicate related functionality, and Graph Attention Networks can learn to propagate failure signals through these relationships.
 
 ---
 
@@ -29,68 +28,68 @@ Traditional TCP approaches treat software history as a linear time series. We pr
 | **Mean APFD** | **0.6413** | Average Percentage of Faults Detected |
 | **vs FailureRate** | **+2.0%** | Beats the strongest baseline |
 | **vs Random** | **+14.6%** | Statistically significant (p < 0.001) |
-| **PhyloEncoder + GATv2** | **Hybrid** | Best of both worlds architecture |
+| **Graph Attention** | **+17.0%** | Most critical component (ablation) |
 
 ---
 
 ## Overview
 
-Filo-Priori V9 introduces a **bio-inspired hybrid architecture** for TCP:
+Filo-Priori V9 uses a **dual-stream architecture** for TCP:
 
 | Component | Description |
 |-----------|-------------|
-| **Phylo-Encoder LITE** | GGNN (2 layers, 128-dim) over Git DAG with learnable temperature |
-| **GATv2 Encoder** | Graph Attention Network over test co-failure graph |
-| **Cross-Attention Fusion** | Combines phylo + structural + semantic features |
-| **Ranking Loss** | RankNet-style pairwise loss aligned with APFD metric |
+| **Semantic Stream** | FFN processing SBERT embeddings (1536-dim) |
+| **Structural Stream** | GAT over multi-edge test relationship graph |
+| **Cross-Attention Fusion** | Bidirectional attention combining modalities |
+| **Weighted Focal Loss** | Handles 37:1 class imbalance |
 
-### Scientific Contributions
+### Key Contributions
 
-1. **Phylogenetic Metaphor**: First application of computational phylogenetics to TCP, treating Git DAG as evolutionary tree
-2. **Phylogenetic Distance Kernel**: Novel distance metric with learnable temperature parameter
-3. **Phylo-Encoder (GGNN)**: Gated Graph Neural Network for failure propagation through commit history
-4. **Phylogenetic Regularization**: Loss component encouraging evolutionary consistency in predictions
-5. **Hybrid Architecture**: Combines proven GATv2 with novel phylogenetic encoding for best results
+1. **Multi-Edge Test Relationship Graph**: Captures co-failure, co-success, and semantic similarity edges
+2. **Dual-Stream Architecture**: Combines SBERT semantic embeddings with GAT-based structural learning
+3. **Cross-Attention Fusion**: Bidirectional attention for dynamic modality combination
+4. **Weighted Focal Loss**: Addresses severe class imbalance (37:1 Pass:Fail ratio)
+5. **Feature Engineering**: 10 discriminative features selected from 29 candidates
 
 ---
 
 ## Architecture
 
 ```
-                    FILO-PRIORI: HYBRID ARCHITECTURE (BEST)
+                    FILO-PRIORI V9: DUAL-STREAM ARCHITECTURE
     =====================================================================
 
-    INPUTS                        ENCODERS                      OUTPUT
-    ------                        --------                      ------
+    INPUTS                        STREAMS                       OUTPUT
+    ------                        -------                       ------
 
-    [Git DAG]                +------------------+
-    Commits +                |  PHYLO-ENCODER   |
-    Branches +  -----------> |  LITE (2 layers) | ----+
-    Merges                   |  [768 → 128]     |     |
-                             +------------------+     |
-                                                      |  (element-wise sum)
-    [Test Graph]             +------------------+     |     +---------------+
-    Co-Failure +             |  GATv2 STREAM    |     +---> | CROSS-        |
-    Co-Success + ----------> |  (2 heads, 256)  | ----+     | ATTENTION     |
-    Semantic                 |  Structural [10] |           | FUSION        |
-                             +------------------+           +-------+-------+
-                                                                    |
-    [Semantic]               +------------------+                   |
-    TC_Summary +             |  SEMANTIC        |                   |
-    TC_Steps +   ----------> |  STREAM          | -----------------+
-    Commits                  |  (SBERT → 256)   |                   |
-                             +------------------+                   v
-                                                            +---------------+
-                                                            | CLASSIFIER    |
-                                                            | [512→128→64→2]|
-                                                            +---------------+
-                                                                    |
-                                                                    v
-                                                            [Prioritized List]
-                                                            T' = {t1, t2, ..., tn}
+    [Semantic Input]             +------------------+
+    TC_Summary +                 |  SEMANTIC        |
+    TC_Steps +       ---------> |  STREAM          | ----+
+    Commit_Msg                   |  FFN [1536→256]  |     |
+                                 +------------------+     |
+                                                          |
+                                                          |  CROSS-ATTENTION
+    [Structural Input]           +------------------+     |     FUSION
+    10 Features +                |  STRUCTURAL      |     |  +-----------+
+    Test Graph   -------------> |  STREAM (GAT)    | ----+->| Bi-dir    |
+    (multi-edge)                 |  [10→256]        |     |  | Attention |
+                                 +------------------+     |  +-----------+
+                                                          |       |
+                                                          +-------+
+                                                                  |
+                                                                  v
+                                                          +---------------+
+                                                          | CLASSIFIER    |
+                                                          | MLP [512→128→ |
+                                                          |      64→2]    |
+                                                          +---------------+
+                                                                  |
+                                                                  v
+                                                          [Prioritized List]
+                                                          T' = {t1, t2, ..., tn}
 
     LOSS FUNCTION:
-    L = 0.7 × L_focal + 0.3 × L_rank + 0.05 × L_phylo_reg
+    L = Weighted Focal Loss (alpha=0.75, gamma=2.5)
 ```
 
 ---
@@ -115,19 +114,16 @@ pip install -r requirements.txt
 ### Training
 
 ```bash
-# Train model with optimal configuration (HYBRID - BEST RESULTS)
-python main.py --config configs/experiment_hybrid_phylogenetic.yaml
+# Train model with optimal configuration
+python main.py --config configs/experiment_07_ranking_optimized.yaml
 
 # Or use the convenience script
-./run_experiment_hybrid.sh
-
-# Alternative: ranking-optimized (without PhyloEncoder)
-python main.py --config configs/experiment_07_ranking_optimized.yaml
+./run_experiment.sh
 ```
 
 ### Results
 
-Results are saved to `results/experiment_hybrid_phylogenetic/`:
+Results are saved to `results/<experiment_name>/`:
 
 | File | Description |
 |------|-------------|
@@ -147,16 +143,12 @@ filo-priori-v9/
 ├── README.md                    # This file
 │
 ├── configs/                     # Experiment configurations (YAML)
-│   ├── experiment_hybrid_phylogenetic.yaml   # BEST config (HYBRID)
-│   ├── experiment_07_ranking_optimized.yaml  # GATv2 only
-│   ├── experiment_phylogenetic.yaml          # Full phylogenetic
+│   ├── experiment_07_ranking_optimized.yaml  # Best config
 │   └── ...
 │
-├── src/                         # Source code (51 Python modules)
+├── src/                         # Source code
 │   ├── models/                  # Neural network architectures
-│   │   ├── phylogenetic_dual_stream.py  # Hybrid model (PhyloEncoder + GATv2)
-│   │   ├── phylo_encoder.py     # GGNN-based PhyloEncoder
-│   │   ├── dual_stream_v8.py    # GATv2-only model
+│   │   ├── dual_stream_v8.py    # Main model (DualStreamModelV8)
 │   │   ├── model_factory.py     # Unified model factory
 │   │   └── ablation_model.py    # For ablation studies
 │   │
@@ -180,14 +172,11 @@ filo-priori-v9/
 │   │
 │   ├── training/                # Training pipeline
 │   │   ├── trainer.py           # Training loops
-│   │   └── losses.py            # Focal Loss + Ranking Loss
+│   │   └── losses.py            # Focal Loss, Weighted Focal Loss
 │   │
 │   ├── baselines/               # Baseline implementations
 │   │   ├── heuristic_baselines.py  # Random, Recency, FailureRate
 │   │   └── ml_baselines.py         # LogReg, RF, XGBoost
-│   │
-│   ├── layers/                  # Custom neural network layers
-│   │   └── gatv2.py             # GATv2 implementation
 │   │
 │   └── utils/                   # Utilities
 │
@@ -196,21 +185,17 @@ filo-priori-v9/
 │   └── publication/             # Paper generation
 │
 ├── paper/                       # Publication materials (LaTeX)
-│   ├── main.tex                 # Paper template (EMSE/IST format)
-│   ├── references.bib           # Bibliography
+│   ├── main_ieee_tse.tex        # Paper (IEEE TSE format)
+│   ├── references_ieee.bib      # Bibliography
 │   ├── figures/                 # PDF + PNG figures
-│   └── tables/                  # LaTeX tables
+│   └── sections/                # Paper sections
 │
 ├── results/                     # Experimental results
-│   ├── experiment_hybrid_phylogenetic/   # BEST results (APFD 0.6413)
-│   ├── experiment_phylogenetic_v9/       # Full phylogenetic results
-│   ├── experiment_07_ranking_optimized/  # GATv2-only results
+│   ├── experiment_hybrid_phylogenetic/   # Best results (APFD 0.6413)
+│   ├── experiment_07_ranking_optimized/  # GATv2 results
 │   ├── baselines/               # Baseline comparison
 │   ├── ablation/                # Ablation study
 │   └── temporal_cv/             # Temporal cross-validation
-│
-├── docs/                        # Documentation
-│   └── TECHNICAL_GUIDE.md       # Detailed technical documentation
 │
 ├── datasets/                    # Data files (gitignored)
 │   ├── train.csv
@@ -272,7 +257,7 @@ Historical Execution Data
     │
     ↓ MultiEdgeGraphBuilder
     │
-Multi-Edge Phylogenetic Graph:
+Multi-Edge Test Relationship Graph:
 ├── Co-Failure edges   (weight: 1.0) - Tests that fail together
 ├── Co-Success edges   (weight: 0.5) - Tests that pass together
 └── Semantic edges     (weight: 0.3) - Semantically similar tests
@@ -282,17 +267,17 @@ Multi-Edge Phylogenetic Graph:
 
 ## Training Configuration
 
-### Loss Function (Combined)
+### Loss Function
 
 ```python
-Total Loss = 0.7 × Focal + 0.3 × Ranking + 0.05 × PhyloReg
+Weighted Focal Loss: L = -alpha * w_t * (1 - p_t)^gamma * log(p_t)
 ```
 
-| Component | Weight | Purpose |
-|-----------|--------|---------|
-| **Focal Loss** | 0.7 | Handles 37:1 class imbalance (α=0.75, γ=2.5) |
-| **Ranking Loss** | 0.3 | RankNet pairwise loss aligned with APFD |
-| **Phylo Regularization** | 0.05 | Encourages evolutionary consistency |
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| **alpha** | 0.75 | Class balancing weight |
+| **gamma** | 2.5 | Focusing parameter (down-weights easy examples) |
+| **w_t** | inverse freq | Additional class weighting |
 
 ### Key Hyperparameters
 
@@ -306,6 +291,9 @@ Total Loss = 0.7 × Focal + 0.3 × Ranking + 0.05 × PhyloReg
 | Scheduler | Cosine Annealing | eta_min=1e-6 |
 | Early Stopping | patience=15 | Monitor: val_f1_macro |
 | Gradient Clipping | 1.0 | Prevent exploding gradients |
+| GAT Layers | 1 | Simpler architecture works best |
+| GAT Heads | 2 | Multi-head attention |
+| Dropout | 0.3-0.4 | Regularization |
 
 ---
 
@@ -313,27 +301,27 @@ Total Loss = 0.7 × Focal + 0.3 × Ranking + 0.05 × PhyloReg
 
 ### RQ1: Effectiveness (Baseline Comparison)
 
-| Method | Mean APFD | vs Baseline | vs Random |
-|--------|-----------|-------------|-----------|
-| **Filo-Priori (Hybrid)** | **0.6413** | - | **+14.6%** |
-| Filo-Priori (GATv2 only) | 0.6379 | -0.53% | +14.0% |
-| Filo-Priori (Full Phylo) | 0.6316 | -1.5% | +12.9% |
-| FailureRate | 0.6289 | -2.0% | +12.4% |
-| XGBoost | 0.6171 | -3.8% | +10.3% |
-| GreedyHistorical | 0.6138 | -4.3% | +9.7% |
-| LogisticRegression | 0.5964 | -7.0% | +6.6% |
-| RandomForest | 0.5910 | -7.8% | +5.6% |
-| Random | 0.5596 | -12.7% | baseline |
+| Method | Mean APFD | vs Random |
+|--------|-----------|-----------|
+| **Filo-Priori** | **0.6413** | **+14.6%** |
+| FailureRate | 0.6289 | +12.4% |
+| XGBoost | 0.6171 | +10.3% |
+| GreedyHistorical | 0.6138 | +9.7% |
+| LogisticRegression | 0.5964 | +6.6% |
+| RandomForest | 0.5910 | +5.6% |
+| Random | 0.5596 | baseline |
+| RecentFailureRate | 0.5454 | -2.5% |
+| Recency | 0.5240 | -6.4% |
 
 ### RQ2: Component Contributions (Ablation Study)
 
-| Component | Contribution | Significance |
-|-----------|-------------|--------------|
-| **Graph Attention (GATv2)** | **+17.0%** | *** (most critical) |
-| **PhyloEncoder LITE** | **+0.5%** | * (novel contribution) |
-| Structural Stream | +5.3% | *** |
-| Class Weighting | +4.6% | *** |
-| Semantic Stream | +1.9% | - |
+| Component | Contribution | p-value |
+|-----------|-------------|---------|
+| **Graph Attention (GAT)** | **+17.0%** | < 0.001*** |
+| Structural Stream | +5.3% | < 0.001*** |
+| Focal Loss | +4.6% | < 0.001*** |
+| Class Weighting | +3.5% | 0.002** |
+| Semantic Stream | +1.9% | 0.087 |
 
 ### RQ3: Temporal Robustness
 
@@ -345,11 +333,10 @@ Total Loss = 0.7 × Focal + 0.3 × Ranking + 0.05 × PhyloReg
 
 ### RQ4: Key Findings
 
-- **Hybrid Architecture**: PhyloEncoder + GATv2 achieves best results (APFD 0.6413)
-- **Ranking Loss**: Critical for APFD optimization (+3.4% improvement)
-- **GATv2**: Most important component (+17.0% from ablation)
-- **PhyloEncoder LITE**: Adds +0.5% while providing scientific novelty
+- **Graph Attention**: Most critical component (+17.0% from ablation)
+- **Weighted Focal Loss**: Essential for handling class imbalance
 - **Feature Selection**: 10 features sufficient (V2.5 extractor)
+- **Simple Architecture**: 1-layer GAT outperforms deeper models
 - **Learning Rate**: 3e-5 proven optimal (very sensitive)
 
 ---
@@ -416,10 +403,10 @@ The `paper/` directory contains all materials ready for submission:
 
 ```bash
 cd paper/
-pdflatex main.tex
-bibtex main
-pdflatex main.tex
-pdflatex main.tex
+pdflatex main_ieee_tse.tex
+bibtex main_ieee_tse
+pdflatex main_ieee_tse.tex
+pdflatex main_ieee_tse.tex
 ```
 
 **Target Journal:** IEEE Transactions on Software Engineering (IEEE TSE)
@@ -430,11 +417,11 @@ pdflatex main.tex
 
 ### Run Training
 ```bash
-# Best configuration (Hybrid - APFD 0.6413)
-python main.py --config configs/experiment_hybrid_phylogenetic.yaml
+# Best configuration
+python main.py --config configs/experiment_07_ranking_optimized.yaml
 
 # Or use convenience script
-./run_experiment_hybrid.sh
+./run_experiment.sh
 ```
 
 ### Compare Experiments
@@ -444,7 +431,7 @@ python main.py --config configs/experiment_hybrid_phylogenetic.yaml
 
 ### Generate Publication Figures
 ```bash
-python scripts/generate_publication_visualizations.py
+python scripts/publication/generate_paper_figures.py
 ```
 
 ### Precompute Embeddings
@@ -454,16 +441,48 @@ python scripts/precompute_embeddings_sbert.py
 
 ---
 
+## Model Architecture Details
+
+### DualStreamModelV8
+
+The main model (`src/models/dual_stream_v8.py`) consists of:
+
+```python
+class DualStreamModelV8(nn.Module):
+    """
+    Dual-stream architecture for test case prioritization.
+
+    Streams:
+    - SemanticStream: FFN processing SBERT embeddings
+    - StructuralStreamV8: GAT over test relationship graph
+
+    Fusion:
+    - CrossAttentionFusion: Bidirectional attention
+
+    Output:
+    - SimpleClassifier: MLP for binary classification
+    """
+```
+
+| Component | Input Dim | Output Dim | Details |
+|-----------|-----------|------------|---------|
+| SemanticStream | 1536 | 256 | 2 FFN blocks with residual |
+| StructuralStreamV8 | 10 | 256 | GAT (4 heads → 1 head) |
+| CrossAttentionFusion | 256 + 256 | 512 | 4-head bidirectional |
+| SimpleClassifier | 512 | 2 | MLP [128, 64] |
+
+---
+
 ## Citation
 
 ```bibtex
-@software{filo_priori_v9_2025,
-  title={Filo-Priori: Deep Learning-based Test Case Prioritization
-         with Graph Attention Networks and Ranking-Aware Training},
+@article{filo_priori_v9_2025,
+  title={Filo-Priori: A Dual-Stream Deep Learning Approach to
+         Test Case Prioritization},
   author={Ribeiro, Acauan C.},
+  journal={IEEE Transactions on Software Engineering},
   year={2025},
-  version={9.0},
-  institution={IComp/UFAM}
+  note={Under Review}
 }
 ```
 
@@ -471,8 +490,8 @@ python scripts/precompute_embeddings_sbert.py
 
 ## References
 
-- **GATv2**: Brody, S., Alon, U., & Yahav, E. (2022). How Attentive are Graph Attention Networks? ICLR.
-- **RankNet**: Burges, C., et al. (2005). Learning to Rank using Gradient Descent. ICML.
+- **GAT**: Velickovic, P., et al. (2018). Graph Attention Networks. ICLR.
+- **GATv2**: Brody, S., et al. (2022). How Attentive are Graph Attention Networks? ICLR.
 - **Focal Loss**: Lin, T., et al. (2017). Focal Loss for Dense Object Detection. ICCV.
 - **SBERT**: Reimers, N., & Gurevych, I. (2019). Sentence-BERT. EMNLP.
 
@@ -486,4 +505,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Status | Version | Last Updated |
 |--------|---------|--------------|
-| Publication Ready | V9.1 (Hybrid) | November 2025 |
+| Publication Ready | V9.1 | November 2025 |
