@@ -7,7 +7,8 @@
 \caption{Summary of Primary Studies from Systematic Literature Review}
 \label{tab:rsl_studies}
 \small
-\begin{tabular}{p{0.4cm}p{4.5cm}p{2cm}p{1.5cm}p{5.5cm}}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{0.5cm}p{4.5cm}p{2.0cm}p{1.3cm}p{6.5cm}}
 \toprule
 \textbf{ID} & \textbf{Study} & \textbf{Technique} & \textbf{Source} & \textbf{Relevance to Our Work} \\
 \midrule
@@ -20,21 +21,21 @@ S4 & PAFL: Project-Specific Fault Patterns & Pattern Learning & ACM & Leveraging
 \midrule
 \multicolumn{5}{l}{\textit{Deep Learning for Test Case Prioritization}} \\
 \midrule
-S5 & TCP-Net: End-to-End DNN for TCP & Deep Neural Net & IEEE & Direct ranking from test execution data \\
+S5 & TCP-Net: End-to-End DNN for TCP & DNN & IEEE & Direct ranking from test execution data \\
 S6 & Analysis vs Learning-Based Regression Testing & Hybrid ML & IEEE & Combining static and dynamic analysis \\
-S7 & BTTackler & Build-aware TCP & ACM & CI-specific prioritization strategies \\
+S7 & BTTackler & Build-aware & ACM & CI-specific prioritization strategies \\
 \midrule
 \multicolumn{5}{l}{\textit{Software Evolution and Code Intelligence}} \\
 \midrule
 S8 & Sharing Software-Evolution Datasets & Datasets & ACM & Benchmarks for evolution analysis \\
 S9 & Deep Learning for Code Intelligence & DL Survey & ACM & Comprehensive DL techniques review \\
-S10 & Fault Localization via Co-Change Analysis & Co-change & ACM & Evolution patterns for fault detection \\
-S11 & Automated Repair Meets Regression Testing & APR + RT & ACM & Integration of testing and repair \\
-S12 & ML-Enabled Software Systems Challenges & ML Systems & ACM & Engineering challenges for ML in SE \\
+S10 & Fault Localization via Co-Change & Co-change & ACM & Evolution patterns for faults \\
+S11 & Automated Repair Meets RT & APR + RT & ACM & Testing and repair integration \\
+S12 & ML-Enabled Software Systems & ML Systems & ACM & ML engineering challenges \\
 \bottomrule
-\end{tabular}
+\end{tabular}}%
 \begin{tablenotes}
 \small
-\item Search strings: ``(Test Case Prioritization OR Regression Testing) AND (Graph Neural Network OR Deep Learning OR Software Evolution)''. Databases: IEEE Xplore, ACM DL. Period: 2019--2025.
+\item Search: ``(TCP OR Regression Testing) AND (GNN OR Deep Learning OR Software Evolution)''. Databases: IEEE Xplore, ACM DL. Period: 2019--2025.
 \end{tablenotes}
 \end{table*}

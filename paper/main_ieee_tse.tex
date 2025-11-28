@@ -72,7 +72,7 @@
 %------------------------------------------------------------------------------
 % TITLE
 %------------------------------------------------------------------------------
-\title{Filo-Priori: A Phylogenetic Approach to Test Case Prioritization\\Using Evolutionary Graph Neural Networks}
+\title{Filo-Priori: A Phylogenetic Approach to Test Case Prioritization}
 
 %------------------------------------------------------------------------------
 % AUTHORS
@@ -497,11 +497,10 @@ Key differentiators:
 \label{sec:approach}
 
 This section describes the \filopriori{} approach for Test Case Prioritization.
-Figure~\ref{fig:architecture} provides an overview of the architecture.
 
 \subsection{Overview}
 
-Figure~\ref{fig:architecture} presents the \filopriori{} architecture. The system
+The \filopriori{} architecture is a hybrid system that
 takes as input: (1) the Git DAG with commit metadata, (2) source code and test
 descriptions, and (3) historical test execution results. It outputs a ranking
 of test cases by predicted failure probability.
@@ -648,7 +647,7 @@ features without increasing model complexity.
 \textbf{Stage 2: Cross-Attention Fusion}. The combined structural-phylo
 representation is fused with semantic features using bidirectional cross-attention:
 \begin{equation}
-    h_{fused} = \text{CrossAttention}(Q=h_{semantic}, K=h_{combined}, V=h_{combined})
+    h_{fused} = \text{CrossAttn}(h_{semantic}, h_{combined})
 \end{equation}
 
 The final 512-dimensional fused representation ($h_{semantic} \| h_{combined}$)
@@ -841,10 +840,10 @@ This work was supported by [funding information]. We thank [acknowledgments].
 %------------------------------------------------------------------------------
 % BIOGRAPHY (Optional for TSE)
 %------------------------------------------------------------------------------
-\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{placeholder.png}}]{Acauan C. Ribeiro}
+\begin{IEEEbiographynophoto}{Acauan C. Ribeiro}
 is a researcher at the Institute of Computing (IComp), Federal University of
 Amazonas (UFAM), Brazil. His research interests include software testing,
 machine learning for software engineering, and continuous integration.
-\end{IEEEbiography}
+\end{IEEEbiographynophoto}
 
 \end{document}

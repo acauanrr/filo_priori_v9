@@ -25,19 +25,20 @@ of Faults Detected (APFD) metric, with 95\% bootstrap confidence intervals
 \centering
 \caption{Comparison of TCP Methods (sorted by Mean APFD)}
 \label{tab:tcp_comparison}
+\footnotesize
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Method} & \textbf{Mean APFD} & \textbf{95\% CI} & \textbf{p-value} & \textbf{vs Random} \\
+\textbf{Method} & \textbf{APFD} & \textbf{95\% CI} & \textbf{p} & \textbf{$\Delta$} \\
 \midrule
-\textbf{\filopriori{}} & \textbf{0.6413} & [0.612, 0.672] & -- & \textbf{+14.6\%} \\
-FailureRate & 0.6289 & [0.601, 0.658] & 0.363 & +12.4\% \\
-XGBoost & 0.6171 & [0.589, 0.646] & 0.577 & +10.3\% \\
-GreedyHistorical & 0.6138 & [0.585, 0.643] & 0.096 & +9.7\% \\
-LogisticRegression & 0.5964 & [0.568, 0.625] & 0.185 & +6.6\% \\
-RandomForest & 0.5910 & [0.563, 0.620] & 0.094 & +5.6\% \\
-Random & 0.5596 & [0.531, 0.588] & $<$0.001*** & baseline \\
-RecentFailureRate & 0.5454 & [0.517, 0.574] & $<$0.001*** & -2.5\% \\
-Recency & 0.5240 & [0.496, 0.553] & $<$0.001*** & -6.4\% \\
+\textbf{Filo-Priori} & \textbf{0.6413} & {[}0.612, 0.672{]} & -- & \textbf{+14.6\%} \\
+FailureRate & 0.6289 & {[}0.601, 0.658{]} & 0.363 & +12.4\% \\
+XGBoost & 0.6171 & {[}0.589, 0.646{]} & 0.577 & +10.3\% \\
+GreedyHist. & 0.6138 & {[}0.585, 0.643{]} & 0.096 & +9.7\% \\
+LogReg & 0.5964 & {[}0.568, 0.625{]} & 0.185 & +6.6\% \\
+RandomForest & 0.5910 & {[}0.563, 0.620{]} & 0.094 & +5.6\% \\
+Random & 0.5596 & {[}0.531, 0.588{]} & $<$.001 & baseline \\
+RecentFR & 0.5454 & {[}0.517, 0.574{]} & $<$.001 & -2.5\% \\
+Recency & 0.5240 & {[}0.496, 0.553{]} & $<$.001 & -6.4\% \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
@@ -194,15 +195,15 @@ results across multiple experimental configurations.
 \centering
 \caption{Hyperparameter Sensitivity Analysis}
 \label{tab:sensitivity}
-\begin{tabular}{llcc}
+\begin{tabular}{llcr}
 \toprule
-\textbf{Parameter} & \textbf{Values Tested} & \textbf{Best} & \textbf{$\Delta$ Range} \\
+\textbf{Parameter} & \textbf{Values Tested} & \textbf{Best} & \textbf{$\Delta$} \\
 \midrule
-Loss Function & CE, Focal, Weighted Focal & Weighted Focal & 0.036 \\
+Loss Function & CE, Focal, W.~Focal & W.~Focal & 0.036 \\
 Learning Rate & 1e-5, 3e-5, 5e-5, 1e-4 & 3e-5 & 0.027 \\
 GNN Layers & 1, 2, 3 & 1 & 0.027 \\
 GNN Heads & 1, 2, 4, 8 & 2 & 0.018 \\
-Structural Features & 6, 10, 29 & 10 & 0.015 \\
+Structural Feat. & 6, 10, 29 & 10 & 0.015 \\
 Ranking Weight & 0.0, 0.1, 0.3, 0.5 & 0.3 & 0.034 \\
 \bottomrule
 \end{tabular}
