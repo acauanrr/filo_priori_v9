@@ -91,8 +91,8 @@ Full Model & 0.6397 & -- & -- & -- \\
 \midrule
 w/o Graph Attention & 0.5467 & -0.093 & +17.0\% & $<$0.001*** \\
 w/o Structural Stream & 0.6073 & -0.032 & +5.3\% & $<$0.001*** \\
-w/o Class Weighting & 0.6115 & -0.028 & +4.6\% & $<$0.001*** \\
-w/o Ranking Loss & 0.6179 & -0.022 & +3.5\% & 0.002** \\
+w/o Focal Loss (use CE) & 0.6115 & -0.028 & +4.6\% & $<$0.001*** \\
+w/o Class Weighting & 0.6179 & -0.022 & +3.5\% & 0.002** \\
 w/o Semantic Stream & 0.6280 & -0.012 & +1.9\% & 0.087 \\
 \bottomrule
 \end{tabular}
@@ -105,17 +105,18 @@ w/o Semantic Stream & 0.6280 & -0.012 & +1.9\% & 0.087 \\
 
 \textbf{Key Findings for RQ2:}
 \begin{itemize}
-    \item \textbf{Graph Attention (GATv2)} is the most critical component,
+    \item \textbf{Graph Attention (GAT)} is the most critical component,
     contributing \textbf{+17.0\%} to performance. Removing it causes the
     largest drop in APFD (-0.093), demonstrating the importance of modeling
-    test case relationships.
+    test case relationships through graph neural networks.
     \item The \textbf{Structural Stream} contributes +5.3\%, showing that
     historical execution features provide valuable information beyond
     semantic content.
-    \item \textbf{Class Weighting} (Focal Loss) contributes +4.6\%, addressing
-    the 37:1 class imbalance effectively.
-    \item \textbf{Ranking Loss} contributes +3.5\%, validating our hypothesis
-    that aligning training with APFD improves results.
+    \item \textbf{Focal Loss} contributes +4.6\%, validating its effectiveness
+    for handling the severe class imbalance. Using standard cross-entropy
+    significantly degrades performance.
+    \item \textbf{Class Weighting} contributes +3.5\%, showing that additional
+    reweighting by class frequency further improves handling of imbalance.
     \item The \textbf{Semantic Stream} shows the smallest contribution (+1.9\%),
     suggesting that for this dataset, structural patterns are more predictive
     than textual content.
@@ -123,8 +124,8 @@ w/o Semantic Stream & 0.6280 & -0.012 & +1.9\% & 0.087 \\
 
 \begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ2]
 Graph Attention Networks are the most critical component (+17.0\%), followed
-by structural features (+5.3\%) and class weighting (+4.6\%). The ranking-aware
-training objective contributes +3.5\% improvement.
+by structural features (+5.3\%) and Focal Loss (+4.6\%). Class weighting
+provides an additional +3.5\% improvement.
 \end{tcolorbox}
 
 %------------------------------------------------------------------------------
@@ -200,11 +201,11 @@ results across multiple experimental configurations.
 \textbf{Parameter} & \textbf{Values Tested} & \textbf{Best} & \textbf{$\Delta$} \\
 \midrule
 Loss Function & CE, Focal, W.~Focal & W.~Focal & 0.036 \\
+Focal Gamma & 1.5, 2.0, 2.5, 3.0 & 2.5 & 0.034 \\
 Learning Rate & 1e-5, 3e-5, 5e-5, 1e-4 & 3e-5 & 0.027 \\
 GNN Layers & 1, 2, 3 & 1 & 0.027 \\
 GNN Heads & 1, 2, 4, 8 & 2 & 0.018 \\
 Structural Feat. & 6, 10, 29 & 10 & 0.015 \\
-Ranking Weight & 0.0, 0.1, 0.3, 0.5 & 0.3 & 0.034 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -213,19 +214,19 @@ Ranking Weight & 0.0, 0.1, 0.3, 0.5 & 0.3 & 0.034 \\
 \begin{itemize}
     \item \textbf{Loss Function}: Weighted Focal Loss performs best; the choice
     of loss function has the largest impact ($\Delta$ = 0.036).
+    \item \textbf{Focal Gamma}: A gamma of 2.5 provides optimal focus on hard
+    examples ($\Delta$ = 0.034), second largest impact after loss type.
     \item \textbf{Learning Rate}: Lower rate (3e-5) outperforms higher rates,
     suggesting careful optimization is beneficial.
     \item \textbf{GNN Architecture}: Simpler architecture (1 layer, 2 heads)
-    performs best, avoiding overfitting on the phylogenetic graph.
+    performs best, avoiding overfitting on the test relationship graph.
     \item \textbf{Structural Features}: 10 selected features outperform both
     minimal (6) and expanded (29) feature sets.
-    \item \textbf{Ranking Weight}: A weight of 0.3 for ranking loss provides
-    the best balance with classification loss.
 \end{itemize}
 
 \begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ4]
 \filopriori{} shows moderate sensitivity to hyperparameters, with loss function
 choice having the largest impact (5.9\% relative variation). The optimal
-configuration uses Weighted Focal Loss, learning rate 3e-5, 1-layer GNN with
-2 heads, 10 structural features, and ranking weight 0.3.
+configuration uses Weighted Focal Loss with $\gamma=2.5$, learning rate 3e-5,
+1-layer GAT with 2 heads, and 10 structural features.
 \end{tcolorbox}

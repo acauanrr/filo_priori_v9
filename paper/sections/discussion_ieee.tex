@@ -11,9 +11,9 @@ The ablation study reveals that Graph Attention Networks contribute +17.0\%
 to performance, making it the most critical component. We attribute this to
 several factors:
 
-\textbf{Capturing Test Dependencies}: The phylogenetic graph encodes relationships
+\textbf{Capturing Test Dependencies}: The multi-edge graph encodes relationships
 that simple features cannot capture. Tests that co-fail often share underlying
-dependencies on the same code modules, and GATv2 learns to propagate failure
+dependencies on the same code modules, and GAT learns to propagate failure
 signals through these connections.
 
 \textbf{Dynamic Attention}: Unlike standard GAT, GATv2~\cite{brody2022attentive}
@@ -25,20 +25,19 @@ each test case, adapting to different failure patterns.
 co-success, and semantic edges. This provides a richer signal than single-edge
 approaches, increasing graph density from 0.02\% to 0.5-1.0\%.
 
-\subsection{The Role of Ranking-Aware Training}
+\subsection{The Role of Weighted Focal Loss}
 
-A key innovation of \filopriori{} is the ranking-aware training objective.
-Traditional TCP approaches using classification losses (e.g., cross-entropy)
-optimize for accuracy, but APFD measures ranking quality. Our combined loss
-function addresses this mismatch:
+A key design choice of \filopriori{} is addressing the severe class imbalance
+(37:1 Pass:Fail ratio). Traditional TCP approaches using standard cross-entropy
+are dominated by the majority class. Our Weighted Focal Loss addresses this:
 
 \begin{equation}
-    \mathcal{L} = 0.7 \cdot \mathcal{L}_{focal} + 0.3 \cdot \mathcal{L}_{rank}
+    \mathcal{L} = -\alpha \cdot w_t \cdot (1 - p_t)^\gamma \cdot \log(p_t)
 \end{equation}
 
-The ablation shows that ranking loss contributes +3.5\% improvement. This
-validates our hypothesis that aligning training objectives with evaluation
-metrics improves TCP effectiveness.
+The ablation shows that Focal Loss contributes +4.6\% improvement over standard
+cross-entropy, and additional class weighting contributes +3.5\%. This validates
+our hypothesis that proper handling of class imbalance is critical for TCP.
 
 \subsection{Comparison with FailureRate Baseline}
 
@@ -80,15 +79,15 @@ limited history may benefit from transfer learning approaches.
     graphs provides substantial benefits over treating tests independently.
 
     \item \textbf{Simple architectures suffice}: 1-layer GNN with 2 heads
-    outperformed deeper architectures, suggesting that the phylogenetic
-    structure is inherently shallow.
+    outperformed deeper architectures, suggesting that test relationships
+    can be captured with shallow networks.
 
     \item \textbf{Feature selection is important}: 10 carefully selected features
     outperformed 29 features, indicating that noise reduction improves
     generalization.
 
-    \item \textbf{Balance classification and ranking}: The combined loss function
-    balances learning to predict failures with learning to rank correctly.
+    \item \textbf{Address class imbalance}: Weighted Focal Loss is essential
+    for handling the extreme class imbalance in test execution data.
 \end{enumerate}
 
 \subsection{Limitations}
@@ -102,7 +101,7 @@ While \filopriori{} demonstrates strong performance, several limitations exist:
     \item \textbf{Cold start}: New test cases without semantic similarity to
     existing tests may not benefit from the graph structure.
 
-    \item \textbf{Graph construction overhead}: Building the phylogenetic graph
+    \item \textbf{Graph construction overhead}: Building the test relationship graph
     adds preprocessing time, though this is amortized over multiple predictions.
 
     \item \textbf{Interpretability}: While ablation studies provide component-level

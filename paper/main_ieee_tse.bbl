@@ -80,44 +80,20 @@ D.~M. German, A.~E. Hassan, and G.~Robles, ``Change impact graphs: Determining
   the impact of prior code changes,'' \emph{Information and Software
   Technology}, vol.~51, no.~10, pp. 1394--1408, 2009.
 
-\bibitem{felsenstein2004phylogenetics}
-J.~Felsenstein, ``Inferring phylogenies,'' 2004.
-
-\bibitem{godfrey2005evolution}
-M.~W. Godfrey and L.~Zou, ``Using origin analysis to detect merging and
-  splitting of source code entities,'' in \emph{IEEE Transactions on Software
-  Engineering}, vol.~31, no.~2.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
-  2005, pp. 166--181.
-
-\bibitem{li2016gated}
-Y.~Li, D.~Tarlow, M.~Brockschmidt, and R.~Zemel, ``Gated graph sequence neural
-  networks,'' in \emph{International Conference on Learning Representations
-  (ICLR)}, 2016.
+\bibitem{velickovic2018graph}
+P.~Veli{\v{c}}kovi{\'c}, G.~Cucurull, A.~Casanova, A.~Romero, P.~Li{\`o}, and
+  Y.~Bengio, ``Graph attention networks,'' in \emph{International Conference on
+  Learning Representations (ICLR)}, 2018.
 
 \bibitem{lin2017focal}
 T.-Y. Lin, P.~Goyal, R.~Girshick, K.~He, and P.~Doll{\'a}r, ``Focal loss for
   dense object detection,'' in \emph{Proceedings of the IEEE International
   Conference on Computer Vision (ICCV)}, 2017, pp. 2980--2988.
 
-\bibitem{burges2005learning}
-C.~Burges, T.~Shaked, E.~Renshaw, A.~Lazier, M.~Deeds, N.~Hamilton, and
-  G.~Hullender, ``Learning to rank using gradient descent,'' in
-  \emph{Proceedings of the 22nd International Conference on Machine Learning
-  (ICML)}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 2005, pp. 89--96.
-
-\bibitem{velickovic2018graph}
-P.~Veli{\v{c}}kovi{\'c}, G.~Cucurull, A.~Casanova, A.~Romero, P.~Li{\`o}, and
-  Y.~Bengio, ``Graph attention networks,'' in \emph{International Conference on
-  Learning Representations (ICLR)}, 2018.
-
 \bibitem{brody2022attentive}
 S.~Brody, U.~Alon, and E.~Yahav, ``How attentive are graph attention
   networks?'' in \emph{International Conference on Learning Representations
   (ICLR)}, 2022.
-
-\bibitem{liu2009learning}
-T.-Y. Liu, \emph{Learning to rank for information retrieval}.\hskip 1em plus
-  0.5em minus 0.4em\relax Springer, 2009.
 
 \bibitem{kitchenham2007guidelines}
 B.~Kitchenham and S.~Charters, ``Guidelines for performing systematic
@@ -179,6 +155,12 @@ E.~Rossi, B.~Chamberlain, F.~Frasca, D.~Eynard, F.~Monti, and M.~Bronstein,
 D.~Xu, C.~Ruan, E.~Korpeoglu, S.~Kumar, and K.~Achan, ``Inductive
   representation learning on temporal graphs,'' in \emph{International
   Conference on Learning Representations (ICLR)}, 2020.
+
+\bibitem{godfrey2005evolution}
+M.~W. Godfrey and L.~Zou, ``Using origin analysis to detect merging and
+  splitting of source code entities,'' in \emph{IEEE Transactions on Software
+  Engineering}, vol.~31, no.~2.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
+  2005, pp. 166--181.
 
 \bibitem{dig2006automated}
 D.~Dig and R.~Johnson, ``Automated detection of refactorings in evolving

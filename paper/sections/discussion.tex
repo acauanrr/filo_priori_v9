@@ -14,7 +14,7 @@ deep learning-based test case prioritization:
 \textbf{1. Graph Neural Networks are Essential.}
 The ablation study (RQ2) demonstrates that Graph Attention Networks (GATv2)
 contribute the most to Filo-Priori's performance (+17.0\%). This confirms
-our hypothesis that modeling test case relationships through a phylogenetic
+our hypothesis that modeling test case relationships through a multi-edge
 graph captures valuable structural information that traditional approaches miss.
 The multi-edge graph, which represents co-failure, co-success, and semantic
 similarity relationships, enables the model to learn complex dependencies
@@ -23,7 +23,7 @@ between test cases.
 \textbf{2. Simpler Architectures May Suffice.}
 Contrary to initial expectations, our sensitivity analysis (RQ4) shows that
 simpler GNN architectures (1 layer, 2 heads) outperform deeper ones
-(2 layers, 4 heads). This suggests that the phylogenetic relationships in
+(2 layers, 4 heads). This suggests that the test relationships in
 our dataset can be captured with shallow message passing, and deeper
 architectures may introduce unnecessary complexity or overfitting.
 
@@ -43,7 +43,7 @@ in CI/CD pipelines where models must handle evolving codebases.
 
 Our results are consistent with recent findings in the TCP literature.
 The APFD of 0.62-0.66 achieved by Filo-Priori is comparable to state-of-the-art
-methods reported in recent surveys~\cite{tcp_survey_2023}. However, direct
+methods reported in recent surveys~\cite{hasnain2023systematic}. However, direct
 comparison is challenging due to differences in datasets and evaluation
 protocols.
 

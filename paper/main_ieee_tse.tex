@@ -72,7 +72,7 @@
 %------------------------------------------------------------------------------
 % TITLE
 %------------------------------------------------------------------------------
-\title{Filo-Priori: A Phylogenetic Approach to Test Case Prioritization}
+\title{Filo-Priori: A Dual-Stream Deep Learning Approach to Test Case Prioritization}
 
 %------------------------------------------------------------------------------
 % AUTHORS
@@ -100,18 +100,18 @@
 \begin{abstract}
 Test Case Prioritization (TCP) aims to order test cases to maximize early fault
 detection in Continuous Integration (CI) environments. Existing approaches treat
-software versions as linear time series, failing to capture the complex branching
-and merging patterns that characterize real-world development. We propose a paradigm
-shift: treating software evolution as a \textbf{phylogenetic tree}, where commits
-represent taxa and the Git DAG captures evolutionary relationships.
+software versions as linear time series, failing to capture the complex relationships
+between test cases that characterize real-world testing. We propose a
+\textbf{dual-stream architecture} that combines semantic understanding of test
+cases with structural patterns learned from execution history.
 
-We present \filopriori{}, a bio-inspired deep learning approach that introduces:
-(1) a \textbf{Phylogenetic Graph} that respects the topology of the Git DAG,
-encoding evolutionary distances between commits; (2) a \textbf{Phylo-Encoder}
-using Gated Graph Neural Networks (GGNN) to propagate failure signals through
-evolutionary history; (3) \textbf{Hierarchical Attention} at micro (code), meso
-(call graph), and macro (history) levels; and (4) \textbf{Ranking-Aware Training}
-combining Focal Loss with RankNet-style pairwise loss aligned with APFD.
+We present \filopriori{}, a deep learning approach that introduces:
+(1) a \textbf{Multi-Edge Test Relationship Graph} encoding co-failure,
+co-success, and semantic similarity relationships between test cases;
+(2) a \textbf{Dual-Stream Architecture} combining semantic embeddings (SBERT)
+with Graph Attention Networks (GAT) for structural feature learning;
+(3) \textbf{Cross-Attention Fusion} for dynamic modality combination; and
+(4) \textbf{Weighted Focal Loss} for handling severe class imbalance (37:1).
 
 We evaluate \filopriori{} on an industrial dataset containing 277 builds with
 failing tests and 52,102 test executions. Results show a mean APFD of 0.6413,
@@ -119,16 +119,16 @@ representing 14.6\% improvement over random ordering ($p < 0.001$) and 2.0\%
 over the strongest baseline. Ablation reveals Graph Attention contributes +17.0\%
 to performance. Temporal validation confirms robustness (APFD: 0.619--0.663).
 
-This work introduces the phylogenetic metaphor to TCP, providing a principled
-framework for modeling software evolution. Our replication package is publicly available.
+This work demonstrates the effectiveness of combining semantic and structural
+information for TCP through graph neural networks. Our replication package is publicly available.
 \end{abstract}
 
 %------------------------------------------------------------------------------
 % KEYWORDS
 %------------------------------------------------------------------------------
 \begin{IEEEkeywords}
-Test Case Prioritization, Phylogenetic Analysis, Software Evolution, Graph Neural Networks,
-Git DAG, Continuous Integration, Hierarchical Attention, Ranking-Aware Learning
+Test Case Prioritization, Graph Attention Networks, Deep Learning,
+Continuous Integration, Dual-Stream Architecture, Class Imbalance
 \end{IEEEkeywords}
 }
 
@@ -152,70 +152,70 @@ The goal is to execute tests most likely to fail first, providing faster feedbac
 to developers. The effectiveness of TCP is typically measured using the Average
 Percentage of Faults Detected (APFD) metric~\cite{rothermel1999test}.
 
-\textbf{The Problem with Linear History.} Existing TCP approaches, whether based
+\textbf{The Challenge of Test Relationships.} Existing TCP approaches, whether based
 on coverage~\cite{rothermel2001prioritizing}, historical failure~\cite{kim2002history},
-or machine learning~\cite{spieker2017reinforcement, pan2022test}, share a common
-limitation: they treat software history as a \emph{linear time series}. This
-assumption ignores the rich branching and merging structure inherent in version
-control systems like Git, where development proceeds through parallel branches,
-feature branches, and merge commits~\cite{german2009evolution}.
+or machine learning~\cite{spieker2017reinforcement, pan2022test}, often treat
+test cases as independent entities. This assumption ignores the rich relationships
+between test cases: tests that fail together often indicate related functionality,
+tests with similar descriptions target similar code, and historical patterns
+reveal systematic dependencies~\cite{german2009evolution}.
 
-\textbf{A Paradigm Shift: The Phylogenetic Metaphor.} We propose a fundamental
-reconceptualization of software evolution, drawing inspiration from computational
-phylogenetics in biology~\cite{felsenstein2004phylogenetics}. In phylogenetics,
-species (taxa) evolve through branching processes captured by phylogenetic trees.
-We observe a striking parallel: software versions (commits) evolve through
-branching processes captured by the Git Directed Acyclic Graph (DAG).
+\textbf{A Dual-Stream Approach.} We propose combining two complementary information
+sources for TCP: (1) \emph{semantic information} from test descriptions and commit
+messages, and (2) \emph{structural information} from test execution history and
+test relationships. This dual-stream approach captures both what tests do
+(semantics) and how they behave (structure).
 
-Table~\ref{tab:phylo_mapping} presents our conceptual mapping between biological
-and software engineering domains:
+Table~\ref{tab:feature_types} presents the two types of features we combine:
 
 \begin{table}[h]
 \centering
-\caption{Mapping from Biology to Software Engineering}
-\label{tab:phylo_mapping}
+\caption{Dual-Stream Feature Types}
+\label{tab:feature_types}
 \begin{tabular}{ll}
 \toprule
-\textbf{Biology Concept} & \textbf{Software Engineering} \\
+\textbf{Semantic Features} & \textbf{Structural Features} \\
 \midrule
-Taxon/Species & Commit/Version \\
-DNA Sequence & Source Code / AST \\
-Mutation (SNP) & Code Diff \\
-Phylogenetic Tree & Git DAG \\
-Phylogenetic Signal & Failure Autocorrelation \\
-Common Ancestor & Merge Base \\
+Test case summary & Historical failure rate \\
+Test case steps & Recent failure trend \\
+Commit messages & Test age (builds since first run) \\
+Code changes (diff) & Flakiness rate \\
+-- & Co-failure relationships \\
+-- & Consecutive failure streaks \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This metaphor is not merely linguistic---it provides a principled mathematical
-framework. Just as phylogenetic signals (trait similarities due to shared ancestry)
-inform biological predictions, \emph{software phylogenetic signals} (failure
-patterns inherited from ancestral commits) can inform test prioritization.
+The key insight is that semantic similarity alone is insufficient---tests with
+similar descriptions may have very different failure patterns. By combining
+semantic and structural information through Graph Attention Networks, we can
+learn which tests are likely to fail based on both their content and their history.
 
-In this paper, we present \filopriori{}, a bio-inspired deep learning approach for
-Test Case Prioritization that operationalizes this metaphor through four key innovations:
+In this paper, we present \filopriori{}, a deep learning approach for
+Test Case Prioritization that combines semantic and structural information through
+four key innovations:
 
 \begin{enumerate}
-    \item \textbf{Phylogenetic Graph Representation}: We construct a graph that
-    respects the Git DAG topology, computing phylogenetic distances between commits
-    based on shortest paths and merge complexity. This captures the evolutionary
-    context that linear approaches ignore~\cite{godfrey2005evolution}.
+    \item \textbf{Multi-Edge Test Relationship Graph}: We construct a graph that
+    captures multiple types of relationships between test cases: co-failure edges
+    (tests that fail together), co-success edges (tests that pass together), and
+    semantic similarity edges (tests with similar descriptions). This multi-edge
+    approach increases graph density and captures complementary relationships.
 
-    \item \textbf{Phylo-Encoder (GGNN Temporal)}: We employ a Gated Graph Neural
-    Network~\cite{li2016gated} to propagate information from ancestral commits to
-    descendants, weighted by phylogenetic distance. This mimics how traits propagate
-    through evolutionary trees in phylogenetics~\cite{felsenstein2004phylogenetics}.
+    \item \textbf{Dual-Stream Architecture}: We employ a dual-stream model that
+    processes semantic features (SBERT embeddings of test descriptions and commit
+    messages) and structural features (historical execution patterns) through
+    separate neural networks before fusion.
 
-    \item \textbf{Hierarchical Attention Mechanism}: We introduce attention at three
-    levels: \emph{micro} (code tokens), \emph{meso} (call graph structure), and
-    \emph{macro} (commit history). This multi-scale approach captures dependencies
-    from fine-grained code to high-level evolutionary patterns.
+    \item \textbf{Graph Attention Networks for Structural Learning}: We use Graph
+    Attention Networks (GAT)~\cite{velickovic2018graph} to learn representations
+    that capture test relationships, allowing the model to propagate information
+    between related test cases with learned attention weights.
 
-    \item \textbf{Ranking-Aware Training}: We combine Focal Loss~\cite{lin2017focal}
-    for class imbalance with RankNet-style pairwise loss~\cite{burges2005learning}
-    aligned with APFD, plus a novel \emph{phylogenetic regularization} term that
-    penalizes predictions inconsistent with evolutionary structure.
+    \item \textbf{Weighted Focal Loss for Class Imbalance}: We employ Weighted
+    Focal Loss~\cite{lin2017focal} to address the severe class imbalance (37:1
+    Pass:Fail ratio) inherent in test execution data, focusing training on
+    hard-to-classify examples while down-weighting easy negatives.
 \end{enumerate}
 
 We evaluate \filopriori{} on an industrial dataset containing 277 builds with
@@ -236,15 +236,15 @@ mechanism is the most critical component, contributing +17.0\% to performance.
 
 \textbf{Contributions.} This paper makes the following contributions:
 \begin{itemize}
-    \item \textbf{Conceptual}: We introduce the phylogenetic metaphor to TCP,
-    providing a principled framework for modeling software evolution that
-    respects the Git DAG topology.
-    \item \textbf{Architectural}: We propose a novel neural architecture combining
-    Phylo-Encoder (GGNN), Code-Encoder (GATv2), and Hierarchical Attention for
-    multi-scale feature fusion.
-    \item \textbf{Methodological}: We define the \emph{phylogenetic distance kernel}
-    for computing evolutionary distances and introduce phylogenetic regularization
-    in the loss function.
+    \item \textbf{Architectural}: We propose a dual-stream neural architecture
+    that combines semantic embeddings (SBERT) with Graph Attention Networks for
+    learning test relationships, using cross-attention fusion for modality combination.
+    \item \textbf{Graph Construction}: We introduce a multi-edge test relationship
+    graph that captures co-failure, co-success, and semantic similarity relationships,
+    providing richer structure than single-edge approaches.
+    \item \textbf{Feature Engineering}: We identify 10 discriminative structural
+    features from an initial set of 29, selected through importance analysis and
+    correlation filtering.
     \item \textbf{Empirical}: We demonstrate effectiveness on an industrial dataset,
     achieving 14.6\% improvement over random ordering and identifying Graph Attention
     as the most critical component (+17.0\% contribution).
@@ -326,55 +326,39 @@ nonlinearity after the linear transformation:
 This modification enables ``dynamic'' attention where attention scores depend
 on both the query and key nodes, providing greater expressiveness.
 
-\subsection{Computational Phylogenetics}
-\label{sec:bg_phylo}
+\subsection{Class Imbalance and Focal Loss}
+\label{sec:bg_focal}
 
-Phylogenetics is the study of evolutionary relationships among organisms based
-on molecular sequences~\cite{felsenstein2004phylogenetics}. Key concepts include:
+Test execution data typically exhibits severe class imbalance, with far more
+passing tests than failing tests. Standard cross-entropy loss is dominated by
+the majority class, leading to models that predict ``pass'' for nearly all tests.
 
-\textbf{Phylogenetic Trees}: Branching diagrams representing evolutionary
-relationships, where internal nodes represent ancestral species and leaf nodes
-represent extant species (taxa).
-
-\textbf{Phylogenetic Distance}: The evolutionary distance between two taxa,
-typically computed as the path length in the tree, often weighted by branch
-lengths representing time or mutation rates.
-
-\textbf{Phylogenetic Signal}: The tendency for related species to resemble each
-other more than random species. Statistically, this represents autocorrelation
-in traits due to shared ancestry.
-
-In software engineering, we observe analogous structures:
-\begin{itemize}
-    \item The \textbf{Git DAG} is a phylogenetic tree where commits are taxa
-    \item \textbf{Code diffs} are mutations between ancestral and descendant code
-    \item \textbf{Failure patterns} exhibit phylogenetic signal---tests that fail
-    in parent commits often fail in child commits
-\end{itemize}
-
-This parallel motivates our approach: we apply phylogenetic distance kernels
-to weight information propagation through the Git history graph.
-
-\subsection{Learning to Rank}
-\label{sec:bg_ltr}
-
-Learning to Rank (LTR) is a family of machine learning techniques for optimizing
-ranking functions~\cite{liu2009learning}. LTR approaches are categorized as:
-\begin{itemize}
-    \item \textbf{Pointwise}: Treat ranking as classification or regression on individual items.
-    \item \textbf{Pairwise}: Optimize the relative ordering of item pairs.
-    \item \textbf{Listwise}: Directly optimize list-level metrics.
-\end{itemize}
-
-RankNet~\cite{burges2005learning} is a pairwise approach that uses a neural
-network to learn a scoring function. For two items $i$ and $j$ with scores
-$s_i$ and $s_j$, the probability that $i$ should be ranked higher than $j$ is:
+\textbf{Focal Loss}~\cite{lin2017focal} addresses this by down-weighting easy
+examples and focusing on hard ones:
 
 \begin{equation}
-    P_{ij} = \frac{1}{1 + e^{-\sigma(s_i - s_j)}}
+    \text{FL}(p_t) = -\alpha_t (1 - p_t)^\gamma \log(p_t)
 \end{equation}
 
-The loss function is the cross-entropy between predicted and true probabilities.
+where $p_t$ is the predicted probability of the true class, $\alpha_t$ is a
+class-balancing weight, and $\gamma$ is the focusing parameter. When $\gamma > 0$,
+the $(1 - p_t)^\gamma$ term reduces the loss for well-classified examples,
+focusing training on hard negatives.
+
+\subsection{Cross-Attention Mechanisms}
+\label{sec:bg_cross_attn}
+
+Cross-attention allows one sequence (or modality) to attend to another, enabling
+information exchange between different representations. Given queries $Q$ from
+one modality and keys/values $K, V$ from another:
+
+\begin{equation}
+    \text{CrossAttn}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+In multi-modal fusion, bidirectional cross-attention allows each modality to
+selectively attend to relevant parts of the other, combining information in a
+learned, adaptive manner.
 
 %------------------------------------------------------------------------------
 % SECTION 3: RELATED WORK
@@ -500,26 +484,26 @@ This section describes the \filopriori{} approach for Test Case Prioritization.
 
 \subsection{Overview}
 
-The \filopriori{} architecture is a hybrid system that
-takes as input: (1) the Git DAG with commit metadata, (2) source code and test
-descriptions, and (3) historical test execution results. It outputs a ranking
-of test cases by predicted failure probability.
+The \filopriori{} architecture is a dual-stream system that
+takes as input: (1) test case descriptions and commit messages (semantic),
+(2) historical test execution patterns (structural), and (3) test relationship
+graph. It outputs a ranking of test cases by predicted failure probability.
 
-The approach consists of three main modules in a \textbf{hybrid architecture}:
+The approach consists of three main modules:
 \begin{enumerate}
-    \item \textbf{Phylo-Encoder LITE}: A lightweight GGNN-based encoder (2 layers,
-    128-dim) that processes the Git DAG, computing phylogenetic distances with
-    a learnable temperature parameter and propagating failure signals through
-    evolutionary history.
-    \item \textbf{Code-Encoder}: A GATv2-based encoder that processes the test
-    relationship graph, capturing co-failure and semantic dependencies between tests.
-    \item \textbf{Cross-Attention Fusion}: Combines Phylo-Encoder outputs with
-    GATv2 structural features via element-wise addition, then fuses with semantic
-    features through cross-attention for final classification.
+    \item \textbf{Semantic Stream}: A feed-forward network that processes SBERT
+    embeddings of test descriptions and commit messages, capturing textual
+    similarity between test cases and code changes.
+    \item \textbf{Structural Stream}: A Graph Attention Network (GAT) that processes
+    historical features (failure rate, recency, flakiness) over the test relationship
+    graph, learning to propagate failure signals between related tests.
+    \item \textbf{Cross-Attention Fusion}: Bidirectional cross-attention that
+    fuses semantic and structural representations, allowing each modality to
+    attend to the other for final classification.
 \end{enumerate}
 
-This hybrid design balances scientific novelty (phylogenetic encoding) with
-proven performance (GATv2), achieving better results than either approach alone.
+This dual-stream design captures both what tests do (semantics) and how they
+behave (structure), combining complementary information sources.
 
 \subsection{Semantic Feature Extraction}
 
@@ -559,136 +543,154 @@ We extract 10 structural features capturing historical execution patterns:
 These features were selected from an initial set of 29 features based on
 feature importance analysis and correlation filtering.
 
-\subsection{Phylogenetic Graph Construction}
+\subsection{Test Relationship Graph Construction}
 
-We construct two complementary graphs:
+We construct a multi-edge graph where nodes represent test cases and edges
+capture different types of relationships:
 
-\textbf{Commit Graph (Git DAG)}: Nodes represent commits, edges represent
-parent-child relationships from the Git history. For a commit $c_{curr}$ and
-its $k$ ancestors, we extract a subgraph preserving the DAG topology.
-
-\textbf{Phylogenetic Distance Kernel}: We compute evolutionary distance as:
-\begin{equation}
-    d_{phylo}(c_i, c_j) = \text{shortest\_path}(c_i, c_j) \times \beta^{n_{merges}}
-\end{equation}
-where $n_{merges}$ is the number of merge commits on the path and $\beta = 0.9$
-is a decay factor. This captures the intuition that merges represent
-evolutionary synchronization points that reset divergence.
-
-\textbf{Test Relationship Graph}: Nodes represent test cases, with three edge types:
+\textbf{Edge Types}: We define three complementary edge types:
 \begin{enumerate}
     \item \textbf{Co-Failure Edges} (weight 1.0): Connect tests that fail
-    together, capturing fault-related dependencies.
+    together in the same build, capturing fault-related dependencies. If tests
+    $t_i$ and $t_j$ both fail in build $b$, we add edge $(t_i, t_j)$.
     \item \textbf{Co-Success Edges} (weight 0.5): Connect tests that pass
-    together, capturing functional similarity.
+    together, capturing functional similarity. Lower weight reflects that
+    passing together is less informative than failing together.
     \item \textbf{Semantic Edges} (weight 0.3): Connect semantically similar
-    tests based on SBERT embedding cosine similarity ($\tau = 0.75$).
+    tests based on SBERT embedding cosine similarity ($\tau = 0.75$). This
+    captures tests targeting similar functionality even without co-occurrence.
 \end{enumerate}
 
-This multi-edge approach increases graph density from 0.02\% to 0.5-1.0\%.
+\textbf{Graph Construction Algorithm}:
+\begin{enumerate}
+    \item For each build in training data, identify all test pairs that fail together
+    \item Count co-occurrences across all builds
+    \item Filter edges with fewer than 1 co-occurrence (min\_co\_occurrences = 1)
+    \item Compute semantic similarity for all test pairs, add edges above threshold
+    \item Combine edges with type-specific weights
+\end{enumerate}
 
-\subsection{Phylo-Encoder LITE}
+This multi-edge approach increases graph density from 0.02\% (co-failure only)
+to 0.5-1.0\% (all edge types), providing richer connectivity for message passing.
 
-The Phylo-Encoder LITE is a lightweight GGNN-based encoder (2 layers, 128-dim)
-that learns representations from the Git DAG using a Gated Graph Neural
-Network~\cite{li2016gated}:
+\subsection{Semantic Stream}
 
+The Semantic Stream processes text embeddings using a feed-forward network
+with residual connections:
+
+\textbf{Input}: SBERT embeddings of concatenated test case description and
+commit message (1536 dimensions = 768 TC + 768 Commit).
+
+\textbf{Architecture}: The stream consists of:
+\begin{enumerate}
+    \item Input projection: Linear layer projecting 1536-dim to 256-dim
+    \item Two residual FFN blocks, each containing:
+    \begin{itemize}
+        \item Linear (256 $\rightarrow$ 1024)
+        \item GELU activation
+        \item Dropout (0.3)
+        \item Linear (1024 $\rightarrow$ 256)
+        \item Dropout (0.3)
+        \item LayerNorm
+    \end{itemize}
+    \item Output LayerNorm
+\end{enumerate}
+
+The output is a 256-dimensional semantic representation for each test case.
+
+\subsection{Structural Stream (Graph Attention Network)}
+
+The Structural Stream processes historical features over the test relationship
+graph using Graph Attention Networks~\cite{velickovic2018graph}:
+
+\textbf{Input}: 10 structural features per test case (failure\_rate,
+recent\_failure\_rate, test\_age, flakiness\_rate, etc.).
+
+\textbf{GAT Architecture}: We use two GAT layers:
+\begin{enumerate}
+    \item \textbf{Layer 1}: Multi-head attention (4 heads) with concatenation
+    \begin{equation}
+        h_i^{(1)} = \|_{k=1}^{4} \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}^k \mathbf{W}^k h_j^{(0)}\right)
+    \end{equation}
+    where $\alpha_{ij}^k$ are learned attention coefficients for head $k$.
+    Output dimension: $256 \times 4 = 1024$.
+
+    \item \textbf{Layer 2}: Single-head attention with averaging, producing
+    256-dimensional output per test case.
+\end{enumerate}
+
+\textbf{Edge Weights}: The GAT layers incorporate edge weights from the multi-edge
+graph, allowing the model to learn that co-failure relationships (weight 1.0)
+are more important than semantic similarity (weight 0.3).
+
+\subsection{Cross-Attention Fusion}
+
+The Cross-Attention Fusion module combines semantic and structural representations
+through bidirectional attention:
+
+\textbf{Bidirectional Cross-Attention}: Each modality attends to the other,
+allowing semantic features to be informed by structural patterns and vice versa:
+
+\begin{enumerate}
+    \item \textbf{Semantic $\rightarrow$ Structural}: Semantic features query
+    structural features:
+    \begin{equation}
+        h_{sem}' = h_{sem} + \text{MHA}(h_{sem}, h_{struct}, h_{struct})
+    \end{equation}
+
+    \item \textbf{Structural $\rightarrow$ Semantic}: Structural features query
+    semantic features:
+    \begin{equation}
+        h_{struct}' = h_{struct} + \text{MHA}(h_{struct}, h_{sem}, h_{sem})
+    \end{equation}
+\end{enumerate}
+
+where $\text{MHA}(Q, K, V)$ denotes multi-head attention with query $Q$,
+key $K$, and value $V$.
+
+Each attention uses 4 heads with 256-dimensional queries/keys/values, followed
+by LayerNorm for stability.
+
+\textbf{Feature Concatenation}: The attended features are concatenated:
 \begin{equation}
-    h_c^{(t)} = \text{GRU}\left(h_c^{(t-1)}, \sum_{c' \in \mathcal{N}(c)} w_{phylo}(c, c') \cdot h_{c'}^{(t-1)}\right)
+    h_{fused} = [h_{sem}' \| h_{struct}']
 \end{equation}
 
-where $w_{phylo}(c, c') = \exp(-d_{phylo}(c, c') / \tau)$ are phylogenetic weights
-with \textbf{learnable temperature} $\tau$. This allows the model to adaptively
-control the influence of phylogenetic distance during training.
+The final 512-dimensional fused representation is passed to a classifier
+MLP with hidden layers [128, 64] and dropout 0.4.
 
-The key innovation is the \textbf{Phylogenetic Distance Kernel} with learnable
-temperature, which enables failure information to propagate from ancestors to
-descendants weighted by evolutionary distance. Closer commits in the DAG have
-stronger influence, capturing the intuition that related code changes exhibit
-similar failure patterns.
+\subsection{Training with Weighted Focal Loss}
 
-For commit messages, we use SBERT~\cite{reimers2019sentence} to obtain semantic
-embeddings (768-dim), which are projected to 128-dim as initial node features $h_c^{(0)}$.
-
-\subsection{Code-Encoder (GATv2)}
-
-The Code-Encoder processes the test relationship graph using GATv2~\cite{brody2022attentive}:
-
-\textbf{Input}: Semantic embeddings (768-dim from SBERT) concatenated with
-structural features (10-dim), projected to 128 dimensions.
-
-\textbf{GATv2 Layer}: We use dynamic attention~\cite{brody2022attentive}:
-\begin{equation}
-    \alpha_{ij} = \text{softmax}_j\left(\vec{a}^T \cdot \text{LeakyReLU}\left(\mathbf{W}[\vec{h}_i \| \vec{h}_j]\right)\right)
-\end{equation}
-
-With 2 attention heads, the output is 64-dimensional per test case.
-
-\subsection{Hybrid Fusion Architecture}
-
-The hybrid architecture combines phylogenetic and structural features through
-a two-stage fusion process:
-
-\textbf{Stage 1: Phylo-Structural Combination}. The Phylo-Encoder outputs
-($h_{phylo} \in \mathbb{R}^{128}$) are first projected to match the GATv2
-output dimension:
-\begin{equation}
-    h_{phylo}' = \text{LayerNorm}(\text{GELU}(W_{proj} \cdot h_{phylo}))
-\end{equation}
-where $W_{proj} \in \mathbb{R}^{256 \times 128}$. Then, phylo and structural
-features are combined via element-wise addition:
-\begin{equation}
-    h_{combined} = h_{structural} + h_{phylo}'
-\end{equation}
-
-This additive fusion allows phylogenetic information to augment structural
-features without increasing model complexity.
-
-\textbf{Stage 2: Cross-Attention Fusion}. The combined structural-phylo
-representation is fused with semantic features using bidirectional cross-attention:
-\begin{equation}
-    h_{fused} = \text{CrossAttn}(h_{semantic}, h_{combined})
-\end{equation}
-
-The final 512-dimensional fused representation ($h_{semantic} \| h_{combined}$)
-is passed to a classifier with hidden layers [128, 64] and dropout 0.2.
-
-\subsection{Ranking-Aware Training}
-
-We use a combined loss function with three components:
+We use Weighted Focal Loss~\cite{lin2017focal} to address the severe class
+imbalance (37:1 Pass:Fail ratio) in test execution data:
 
 \begin{equation}
-    \mathcal{L} = \lambda_1 \cdot \mathcal{L}_{focal} + \lambda_2 \cdot \mathcal{L}_{rank} + \lambda_3 \cdot \mathcal{L}_{phylo}
+    \mathcal{L} = -\alpha \cdot w_t \cdot (1 - p_t)^\gamma \cdot \log(p_t)
 \end{equation}
 
-where $\lambda_1 = 0.7$, $\lambda_2 = 0.3$, and $\lambda_3 = 0.05$. The reduced
-phylogenetic regularization weight (0.05 vs 0.1) was found to improve performance
-by allowing the model more flexibility while still encouraging evolutionary consistency.
+where:
+\begin{itemize}
+    \item $p_t$ is the predicted probability of the true class
+    \item $\alpha = 0.75$ weights the loss toward the minority class
+    \item $\gamma = 2.5$ is the focusing parameter that down-weights easy examples
+    \item $w_t$ is the class weight (computed as inverse frequency)
+\end{itemize}
 
-\textbf{Focal Loss}~\cite{lin2017focal} handles the 37:1 class imbalance:
-\begin{equation}
-    \mathcal{L}_{focal} = -\alpha_t (1 - p_t)^\gamma \log(p_t)
-\end{equation}
-with $\alpha = [0.15, 0.85]$ and $\gamma = 2.5$.
+\textbf{Why Weighted Focal Loss?} Standard cross-entropy is dominated by the
+majority class (Pass), leading to models that predict ``Pass'' for nearly all
+test cases. Focal Loss addresses this by reducing the contribution of easy
+examples (confident Pass predictions) while focusing on hard examples (uncertain
+predictions and Fail cases). The additional class weighting further rebalances
+the loss toward the minority class.
 
-\textbf{Ranking Loss} (RankNet-style) aligns with APFD:
-\begin{equation}
-    \mathcal{L}_{rank} = \log(1 + e^{-(s_{fail} - s_{pass} - m)})
-\end{equation}
-where $s_{fail}$ and $s_{pass}$ are scores for fail/pass test cases within
-the same build, and $m = 0.5$ is the margin.
-
-\textbf{Phylogenetic Regularization} penalizes predictions inconsistent with
-evolutionary structure:
-\begin{equation}
-    \mathcal{L}_{phylo} = \sum_{(c_i, c_j) \in E_{DAG}} w_{phylo}(c_i, c_j) \cdot |p(c_i) - p(c_j)|
-\end{equation}
-
-This encourages similar failure predictions for phylogenetically close commits,
-encoding the inductive bias that evolutionary proximity implies behavioral similarity.
-
-We apply hard negative mining, selecting the top-5 hardest pass examples
-per build for ranking loss computation.
+\textbf{Training Configuration}:
+\begin{itemize}
+    \item Optimizer: AdamW with learning rate $3 \times 10^{-5}$
+    \item Weight decay: $1 \times 10^{-4}$
+    \item Scheduler: Cosine annealing with $\eta_{min} = 1 \times 10^{-6}$
+    \item Early stopping: Patience 15, monitoring validation F1-macro
+    \item Gradient clipping: Max norm 1.0
+\end{itemize}
 
 %------------------------------------------------------------------------------
 % SECTION 5: EXPERIMENTAL DESIGN
@@ -794,32 +796,34 @@ We compare against eight baselines:
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented \filopriori{}, a bio-inspired approach for Test Case Prioritization
-that introduces the phylogenetic metaphor to software testing. By treating the
-Git DAG as an evolutionary tree and computing phylogenetic distances between
-commits, we provide a principled framework for modeling software evolution
-that existing linear approaches ignore.
+We presented \filopriori{}, a dual-stream deep learning approach for Test Case
+Prioritization that combines semantic understanding with structural pattern
+learning. By modeling test relationships through multi-edge graphs and using
+Graph Attention Networks for message passing, we capture complex dependencies
+between test cases that simpler approaches ignore.
 
 Our key contributions include:
 \begin{itemize}
-    \item The first application of computational phylogenetics concepts to TCP,
-    including phylogenetic distance kernels and evolutionary regularization.
-    \item A novel architecture combining Phylo-Encoder (GGNN), Code-Encoder (GATv2),
-    and Hierarchical Attention at micro/meso/macro scales.
+    \item A dual-stream architecture combining SBERT semantic embeddings with
+    Graph Attention Networks for structural feature learning.
+    \item Multi-edge test relationship graphs capturing co-failure, co-success,
+    and semantic similarity relationships.
+    \item Careful feature engineering identifying 10 discriminative structural
+    features from historical execution patterns.
     \item Empirical validation showing 14.6\% improvement over random ordering
     ($p < 0.001$) with Graph Attention contributing +17.0\% to performance.
     \item Robust temporal generalization (APFD: 0.619--0.663 across time periods).
 \end{itemize}
 
-The phylogenetic metaphor is not merely linguistic---it provides mathematical
-foundations (distance kernels, signal propagation) that align with how software
-actually evolves through branching and merging.
+The ablation study reveals that Graph Attention is the most critical component,
+validating our hypothesis that modeling test relationships through graphs is
+more effective than treating tests as independent entities.
 
-\textbf{Future Work.} We plan to: (1) evaluate on additional datasets with rich
-Git histories, (2) extend the phylogenetic model to incorporate mutation rates
-(code churn) as branch lengths, (3) investigate cross-project transfer learning
-using phylogenetic embeddings, and (4) develop real-time prioritization integrated
-with CI/CD pipelines.
+\textbf{Future Work.} We plan to: (1) evaluate on additional industrial datasets
+with different test suite characteristics, (2) investigate dynamic graph
+construction that evolves with the test suite, (3) explore cross-project transfer
+learning using pre-trained embeddings, and (4) develop real-time prioritization
+integrated with CI/CD pipelines.
 
 \textbf{Data Availability.} Our replication package, including source code,
 trained models, configuration files, and anonymized dataset, is available at:

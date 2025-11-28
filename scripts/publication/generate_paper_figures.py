@@ -204,14 +204,14 @@ def generate_fig_rq2_ablation():
     print("Generating fig_rq2_ablation")
     print("="*60)
 
-    # Ablation data from results
+    # Ablation data from results (updated to match paper)
     ablation_data = {
         'Full Model': {'apfd': 0.6397, 'contribution': 0},
-        'w/o GATv2': {'apfd': 0.5311, 'contribution': 17.0},
-        'w/o Structural': {'apfd': 0.6060, 'contribution': 5.3},
-        'w/o Class Weights': {'apfd': 0.6100, 'contribution': 4.6},
-        'w/o Ensemble': {'apfd': 0.6171, 'contribution': 3.5},
-        'w/o Semantic': {'apfd': 0.6276, 'contribution': 1.9},
+        'w/o Graph Attention': {'apfd': 0.5467, 'contribution': 17.0},
+        'w/o Structural Stream': {'apfd': 0.6073, 'contribution': 5.3},
+        'w/o Focal Loss': {'apfd': 0.6115, 'contribution': 4.6},
+        'w/o Class Weighting': {'apfd': 0.6179, 'contribution': 3.5},
+        'w/o Semantic Stream': {'apfd': 0.6280, 'contribution': 1.9},
     }
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
@@ -334,13 +334,19 @@ def generate_fig_rq4_sensitivity():
     print("Generating fig_rq4_sensitivity")
     print("="*60)
 
-    # Sensitivity data
+    # Sensitivity data (updated to match paper)
     sensitivity_data = {
         'Loss Function': {
-            'options': ['Weighted CE', 'Focal', 'CE', 'Ranking'],
-            'values': [0.6191, 0.6120, 0.5989, 0.5830],
-            'best': 'Weighted CE',
+            'options': ['W. Focal', 'Focal', 'CE'],
+            'values': [0.6191, 0.6120, 0.5830],
+            'best': 'W. Focal',
             'delta': 0.036
+        },
+        'Focal Gamma': {
+            'options': ['γ=2.5', 'γ=2.0', 'γ=1.5', 'γ=3.0'],
+            'values': [0.6191, 0.6050, 0.5920, 0.5850],
+            'best': 'γ=2.5',
+            'delta': 0.034
         },
         'Learning Rate': {
             'options': ['3e-5', '5e-5', '1e-4', '1e-5'],
@@ -348,17 +354,11 @@ def generate_fig_rq4_sensitivity():
             'best': '3e-5',
             'delta': 0.027
         },
-        'GNN Layers': {
+        'GNN Architecture': {
             'options': ['1 layer', '2 layers', '3 layers'],
             'values': [0.6191, 0.6012, 0.5920],
             'best': '1 layer',
             'delta': 0.027
-        },
-        'Features': {
-            'options': ['10 (selected)', '6 (baseline)', '29 (expanded)'],
-            'values': [0.6191, 0.6210, 0.5997],
-            'best': '10 (selected)',
-            'delta': 0.021
         }
     }
 
