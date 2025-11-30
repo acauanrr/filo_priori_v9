@@ -1,41 +1,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TABLE: RSL Primary Studies Summary
+% TABLE: RSL Primary Studies Summary (Compact Version)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Note: Following IEEE TSE convention, we present a compact summary focusing
+% on the most relevant prior work for our contributions.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{table*}[htbp]
+\begin{table}[h]
 \centering
-\caption{Summary of Primary Studies from Systematic Literature Review}
+\caption{Key Prior Work Categories}
 \label{tab:rsl_studies}
 \small
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{p{0.5cm}p{4.5cm}p{2.0cm}p{1.3cm}p{6.5cm}}
+\begin{tabular}{lp{6cm}}
 \toprule
-\textbf{ID} & \textbf{Study} & \textbf{Technique} & \textbf{Source} & \textbf{Relevance to Our Work} \\
+\textbf{Category} & \textbf{Representative Work} \\
 \midrule
-\multicolumn{5}{l}{\textit{Graph Neural Networks for Software Engineering}} \\
-\midrule
-S1 & Bus-Centric Temporal GNN for Fault Localization & Temporal GNN & IEEE & Temporal graph modeling for fault detection \\
-S2 & Temporal Graph Transformer Network & Graph Transformer & IEEE & Attention mechanisms on temporal graphs \\
-S3 & Towards Better GNN-Based Fault Localization & GNN + FL & ACM & GNN architecture design for code analysis \\
-S4 & PAFL: Project-Specific Fault Patterns & Pattern Learning & ACM & Leveraging historical patterns \\
-\midrule
-\multicolumn{5}{l}{\textit{Deep Learning for Test Case Prioritization}} \\
-\midrule
-S5 & TCP-Net: End-to-End DNN for TCP & DNN & IEEE & Direct ranking from test execution data \\
-S6 & Analysis vs Learning-Based Regression Testing & Hybrid ML & IEEE & Combining static and dynamic analysis \\
-S7 & BTTackler & Build-aware & ACM & CI-specific prioritization strategies \\
-\midrule
-\multicolumn{5}{l}{\textit{Software Evolution and Code Intelligence}} \\
-\midrule
-S8 & Sharing Software-Evolution Datasets & Datasets & ACM & Benchmarks for evolution analysis \\
-S9 & Deep Learning for Code Intelligence & DL Survey & ACM & Comprehensive DL techniques review \\
-S10 & Fault Localization via Co-Change & Co-change & ACM & Evolution patterns for faults \\
-S11 & Automated Repair Meets RT & APR + RT & ACM & Testing and repair integration \\
-S12 & ML-Enabled Software Systems & ML Systems & ACM & ML engineering challenges \\
+\textit{RL-based TCP} & RETECS~\cite{spieker2017reinforcement}, Bagherzadeh et al.~\cite{bagherzadeh2022reinforcement} \\
+\textit{DL-based TCP} & DeepOrder~\cite{chen2023deeporder}, TCP-Net~\cite{abdelkarim2022tcp} \\
+\textit{GNN for SE} & GraphCodeBERT~\cite{guo2021graphcodebert}, Lou et al.~\cite{lou2024towards} \\
+\textit{Coverage-based} & Rothermel et al.~\cite{rothermel2001prioritizing}, Elbaum et al.~\cite{elbaum2002test} \\
 \bottomrule
-\end{tabular}}%
+\end{tabular}
 \begin{tablenotes}
 \small
-\item Search: ``(TCP OR Regression Testing) AND (GNN OR Deep Learning OR Software Evolution)''. Databases: IEEE Xplore, ACM DL. Period: 2019--2025.
+\item RSL: 127 initial papers (2019--2025), 12 primary studies selected.
 \end{tablenotes}
-\end{table*}
+\end{table}

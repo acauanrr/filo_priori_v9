@@ -1,0 +1,249 @@
+# =============================================================================
+# Experimento Industry V13 - Stronger Ranking Focus
+# =============================================================================
+# Objetivo: Superar DeepOrder (0.6500 APFD) with stronger ranking signal
+#
+# CHANGES from V12:
+# - ranking.weight: 0.2 -> 0.4 (stronger ranking, but still stable)
+# - ranking.margin: 0.5 -> 0.7 (larger margin for better separation)
+# - ranking.hard_negative_percent: 0.2 -> 0.3 (more hard negatives)
+# - ranking.start_epoch: 5 -> 3 (earlier ranking)
+# - early_stopping.patience: 20 -> 25 (more exploration time)
+# =============================================================================
+
+experiment:
+  name: "experiment_industry_v13"
+  version: "13.0"
+  description: "V3 features + stronger ranking (0.4 weight)"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text and Embedding
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Embedding
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 32
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache/01_industry"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 32
+
+# =============================================================================
+# STRUCTURAL FEATURES V3 - DeepOrder Enhanced
+# =============================================================================
+structural:
+  input_dim: 14  # V3: 14 features
+  extractor:
+    use_v3: true  # Use V3 extractor
+    recent_window: 10  # Extended window
+    very_recent_window: 3
+    medium_term_window: 20
+    min_history: 2
+    decay_alpha: 0.1
+    max_time_since_failure: 50.0
+    cache_path: "cache/01_industry/structural_features_v3.pkl"
+
+# Graph Configuration
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/01_industry/multi_edge_graph.pkl"
+  type: "co_failure"
+
+# Model Architecture
+model:
+  type: "dual_stream"
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  structural:
+    input_dim: 14  # V3: 14 features
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.1
+    activation: "elu"
+
+  fusion:
+    input_dim: 320
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.2
+
+# =============================================================================
+# TRAINING - STRONGER RANKING FOCUS
+# =============================================================================
+training:
+  num_epochs: 60  # More epochs
+  epochs: 60
+  batch_size: 32
+  learning_rate: 0.00003  # 3e-5
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 8
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 25  # CHANGED: More patience for exploration
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  sampling:
+    use_balanced_sampling: false
+
+  # WEIGHTED FOCAL LOSS
+  loss:
+    type: "weighted_focal"
+    use_class_weights: true
+    focal_alpha: 0.75
+    focal_gamma: 2.5
+    label_smoothing: 0.0
+
+  # =============================================================================
+  # RANKING LOSS - STRONGER BUT STABLE
+  # =============================================================================
+  ranking:
+    enabled: true
+    use_grouped_sampler: true
+    weight: 0.4  # CHANGED: 0.2 -> 0.4 (stronger ranking)
+    loss_type: "logistic"
+    score_type: "logit"
+    margin: 0.7  # CHANGED: 0.5 -> 0.7 (larger margin)
+    hard_negative_top_k: 5
+    hard_negative_percent: 0.3  # CHANGED: 0.2 -> 0.3 (more hard negatives)
+    max_pairs_per_build: 50
+    start_epoch: 3  # CHANGED: 5 -> 3 (earlier ranking)
+
+# Legacy loss config
+loss:
+  type: "weighted_focal"
+  focal_alpha: 0.75
+  focal_gamma: 2.5
+  label_smoothing: 0.0
+
+# Threshold Optimization
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+# Ranking
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System
+system:
+  device: "cuda"
+  num_workers: 2
+  pin_memory: true
+  use_amp: false
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  num_workers: 2
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_industry_v13"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true

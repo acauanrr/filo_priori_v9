@@ -448,34 +448,41 @@ metaphor to TCP or modeled the Git DAG as an evolutionary tree.
 
 \subsection{Comparison with Our Approach}
 
-\filopriori{} differs from prior work in several key aspects (Table~\ref{tab:comparison}):
+\filopriori{} differs from prior work in several key aspects. Table~\ref{tab:comparison}
+presents both architectural differences and empirical performance comparison on
+our industrial dataset:
 
 \begin{table}[h]
 \centering
-\caption{Comparison with Related Approaches}
+\caption{Comparison with State-of-the-Art TCP Approaches}
 \label{tab:comparison}
-\begin{tabular}{lccc}
+\footnotesize
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Approach} & \textbf{Git DAG} & \textbf{GNN} & \textbf{Ranking} \\
+\textbf{Approach} & \textbf{Architecture} & \textbf{GNN} & \textbf{APFD} & \textbf{$\Delta$ vs Random} \\
 \midrule
-RETECS~\cite{spieker2017reinforcement} & No & No & RL \\
-DeepOrder~\cite{chen2023deeporder} & No & No & DL \\
-NodeRank~\cite{vansoest2024noderank} & No & Yes & Heuristic \\
-GraphPrior~\cite{wang2023graphprior} & No & Yes & Mutation \\
-\textbf{\filopriori{}} & \textbf{Yes} & \textbf{Yes} & \textbf{LTR} \\
+DeepOrder~\cite{chen2023deeporder} & Deep NN & No & 0.650 & +22.0\% \\
+\textbf{\filopriori{}} & \textbf{GAT + SBERT} & \textbf{Yes} & \textbf{0.641} & \textbf{+20.3\%} \\
+FailureRate & Heuristic & No & 0.555 & +4.1\% \\
+RETECS~\cite{spieker2017reinforcement} & RL (Q-learning) & No & 0.458 & -14.0\% \\
 \bottomrule
 \end{tabular}
+\begin{tablenotes}
+\small
+\item Results on industrial dataset (371 builds with failures). DeepOrder and \filopriori{}
+show no statistically significant difference ($p = 0.43$, Wilcoxon signed-rank test).
+\end{tablenotes}
 \end{table}
 
 Key differentiators:
 \begin{itemize}
-    \item \textbf{Phylogenetic modeling}: We are the first to treat the Git DAG
-    as a phylogenetic tree, enabling principled distance-weighted propagation.
-    \item \textbf{Hierarchical attention}: We introduce multi-scale attention
-    (micro/meso/macro) not found in prior TCP approaches.
-    \item \textbf{Evolutionary regularization}: Our loss function includes a
-    phylogenetic regularization term penalizing predictions inconsistent with
-    evolutionary structure.
+    \item \textbf{Graph-based modeling}: \filopriori{} is the only approach that
+    explicitly models test relationships using Graph Attention Networks.
+    \item \textbf{Dual-stream architecture}: We combine semantic (SBERT) and
+    structural (GAT) features, unlike DeepOrder which uses only historical features.
+    \item \textbf{Competitive performance}: While DeepOrder achieves slightly
+    higher APFD (0.650 vs 0.641), the difference is not statistically significant,
+    and \filopriori{}'s graph-based design provides interpretability advantages.
 \end{itemize}
 
 %------------------------------------------------------------------------------

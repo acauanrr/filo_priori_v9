@@ -43,6 +43,7 @@ from preprocessing.commit_extractor import CommitExtractor
 from preprocessing.structural_feature_extractor import extract_structural_features, StructuralFeatureExtractor
 from preprocessing.structural_feature_extractor_v2 import StructuralFeatureExtractorV2
 from preprocessing.structural_feature_extractor_v2_5 import StructuralFeatureExtractorV2_5
+from preprocessing.structural_feature_extractor_v3 import StructuralFeatureExtractorV3
 from preprocessing.structural_feature_imputation import impute_structural_features
 from embeddings import EmbeddingManager
 from phylogenetic.phylogenetic_graph_builder import build_phylogenetic_graph
@@ -237,10 +238,23 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
         logger.info(f"  Note: Cache disabled for sample_size={sample_size} to ensure correct shapes")
 
     # Create extractor manually to get access to tc_history for imputation
+    use_v3 = structural_config.get('use_v3', False)
     use_v2 = structural_config.get('use_v2', False)
     use_v2_5 = structural_config.get('use_v2_5', False)
 
-    if use_v2_5:
+    if use_v3:
+        logger.info("  Initializing StructuralFeatureExtractorV3 (14 DeepOrder-enhanced features)...")
+        extractor = StructuralFeatureExtractorV3(
+            recent_window=structural_config.get('recent_window', 10),
+            very_recent_window=structural_config.get('very_recent_window', 3),
+            medium_term_window=structural_config.get('medium_term_window', 20),
+            min_history=structural_config.get('min_history', 2),
+            decay_alpha=structural_config.get('decay_alpha', 0.1),
+            max_time_since_failure=structural_config.get('max_time_since_failure', 50.0),
+            verbose=True
+        )
+        logger.info("  ✓ Using V3 extractor with 14 features (last_verdict, time_since_failure, weighted_failure_rate)")
+    elif use_v2_5:
         logger.info("  Initializing StructuralFeatureExtractorV2.5 (10 selected features)...")
         extractor = StructuralFeatureExtractorV2_5(
             recent_window=structural_config.get('recent_window', 5),

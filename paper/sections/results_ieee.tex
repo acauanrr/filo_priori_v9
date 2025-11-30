@@ -23,49 +23,50 @@ of Faults Detected (APFD) metric, with 95\% bootstrap confidence intervals
 
 \begin{table}[!t]
 \centering
-\caption{Comparison of TCP Methods (sorted by Mean APFD)}
+\caption{Comparison with State-of-the-Art TCP Methods}
 \label{tab:tcp_comparison}
 \footnotesize
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Method} & \textbf{APFD} & \textbf{95\% CI} & \textbf{p} & \textbf{$\Delta$} \\
+\textbf{Method} & \textbf{APFD} & \textbf{95\% CI} & \textbf{p-value} & \textbf{$\Delta$ vs Random} \\
 \midrule
-\textbf{Filo-Priori} & \textbf{0.6413} & {[}0.612, 0.672{]} & -- & \textbf{+14.6\%} \\
-FailureRate & 0.6289 & {[}0.601, 0.658{]} & 0.363 & +12.4\% \\
-XGBoost & 0.6171 & {[}0.589, 0.646{]} & 0.577 & +10.3\% \\
-GreedyHist. & 0.6138 & {[}0.585, 0.643{]} & 0.096 & +9.7\% \\
-LogReg & 0.5964 & {[}0.568, 0.625{]} & 0.185 & +6.6\% \\
-RandomForest & 0.5910 & {[}0.563, 0.620{]} & 0.094 & +5.6\% \\
-Random & 0.5596 & {[}0.531, 0.588{]} & $<$.001 & baseline \\
-RecentFR & 0.5454 & {[}0.517, 0.574{]} & $<$.001 & -2.5\% \\
-Recency & 0.5240 & {[}0.496, 0.553{]} & $<$.001 & -6.4\% \\
+DeepOrder~\cite{chen2023deeporder} & 0.6500 & {[}0.627, 0.673{]} & 0.434 & +22.0\% \\
+\textbf{Filo-Priori} & \textbf{0.6413} & {[}0.611, 0.671{]} & -- & \textbf{+20.3\%} \\
+FailureRate & 0.5549 & {[}0.531, 0.579{]} & 0.003** & +4.1\% \\
+Random & 0.5329 & {[}0.512, 0.554{]} & $<$.001*** & baseline \\
+RETECS~\cite{spieker2017reinforcement} & 0.4583 & {[}0.436, 0.480{]} & $<$.001*** & -14.0\% \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item *** p $<$ 0.001 (Wilcoxon signed-rank test vs \filopriori{})
+\item * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001 (Wilcoxon signed-rank test vs \filopriori{})
+\item DeepOrder and \filopriori{} show no statistically significant difference.
 \end{tablenotes}
 \end{table}
 
 \textbf{Key Findings for RQ1:}
 \begin{itemize}
-    \item \filopriori{} achieves a mean APFD of \textbf{0.6413} (95\% CI: [0.612, 0.672]),
-    representing the highest performance among all evaluated methods.
-    \item This represents a \textbf{14.6\%} improvement over Random ordering
-    (APFD = 0.5596), which is statistically significant ($p < 0.001$, Wilcoxon signed-rank test).
-    \item \filopriori{} outperforms the strongest baseline FailureRate (0.6289)
-    by \textbf{+2.0\%}. While this improvement shows marginal statistical significance,
-    it demonstrates that our approach consistently exceeds well-tuned heuristics.
-    \item \filopriori{} significantly outperforms all recency-based approaches
-    (Recency, RecentFailureRate) with $p < 0.001$.
-    \item Machine learning baselines (XGBoost, LogisticRegression, RandomForest)
-    perform competitively but do not surpass the FailureRate heuristic.
+    \item \filopriori{} achieves a mean APFD of \textbf{0.6413} (95\% CI: [0.611, 0.671]),
+    representing a \textbf{20.3\%} improvement over random ordering ($p < 0.001$).
+    \item DeepOrder~\cite{chen2023deeporder} achieves the highest APFD (0.6500), but
+    the difference from \filopriori{} is \textbf{not statistically significant}
+    ($p = 0.434$, Wilcoxon signed-rank test).
+    \item \filopriori{} significantly outperforms the FailureRate heuristic
+    (0.5549) with $p = 0.003$, demonstrating that our approach exceeds well-tuned
+    history-based baselines.
+    \item RETECS~\cite{spieker2017reinforcement} performs below random ordering
+    (-14.0\%), suggesting that reinforcement learning may require more training
+    data or domain-specific reward engineering for our dataset.
+    \item Both deep learning approaches (DeepOrder, \filopriori{}) significantly
+    outperform heuristic and RL-based methods, validating the effectiveness of
+    neural network-based TCP.
 \end{itemize}
 
 \begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Answer to RQ1]
-\filopriori{} achieves the highest APFD (0.6413) among all evaluated methods,
-significantly outperforming random ordering by 14.6\% and surpassing the
-strongest baseline (FailureRate) by 2.0\%.
+\filopriori{} achieves APFD=0.6413, outperforming random ordering by 20.3\%
+($p < 0.001$) and FailureRate by 15.6\% ($p = 0.003$). \filopriori{} is
+statistically equivalent to DeepOrder (0.6500, $p = 0.434$), while offering
+interpretability through graph-based test relationships.
 \end{tcolorbox}
 
 %------------------------------------------------------------------------------

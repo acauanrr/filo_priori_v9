@@ -1,0 +1,23 @@
+
+\begin{table}[!t]
+\centering
+\caption{Comparison with State-of-the-Art TCP Methods}
+\label{tab:baseline_comparison}
+\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{APFD} & \textbf{95\% CI} & \textbf{p-value} & \textbf{$\Delta$ vs Random} \\
+\midrule
+DeepOrder & 0.6500 & [0.627, 0.673] & 0.434 & +22.0\% \\
+\textbf{Filo-Priori} & \textbf{0.6413} & [0.611, 0.671] & nan & +20.3\% \\
+FailureRate & 0.5549 & [0.531, 0.579] & 0.003** & +4.1\% \\
+Random & 0.5329 & [0.512, 0.554] & $<$.001*** & 0.0\% \\
+RETECS & 0.4583 & [0.436, 0.480] & $<$.001*** & -14.0\% \\
+
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001 (Wilcoxon signed-rank test vs Filo-Priori)
+\end{tablenotes}
+\end{table}
