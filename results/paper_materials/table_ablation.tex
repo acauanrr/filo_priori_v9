@@ -1,0 +1,17 @@
+
+\begin{table}[h]
+\centering
+\caption{Ablation Study: Component Contribution Analysis}
+\label{tab:ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Configuration} & \textbf{APFD} & \textbf{$\alpha$} & \textbf{$\Delta$ vs Full} \\
+\midrule
+\textbf{Full Model} & \textbf{0.6751} & 0.50 & --- \\
+w/o Heuristic Residual & 0.6161 & 0.00 & -8.7\% \\
+w/o Neural Learning & 0.5221 & 1.00 & -22.7\% \\
+Fixed $\alpha=0.8$ & 0.6251 & 0.80 & -7.4\% \\
+Fixed $\alpha=0.2$ & 0.6399 & 0.20 & -5.2\% \\
+\bottomrule
+\end{tabular}
+\end{table}

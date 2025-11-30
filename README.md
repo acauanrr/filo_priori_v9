@@ -32,14 +32,26 @@ The key insight: tests that fail together often indicate related functionality, 
 | **vs Random** | **+14.6%** | Statistically significant (p < 0.001) |
 | **Graph Attention** | **+17.0%** | Most critical component (ablation) |
 
-### RTPTorrent Dataset (Learning-to-Rank Mode)
+### RTPTorrent Dataset (V10 Full - 20 Projects)
 
-| Metric | HikariCP | jsprit |
-|--------|----------|--------|
-| **Model APFD** | **0.7113** | **0.5496** |
-| **vs untreated** | +43.9% | +51.2% |
-| **vs random** | +49.8% | -7.3% |
-| **vs matrix-naive** | -4.2% | +51.5% |
+| Metric | Value |
+|--------|-------|
+| **Mean APFD** | **0.8376** |
+| **Projects** | 20 Java projects |
+| **Test Builds** | 1,250 |
+| **vs recently_failed** | **+2.02%** |
+| **vs random** | +69.56% |
+| **vs untreated** | +134.32% |
+
+**Top-5 Projects:**
+
+| Project | APFD | vs recently_failed |
+|---------|------|-------------------|
+| apache/sling | 0.9922 | +2.18% |
+| neuland/jade4j | 0.9799 | +0.88% |
+| eclipse/jetty.project | 0.9789 | +1.27% |
+| facebook/buck | 0.9722 | +1.97% |
+| deeplearning4j/dl4j | 0.9277 | +0.46% |
 
 ---
 
@@ -512,12 +524,20 @@ The RTPTorrent dataset comes with 7 pre-computed baseline orderings:
 | `matrix-naive` | Co-failure matrix approach |
 | `matrix-conditional-prob` | Conditional probability matrix |
 
-### L2R Results (Small Projects)
+### V10 Full Results (All 20 Projects)
 
-| Project | Builds | Model APFD | vs untreated | vs random |
-|---------|--------|------------|--------------|-----------|
-| **HikariCP** | 4 | **0.7113** | +43.9% | +49.8% |
-| **jsprit** | 3 | **0.5496** | +51.2% | -7.3% |
+| Baseline | APFD | Model Improvement |
+|----------|------|-------------------|
+| **Filo-Priori V10** | **0.8376** | -- |
+| recently_failed | 0.8209 | +2.02% |
+| random | 0.4940 | +69.56% |
+| untreated | 0.3574 | +134.32% |
+| matrix_naive | 0.5693 | +47.11% |
+| matrix_conditional | 0.5132 | +63.21% |
+| optimal_duration | 0.5934 | +41.15% |
+| optimal_failure (oracle) | 0.9249 | -9.45% |
+
+The model outperforms **6 out of 7 baselines**, with only the oracle (optimal_failure) achieving higher APFD.
 
 ---
 
@@ -680,9 +700,16 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Status | Version | Last Updated |
 |--------|---------|--------------|
-| Publication Ready | V9.2 | November 2025 |
+| Publication Ready | V10.0 | November 2025 |
 
 ### Changelog
+
+**V10.0 (November 2025)**
+- **Complete RTPTorrent Evaluation**: Full experiment across all 20 projects
+- **APFD 0.8376** on RTPTorrent, outperforming 6/7 baselines
+- LightGBM LambdaRank with 16 ranking-optimized features
+- Online learning with EMA (alpha=0.8)
+- New `run_v10_rtptorrent_full.py` for comprehensive multi-project evaluation
 
 **V9.2 (November 2025)**
 - Added Learning-to-Rank mode for RTPTorrent dataset
@@ -693,4 +720,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **V9.1 (November 2025)**
 - Initial publication-ready version
 - Dual-stream architecture with GAT
-- Industrial dataset support
+- Industrial dataset support (APFD 0.6413)

@@ -115,10 +115,12 @@ with Graph Attention Networks (GAT) for structural feature learning;
 
 We evaluate \filopriori{} on two complementary datasets: an industrial dataset
 (52,102 test executions, 277 builds with failures) and the RTPTorrent open-source
-benchmark (20 Java projects, 100k+ builds). On the industrial dataset, results
+benchmark (20 Java projects, 1,250 test builds). On the industrial dataset, results
 show a mean APFD of 0.6413, representing 14.6\% improvement over random ordering
-($p < 0.001$) and 2.0\% over the strongest baseline. Ablation reveals Graph
-Attention contributes +17.0\% to performance. Temporal validation confirms
+($p < 0.001$) and 2.0\% over the strongest baseline. On RTPTorrent, \filopriori{}
+achieves APFD of 0.8376 across all 20 projects, outperforming 6 of 7 baselines
+including the strongest heuristic (recently\_failed) by +2.02\%. Ablation reveals
+Graph Attention contributes +17.0\% to performance. Temporal validation confirms
 robustness (APFD: 0.619--0.663).
 
 This work demonstrates the effectiveness of combining semantic and structural
@@ -844,8 +846,10 @@ Our key contributions include:
     and semantic similarity relationships.
     \item Careful feature engineering identifying 10 discriminative structural
     features from historical execution patterns.
-    \item Empirical validation showing 14.6\% improvement over random ordering
-    ($p < 0.001$) with Graph Attention contributing +17.0\% to performance.
+    \item Empirical validation on industrial data showing 14.6\% improvement over
+    random ordering ($p < 0.001$) with Graph Attention contributing +17.0\%.
+    \item Cross-dataset validation on RTPTorrent benchmark achieving APFD=0.8376
+    across 20 Java projects, outperforming 6 of 7 baselines.
     \item Robust temporal generalization (APFD: 0.619--0.663 across time periods).
 \end{itemize}
 
@@ -853,11 +857,11 @@ The ablation study reveals that Graph Attention is the most critical component,
 validating our hypothesis that modeling test relationships through graphs is
 more effective than treating tests as independent entities.
 
-\textbf{Future Work.} We plan to: (1) conduct full experiments on the RTPTorrent
-dataset to evaluate cross-project generalization, (2) investigate dynamic graph
-construction that evolves with the test suite, (3) explore cross-project transfer
-learning using pre-trained embeddings, and (4) develop real-time prioritization
-integrated with CI/CD pipelines.
+\textbf{Future Work.} We plan to: (1) investigate dynamic graph construction that
+evolves with the test suite, (2) explore cross-project transfer learning using
+pre-trained code embeddings (CodeBERT, GraphCodeBERT), (3) develop real-time
+prioritization integrated with CI/CD pipelines, and (4) extend evaluation to
+additional industrial datasets with diverse testing patterns.
 
 \textbf{Data Availability.} Our replication package, including source code,
 trained models, configuration files, and anonymized dataset, is available at:

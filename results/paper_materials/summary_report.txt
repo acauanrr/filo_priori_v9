@@ -1,0 +1,72 @@
+
+================================================================================
+FILO-PRIORI V10 EXPERIMENTAL RESULTS SUMMARY
+Generated: 2025-11-29 17:04:17
+================================================================================
+
+## DATASET: RTPTorrent
+- Projects: dynjs, jsprit, HikariCP
+- Train builds: 192 (14 with failures)
+- Test builds: 60 (7 with failures)
+- Features: 9 (duration, count, failures, errors, failure_rate, recent_failures,
+             recent_executions, avg_duration, last_failure_recency)
+
+## MAIN RESULTS
+
+| Model                | APFD   | Std.   | vs RF    | p-value |
+|---------------------|--------|--------|----------|---------|
+| Random              | 0.4213 | 0.2251 | -28.9%   | ---     |
+| Recently-Failed     | 0.5926 | 0.2521 | baseline | ---     |
+| Failure-Rate        | 0.5801 | 0.2449 | -2.1%    | ---     |
+| V10-NeuralOnly      | 0.6161 | 0.2323 | +4.0%   | 0.5000  |
+| V10-Full-APFD       | 0.6751 | 0.2696 | +13.9%  | 0.0312* |
+| V10-Full-Lambda     | 0.6856 | 0.2663 | +15.7%  | 0.0938  |
+
+* Statistically significant at p < 0.05
+
+## ABLATION STUDY
+
+| Configuration         | APFD   | Alpha | Delta vs Full |
+|-----------------------|--------|-------|---------------|
+| V10-Full (baseline)   | 0.6751 | 0.50  | ---           |
+| w/o Heuristic Residual| 0.6161 | 0.00  | -8.7%         |
+| w/o Neural Learning   | 0.5221 | 1.00  | -22.7%        |
+| Fixed alpha=0.8       | 0.6251 | 0.80  | -7.4%         |
+| Fixed alpha=0.2       | 0.6399 | 0.20  | -5.2%         |
+
+## KEY FINDINGS
+
+1. BEST MODEL: V10-Full-Lambda (APFD = 0.6856)
+   - +15.7% improvement over Recently-Failed baseline
+
+2. RESIDUAL LEARNING CONTRIBUTION: +9.6%
+   - Neural-only: 0.6161
+   - Full model: 0.6751
+
+3. OPTIMAL ALPHA: ~0.5 (learned)
+   - Indicates balanced contribution from neural and heuristic components
+
+4. LOSS FUNCTION: LambdaRank marginally outperforms APFD Loss
+   - LambdaRank: 0.6856
+   - APFD Loss: 0.6751
+   - Difference: +1.55%
+
+## STATISTICAL SIGNIFICANCE
+
+V10-Full-APFD vs Recently-Failed:
+- Wilcoxon signed-rank test p-value: 0.0312
+- Result: STATISTICALLY SIGNIFICANT at p < 0.05
+
+================================================================================
+FILES GENERATED
+================================================================================
+
+- results/paper_materials/table_main_results.tex
+- results/paper_materials/table_ablation.tex
+- results/paper_materials/fig_model_comparison.pdf
+- results/paper_materials/fig_alpha_analysis.pdf
+- results/paper_materials/fig_loss_comparison.pdf
+- results/paper_materials/paper_text.md
+- results/paper_materials/summary_report.txt
+
+================================================================================

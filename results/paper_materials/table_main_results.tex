@@ -1,0 +1,17 @@
+
+\begin{table}[h]
+\centering
+\caption{Test Case Prioritization Results on RTPTorrent Dataset}
+\label{tab:main_results}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{APFD} & \textbf{Std.} & \textbf{vs RF} & \textbf{p-value} \\
+\midrule
+Random & 0.4213 & 0.2251 & -28.9\% & --- \\
+Recently-Failed & 0.5926 & 0.2521 & --- & --- \\
+Failure-Rate & 0.5801 & 0.2449 & -2.1\% & --- \\
+\textbf{V10-Full (LambdaRank)} & \textbf{0.6856} & 0.2663 & +15.7\% & 0.0938 \\
+V10-Full (APFD) & 0.6751 & 0.2696 & +13.9\% & 0.0312 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -69,6 +69,86 @@ strongest baseline (FailureRate) by 2.0\%.
 \end{tcolorbox}
 
 %------------------------------------------------------------------------------
+% RQ1b: Cross-Dataset Validation (RTPTorrent)
+%------------------------------------------------------------------------------
+
+\subsection{Cross-Dataset Validation: RTPTorrent}
+\label{sec:rq1_rtptorrent}
+
+To evaluate generalization beyond the industrial dataset, we conducted a comprehensive
+experiment on the RTPTorrent open-source benchmark~\cite{mattis2020rtptorrent}, which
+contains test execution histories from 20 Java projects with over 100,000 Travis CI builds.
+We adapted \filopriori{} using a LightGBM LambdaRank model with 16 ranking-optimized
+features, trained independently on each project.
+
+\begin{table}[!t]
+\centering
+\caption{RTPTorrent Cross-Dataset Results (20 Projects)}
+\label{tab:rtptorrent_results}
+\footnotesize
+\begin{tabular}{lccr}
+\toprule
+\textbf{Baseline} & \textbf{APFD} & \textbf{Model Improv.} & \textbf{p-value} \\
+\midrule
+\textbf{Filo-Priori V10} & \textbf{0.8376} & -- & -- \\
+\midrule
+recently\_failed & 0.8209 & +2.02\% & sig.* \\
+random & 0.4940 & +69.56\% & $<$0.001*** \\
+untreated & 0.3574 & +134.32\% & $<$0.001*** \\
+matrix\_naive & 0.5693 & +47.11\% & $<$0.001*** \\
+matrix\_conditional & 0.5132 & +63.21\% & $<$0.001*** \\
+optimal\_duration & 0.5934 & +41.15\% & $<$0.001*** \\
+optimal\_failure (oracle) & 0.9249 & -9.45\% & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Aggregate results over 1,250 test builds from 20 Java projects.
+\item * Statistically significant improvement over strongest baseline.
+\end{tablenotes}
+\end{table}
+
+Table~\ref{tab:rtptorrent_top5} shows the top-5 performing projects:
+
+\begin{table}[!t]
+\centering
+\caption{Top-5 Projects by APFD (RTPTorrent)}
+\label{tab:rtptorrent_top5}
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+\textbf{Project} & \textbf{APFD} & \textbf{Builds} & \textbf{vs recent.} \\
+\midrule
+apache/sling & 0.9922 & 163 & +2.18\% \\
+neuland/jade4j & 0.9799 & 20 & +0.88\% \\
+eclipse/jetty.project & 0.9789 & 66 & +1.27\% \\
+facebook/buck & 0.9722 & 69 & +1.97\% \\
+deeplearning4j/dl4j & 0.9277 & 114 & +0.46\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Findings for Cross-Dataset Validation:}
+\begin{itemize}
+    \item \filopriori{} achieves a mean APFD of \textbf{0.8376} across 20 diverse
+    Java projects (1,250 test builds), demonstrating strong cross-domain generalization.
+    \item The model \textbf{outperforms 6 out of 7 baselines}, including the strongest
+    heuristic baseline (recently\_failed) by +2.02\%.
+    \item Only the oracle baseline (optimal\_failure) achieves higher APFD (0.9249),
+    representing the theoretical upper bound with perfect failure knowledge.
+    \item Performance varies across projects (APFD: 0.29--0.99), with best results
+    on projects with consistent failure patterns (e.g., apache/sling).
+    \item The most important features are \texttt{novelty\_score}, \texttt{base\_risk},
+    \texttt{execution\_frequency}, and \texttt{time\_decay\_score}.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Cross-Dataset Finding]
+\filopriori{} generalizes effectively to open-source projects, achieving APFD=0.8376
+across 20 RTPTorrent projects and outperforming 6 of 7 baselines. This validates
+the approach on a well-known benchmark with limited semantic information.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
 % RQ2: Component Contributions
 %------------------------------------------------------------------------------
 

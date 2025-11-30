@@ -1,0 +1,68 @@
+{
+  "dataset": "rtptorrent",
+  "model": "V10_Simple_LightGBM_Ensemble",
+  "v10_simple": {
+    "apfd": 0.5263785817357247,
+    "apfd_std": 0.20032790489996397,
+    "ndcg_at_10": 0.36573183154700795,
+    "num_builds": 7,
+    "best_alpha": 0.7
+  },
+  "baselines": {
+    "recently_failed": {
+      "apfd": 0.46310549472314194,
+      "std": 0.145603779575015
+    },
+    "failure_rate": {
+      "apfd": 0.4636817252153387,
+      "std": 0.15215201947122953
+    }
+  },
+  "improvement_vs_rf": 13.662780453600378,
+  "p_value": 0.203125,
+  "alpha_search": {
+    "0.0": 0.5135734596869052,
+    "0.3": 0.5135734596869052,
+    "0.5": 0.5173749802951485,
+    "0.7": 0.5263785817357247,
+    "0.9": 0.5263785817357247,
+    "1.0": 0.523126331340617
+  },
+  "feature_importance": {
+    "novelty_score": 23,
+    "base_risk": 22,
+    "historical_rate": 34,
+    "recent_rate": 0,
+    "very_recent_rate": 0,
+    "time_decay_score": 103,
+    "consecutive_failures": 0,
+    "failure_trend": 11,
+    "recency_score": 10,
+    "volatility": 11,
+    "max_consecutive_failures": 1,
+    "ranking_prior": 1,
+    "total_executions": 18,
+    "last_failure_distance": 11
+  },
+  "config": {
+    "features": [
+      "novelty_score",
+      "base_risk",
+      "historical_rate",
+      "recent_rate",
+      "very_recent_rate",
+      "time_decay_score",
+      "consecutive_failures",
+      "failure_trend",
+      "recency_score",
+      "volatility",
+      "max_consecutive_failures",
+      "ranking_prior",
+      "total_executions",
+      "last_failure_distance"
+    ],
+    "n_estimators": 50,
+    "max_depth": 3,
+    "ensemble": "LightGBM + Heuristic"
+  }
+}

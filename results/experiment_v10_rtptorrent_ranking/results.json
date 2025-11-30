@@ -1,0 +1,43 @@
+{
+  "dataset": "rtptorrent",
+  "model": "V10_RankingModel",
+  "v10": {
+    "apfd": 0.37665453049906833,
+    "apfd_std": 0.2202343925166428,
+    "ndcg_at_10": 0.23122368644120783,
+    "num_builds": 7,
+    "alpha": 0.5013774633407593
+  },
+  "baselines": {
+    "recently_failed": {
+      "apfd": 0.45358172561954074,
+      "std": 0.11056926009928214
+    },
+    "failure_rate": {
+      "apfd": 0.4622002841540657,
+      "std": 0.1188224217009918
+    }
+  },
+  "improvement_vs_rf": -16.95994145606256,
+  "p_value": 0.828125,
+  "config": {
+    "features": [
+      "novelty_score",
+      "base_risk",
+      "historical_rate",
+      "recent_rate",
+      "very_recent_rate",
+      "time_decay_score",
+      "consecutive_failures",
+      "failure_trend",
+      "recency_score",
+      "volatility",
+      "max_consecutive_failures",
+      "ranking_prior"
+    ],
+    "hidden_dim": 128,
+    "num_heads": 4,
+    "loss": "LambdaRank+ListMLE+ApproxNDCG",
+    "num_epochs": 50
+  }
+}

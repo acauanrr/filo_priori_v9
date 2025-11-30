@@ -1,0 +1,225 @@
+# Filo-Priori V10 Configuration
+# Target: RTPTorrent dataset, surpass Recently-Failed baseline
+
+experiment:
+  name: "filo_priori_v10_rtptorrent"
+  version: "10.0.0"
+  description: "Hybrid neuro-symbolic TCP with CodeBERT, Time-Decay Graph, and LambdaRank"
+  target_metric: "apfd"
+  target_baseline: "recently_failed"
+
+# Dataset Configuration
+data:
+  dataset: "rtptorrent"
+  dataset_path: "datasets/02_rtptorrent/raw/MSR2"
+  projects:
+    preset: "all"  # or list: ["HikariCP", "jsprit", "dynjs", ...]
+
+  # Temporal split (critical for avoiding data leakage)
+  split:
+    type: "temporal"  # NOT random!
+    train_ratio: 0.7
+    val_ratio: 0.15
+    test_ratio: 0.15
+
+  # Preprocessing
+  preprocessing:
+    filter_flaky_tests: true
+    min_failures_per_project: 50
+    max_files_per_commit: 50
+
+# Encoder Configuration (CodeBERT)
+encoder:
+  type: "codebert"
+  model_name: "microsoft/codebert-base"
+  output_dim: 768
+  pooling: "cls"
+  max_length: 256
+
+  # Fine-tuning
+  freeze_layers: 6  # Freeze first 6 layers
+  learning_rate: 1.0e-5  # Lower LR for pre-trained model
+
+  # Co-Attention
+  use_co_attention: true
+  co_attention_heads: 8
+  co_attention_layers: 1
+
+  # Caching
+  use_cache: true
+  cache_dir: "cache/v10_codebert"
+
+# Graph Configuration (Time-Decay)
+graph:
+  type: "time_decay"
+
+  # Decay parameters
+  decay_lambda: 0.1  # exp(-0.1 * days) -> ~37% after 10 days
+  lookback_days: 365
+
+  # Edge filtering
+  min_co_changes: 2
+  normalize_weights: true
+
+  # GAT parameters
+  gat:
+    node_dim: 768  # From CodeBERT embeddings
+    hidden_dim: 256
+    num_heads: 4
+    num_layers: 2
+    dropout: 0.1
+
+  # Caching
+  cache_path: "cache/v10_time_decay_graph.pkl"
+
+# Heuristic Features
+heuristics:
+  enabled: true
+  dim: 6
+
+  # Feature extraction
+  recency_transform: "inverse_log"  # 1/log(1+builds)
+  recent_window: 5
+
+  # Initial trust in heuristics
+  initial_weight: 0.7  # alpha starts at 0.7
+
+# Model Architecture
+model:
+  type: "filo_priori_v10"
+
+  # Fusion strategy
+  fusion:
+    type: "hierarchical"  # or "gated", "simple"
+    hidden_dim: 256
+    dropout: 0.3
+
+  # Output
+  output_dim: 1
+
+# Training Configuration
+training:
+  # LambdaRank loss
+  loss:
+    type: "lambda_rank"
+    sigma: 1.0
+    ndcg_at_k: 10
+    # Alternative: approx_ndcg, apfd_loss
+
+  # Optimization
+  optimizer: "adamw"
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+
+  # Different LRs for different components
+  learning_rates:
+    encoder: 1.0e-5
+    gat: 1.0e-4
+    fusion: 1.0e-3
+    alpha: 1.0e-2
+
+  # Schedule
+  scheduler:
+    type: "cosine"
+    warmup_epochs: 5
+    min_lr: 1.0e-6
+
+  # Training loop
+  epochs: 50
+  batch_size: 32
+  accumulation_steps: 1
+
+  # Early stopping
+  early_stopping:
+    patience: 10
+    monitor: "val_apfd"
+    mode: "max"
+    min_delta: 0.001
+
+  # Regularization
+  dropout: 0.3
+  label_smoothing: 0.0
+
+  # Mixed precision
+  use_amp: true
+
+# Evaluation
+evaluation:
+  # Primary metrics
+  metrics:
+    - "apfd"
+    - "apfd_at_5"
+    - "apfd_at_10"
+    - "ndcg_at_10"
+    - "mrr"
+    - "precision_at_5"
+    - "recall_at_10"
+
+  # Baselines to compare against
+  baselines:
+    - "random"
+    - "recently_failed"
+    - "failure_rate"
+    - "optimal_failure"
+    - "filo_v9"
+
+  # Statistical tests
+  statistics:
+    wilcoxon: true
+    cliffs_delta: true
+    bootstrap_ci: true
+    n_bootstrap: 1000
+
+# Experiment tracking
+logging:
+  level: "INFO"
+  tensorboard: true
+  tensorboard_dir: "runs/v10_rtptorrent"
+
+  # Checkpointing
+  save_dir: "results/experiment_v10_rtptorrent"
+  save_best: true
+  save_every: 10
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  seed: 42
+
+# Ablation studies (for paper)
+ablation:
+  experiments:
+    - name: "v10_full"
+      description: "Full V10 model"
+      enabled: true
+
+    - name: "v10_no_codebert"
+      description: "V10 without CodeBERT (use SBERT instead)"
+      encoder:
+        type: "sbert"
+        model_name: "sentence-transformers/all-mpnet-base-v2"
+
+    - name: "v10_no_time_decay"
+      description: "V10 with static graph (like V9)"
+      graph:
+        type: "static"
+
+    - name: "v10_no_lambda"
+      description: "V10 with Focal Loss instead of LambdaRank"
+      training:
+        loss:
+          type: "focal"
+          alpha: 0.75
+          gamma: 2.0
+
+    - name: "v10_no_residual"
+      description: "V10 without heuristic residual"
+      heuristics:
+        enabled: false
+
+    - name: "v10_no_coattention"
+      description: "V10 without co-attention"
+      encoder:
+        use_co_attention: false
