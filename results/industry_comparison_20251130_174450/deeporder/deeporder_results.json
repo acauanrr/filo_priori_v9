@@ -1,0 +1,3319 @@
+{
+  "method": "DeepOrder",
+  "dataset": "01_industry",
+  "timestamp": "2025-11-30T18:09:27.327737",
+  "metrics": {
+    "mean_apfd": 0.6720079700898048,
+    "std_apfd": 0.2227447513070803,
+    "median_apfd": 0.7138501742160278,
+    "min_apfd": 0.05172413793103444,
+    "max_apfd": 0.9888888888888888
+  },
+  "statistics": {
+    "total_test_builds": 1365,
+    "builds_with_failures": 550,
+    "builds_evaluated": 550
+  },
+  "per_build_results": [
+    {
+      "build_id": "T1TH33.71",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TN33.14-44-1",
+      "apfd": 0.9666666666666667,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "S3SQ32.16-72-31",
+      "apfd": 0.8625,
+      "n_tests": 20,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2TT33.17",
+      "apfd": 0.5,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "S2SD32.21-85-3-2-1",
+      "apfd": 0.5952380952380952,
+      "n_tests": 15,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T2SD33.27",
+      "apfd": 0.9878048780487805,
+      "n_tests": 41,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SD33.26",
+      "apfd": 0.5833333333333333,
+      "n_tests": 32,
+      "n_faults": 6
+    },
+    {
+      "build_id": "T2SD33.21",
+      "apfd": 0.5,
+      "n_tests": 9,
+      "n_faults": 5
+    },
+    {
+      "build_id": "T2SD33.20",
+      "apfd": 0.8043478260869565,
+      "n_tests": 23,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TR33.43-40",
+      "apfd": 0.81,
+      "n_tests": 50,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2TV33.10",
+      "apfd": 0.7113502935420744,
+      "n_tests": 73,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T2TV33.9",
+      "apfd": 0.875,
+      "n_tests": 12,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2TV33.11",
+      "apfd": 0.7500000000000001,
+      "n_tests": 26,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2TV33.7",
+      "apfd": 0.5,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TH33.75-2",
+      "apfd": 0.623015873015873,
+      "n_tests": 42,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1TH33.75-3",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTV33.16",
+      "apfd": 0.5,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TPN33.58-15",
+      "apfd": 0.9117647058823529,
+      "n_tests": 17,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1TN33.14-44-2",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.12",
+      "apfd": 0.6499999999999999,
+      "n_tests": 70,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T2TZ33.9",
+      "apfd": 0.6363636363636364,
+      "n_tests": 22,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2TZ33.10",
+      "apfd": 0.5908134642356242,
+      "n_tests": 62,
+      "n_faults": 23
+    },
+    {
+      "build_id": "T2TZ33.13",
+      "apfd": 0.7424242424242424,
+      "n_tests": 11,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1TGN33.60-23",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.14",
+      "apfd": 0.7866161616161615,
+      "n_tests": 66,
+      "n_faults": 12
+    },
+    {
+      "build_id": "T2TV33.13",
+      "apfd": 0.42897727272727276,
+      "n_tests": 88,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1SJC33.51-7",
+      "apfd": 0.9500000000000001,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SJC33.51-6",
+      "apfd": 0.1875,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TL33.6",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SD33.54",
+      "apfd": 0.75,
+      "n_tests": 4,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TV33.8",
+      "apfd": 0.7500000000000001,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SJ33.117-18",
+      "apfd": 0.7857142857142857,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "S3SG32.39-90-1",
+      "apfd": 0.7124999999999999,
+      "n_tests": 40,
+      "n_faults": 10
+    },
+    {
+      "build_id": "T1RD33.116-13",
+      "apfd": 0.5803571428571428,
+      "n_tests": 40,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T1RD33.116-9",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RD33.116-16",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RD33.116-15",
+      "apfd": 0.4166666666666667,
+      "n_tests": 12,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TSH33.179",
+      "apfd": 0.41666666666666663,
+      "n_tests": 27,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1SQ33.15-11-77",
+      "apfd": 0.9807692307692308,
+      "n_tests": 26,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SQ33.15-11-80",
+      "apfd": 0.8500000000000001,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SQ33.15-11-85",
+      "apfd": 0.4787234042553192,
+      "n_tests": 47,
+      "n_faults": 3
+    },
+    {
+      "build_id": "S3RW32.138-29-5",
+      "apfd": 0.8886363636363636,
+      "n_tests": 110,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1TZ33.3-50",
+      "apfd": 0.9375,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TPN33.58-31",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TZ33.3-52",
+      "apfd": 0.6847826086956522,
+      "n_tests": 23,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1TZ33.3-47",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TH33.75-12-6",
+      "apfd": 0.39999999999999997,
+      "n_tests": 10,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TH33.75-12-9",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SH33.9",
+      "apfd": 0.8333333333333334,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TR33.5",
+      "apfd": 0.6296296296296297,
+      "n_tests": 27,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2SA33.9",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SSM33.1-49",
+      "apfd": 0.07142857142857142,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SSM33.1-101",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SSM33.1-100",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TBS33.32-41-1-2",
+      "apfd": 0.9285714285714286,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SJ33.117-19",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TPN33.58-37",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.30",
+      "apfd": 0.9189189189189189,
+      "n_tests": 37,
+      "n_faults": 6
+    },
+    {
+      "build_id": "T2TV33.28",
+      "apfd": 0.8928571428571429,
+      "n_tests": 14,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1TBS33.32-8-9-6",
+      "apfd": 0.9,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TBS33.32-41-2",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TSH33.252",
+      "apfd": 0.975,
+      "n_tests": 60,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-10",
+      "apfd": 0.7533333333333334,
+      "n_tests": 25,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2TV33.33",
+      "apfd": 0.640625,
+      "n_tests": 16,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2TV33.45-9",
+      "apfd": 0.5013736263736264,
+      "n_tests": 52,
+      "n_faults": 7
+    },
+    {
+      "build_id": "TTR33.145",
+      "apfd": 0.7777777777777778,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TSA33.217",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TSA33.242",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TZ33.3-60",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.31",
+      "apfd": 0.6616847826086957,
+      "n_tests": 48,
+      "n_faults": 23
+    },
+    {
+      "build_id": "T1TR33.43-20-24",
+      "apfd": 0.5,
+      "n_tests": 4,
+      "n_faults": 2
+    },
+    {
+      "build_id": "S3RW32.138-29-6",
+      "apfd": 0.9056603773584906,
+      "n_tests": 53,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TT33.60-3",
+      "apfd": 0.7974789915966387,
+      "n_tests": 119,
+      "n_faults": 20
+    },
+    {
+      "build_id": "T2TT33.60-4",
+      "apfd": 0.5555555555555556,
+      "n_tests": 18,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TT33.60-5",
+      "apfd": 0.9444444444444444,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TT33.60-7",
+      "apfd": 0.8333333333333333,
+      "n_tests": 12,
+      "n_faults": 2
+    },
+    {
+      "build_id": "S3RO32.1",
+      "apfd": 0.7,
+      "n_tests": 5,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2TV33.32",
+      "apfd": 0.7222222222222223,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.34",
+      "apfd": 0.5598290598290597,
+      "n_tests": 27,
+      "n_faults": 13
+    },
+    {
+      "build_id": "S3SG32.39-181",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.35",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTM33.1",
+      "apfd": 0.676470588235294,
+      "n_tests": 17,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTM33.19",
+      "apfd": 0.9500000000000001,
+      "n_tests": 20,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TM33.6",
+      "apfd": 0.1470588235294118,
+      "n_tests": 17,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TM33.9",
+      "apfd": 0.49642857142857144,
+      "n_tests": 20,
+      "n_faults": 7
+    },
+    {
+      "build_id": "TTM33.15",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTM33.20",
+      "apfd": 0.35000000000000003,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTM33.18",
+      "apfd": 0.9583333333333334,
+      "n_tests": 24,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTM33.21",
+      "apfd": 0.6111111111111112,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTD33.18",
+      "apfd": 0.7,
+      "n_tests": 5,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T3TC33.8",
+      "apfd": 0.6619047619047619,
+      "n_tests": 15,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T1TP33.75-20",
+      "apfd": 0.5625,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RG33.135-56",
+      "apfd": 0.25,
+      "n_tests": 18,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1RM33.1-89",
+      "apfd": 0.8200000000000001,
+      "n_tests": 25,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RM33.1-92",
+      "apfd": 0.7000000000000001,
+      "n_tests": 10,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1RM33.1-54",
+      "apfd": 0.9197530864197531,
+      "n_tests": 27,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1RG33.135-109-1",
+      "apfd": 0.78,
+      "n_tests": 25,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RG33.135-89",
+      "apfd": 0.5,
+      "n_tests": 12,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T1RM33.1-60",
+      "apfd": 0.8500000000000001,
+      "n_tests": 10,
+      "n_faults": 3
+    },
+    {
+      "build_id": "TTC33.18",
+      "apfd": 0.7553191489361702,
+      "n_tests": 47,
+      "n_faults": 3
+    },
+    {
+      "build_id": "TTC33.19",
+      "apfd": 0.7666666666666667,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTC33.20",
+      "apfd": 0.22727272727272724,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTC33.17",
+      "apfd": 0.9722222222222222,
+      "n_tests": 18,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTD33.17",
+      "apfd": 0.8636363636363636,
+      "n_tests": 33,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTD33.21",
+      "apfd": 0.7248803827751196,
+      "n_tests": 57,
+      "n_faults": 11
+    },
+    {
+      "build_id": "TTD33.20",
+      "apfd": 0.96,
+      "n_tests": 25,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTD33.16",
+      "apfd": 0.7916666666666666,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TC33.10",
+      "apfd": 0.5625,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TC33.9",
+      "apfd": 0.5833333333333334,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TC33.5",
+      "apfd": 0.33333333333333326,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TZ33.3-62-25",
+      "apfd": 0.75,
+      "n_tests": 14,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TV33.45-10-3",
+      "apfd": 0.1,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-5",
+      "apfd": 0.7307692307692307,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-8",
+      "apfd": 0.8056603773584906,
+      "n_tests": 53,
+      "n_faults": 15
+    },
+    {
+      "build_id": "S3RO32.16",
+      "apfd": 0.43333333333333335,
+      "n_tests": 15,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T1TPN33.146",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTDC33.16",
+      "apfd": 0.4791666666666667,
+      "n_tests": 24,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TDC33.3",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TSH33.263",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTD33.22",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "TTD33.15",
+      "apfd": 0.38888888888888895,
+      "n_tests": 9,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2ST33.95",
+      "apfd": 0.9375,
+      "n_tests": 24,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2ST33.101",
+      "apfd": 0.5,
+      "n_tests": 43,
+      "n_faults": 43
+    },
+    {
+      "build_id": "T2ST33.92",
+      "apfd": 0.8928571428571429,
+      "n_tests": 28,
+      "n_faults": 2
+    },
+    {
+      "build_id": "TTC33.13",
+      "apfd": 0.96875,
+      "n_tests": 16,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-10-1",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TZ33.18-16-17",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TM33.7",
+      "apfd": 0.24999999999999994,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TM33.4",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TD33.9",
+      "apfd": 0.6428571428571428,
+      "n_tests": 7,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TV33.45-10-4",
+      "apfd": 0.8,
+      "n_tests": 10,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2SD33.75-7",
+      "apfd": 0.3571428571428572,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "S3RYA32.16",
+      "apfd": 0.39999999999999997,
+      "n_tests": 10,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TV33.45-10-5",
+      "apfd": 0.5416666666666666,
+      "n_tests": 4,
+      "n_faults": 3
+    },
+    {
+      "build_id": "S2SN32.34-72-25",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2ST33.96",
+      "apfd": 0.8125,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TDC33.6",
+      "apfd": 0.49999999999999994,
+      "n_tests": 10,
+      "n_faults": 10
+    },
+    {
+      "build_id": "T3SL33.5",
+      "apfd": 0.6730769230769231,
+      "n_tests": 26,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T3SL33.6",
+      "apfd": 0.88,
+      "n_tests": 25,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3SL33.3",
+      "apfd": 0.5555555555555556,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3SL33.9",
+      "apfd": 0.11538461538461534,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RM33.1-110-4",
+      "apfd": 0.8684210526315789,
+      "n_tests": 19,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SU33.1-124-4",
+      "apfd": 0.06000000000000004,
+      "n_tests": 25,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-31",
+      "apfd": 0.5666666666666667,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TP33.2",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SH33.9",
+      "apfd": 0.8902439024390244,
+      "n_tests": 41,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TL33.3-49",
+      "apfd": 0.9821428571428572,
+      "n_tests": 28,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SL33.4",
+      "apfd": 0.888888888888889,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TV33.45-10-20",
+      "apfd": 0.880952380952381,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1SSM33.1-121-5",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TB33.2-5",
+      "apfd": 0.7941176470588235,
+      "n_tests": 17,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TT33.60-27",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SL33.8",
+      "apfd": 0.5,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3SL33.16",
+      "apfd": 0.5725806451612903,
+      "n_tests": 62,
+      "n_faults": 15
+    },
+    {
+      "build_id": "S3RYA32.35",
+      "apfd": 0.6,
+      "n_tests": 5,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2SD33.75-39",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TD33.10",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TH33.75-12-6-1-1",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2SR33.33",
+      "apfd": 0.9074074074074073,
+      "n_tests": 27,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SL33.16-1",
+      "apfd": 0.5892857142857143,
+      "n_tests": 28,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T2SR33.54",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SE33.39",
+      "apfd": 0.29999999999999993,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TDC33.16-14",
+      "apfd": 0.8846153846153846,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TM33.23-10",
+      "apfd": 0.9,
+      "n_tests": 20,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2SN33.33",
+      "apfd": 0.9545454545454545,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-50",
+      "apfd": 0.625,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TDC33.16-12",
+      "apfd": 0.7282608695652174,
+      "n_tests": 23,
+      "n_faults": 4
+    },
+    {
+      "build_id": "T2SR33.34",
+      "apfd": 0.8666666666666667,
+      "n_tests": 15,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2SR33.35",
+      "apfd": 0.9166666666666666,
+      "n_tests": 12,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TD33.16-13",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2ST33.105-15",
+      "apfd": 0.9888888888888888,
+      "n_tests": 45,
+      "n_faults": 1
+    },
+    {
+      "build_id": "S3SV32.45-28-1-6-5",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TM33.23-15",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RG33.135-109-2",
+      "apfd": 0.75,
+      "n_tests": 4,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TPJ33.75-84",
+      "apfd": 0.9615384615384616,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TPJ33.75-87",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TL33.3-50",
+      "apfd": 0.9464285714285715,
+      "n_tests": 28,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TL33.3-56",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "S3RYA32.49-8",
+      "apfd": 0.8333333333333333,
+      "n_tests": 12,
+      "n_faults": 4
+    },
+    {
+      "build_id": "S3RYA32.49-7",
+      "apfd": 0.5416666666666666,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TR33.43-20-42",
+      "apfd": 0.8461538461538461,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2TT33.60-42",
+      "apfd": 0.4166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.95",
+      "apfd": 0.8863636363636364,
+      "n_tests": 22,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTR34.96",
+      "apfd": 0.7451923076923077,
+      "n_tests": 52,
+      "n_faults": 8
+    },
+    {
+      "build_id": "T1TR33.4-30-75",
+      "apfd": 0.6333333333333333,
+      "n_tests": 15,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTP34.112",
+      "apfd": 0.8177083333333334,
+      "n_tests": 24,
+      "n_faults": 8
+    },
+    {
+      "build_id": "T3TB33.2-24",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUG34.27",
+      "apfd": 0.4090909090909091,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SV33.39",
+      "apfd": 0.6515151515151515,
+      "n_tests": 33,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2SV33.40",
+      "apfd": 0.90625,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2SV33.42",
+      "apfd": 0.7083333333333334,
+      "n_tests": 12,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UTPN34.116",
+      "apfd": 0.9444444444444444,
+      "n_tests": 63,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTP34.79",
+      "apfd": 0.6568627450980392,
+      "n_tests": 17,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUD34.21",
+      "apfd": 0.703125,
+      "n_tests": 16,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UUD34.24",
+      "apfd": 0.8303571428571428,
+      "n_tests": 56,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UTP34.80",
+      "apfd": 0.6095571095571095,
+      "n_tests": 33,
+      "n_faults": 13
+    },
+    {
+      "build_id": "UTPN34.145",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTPN34.125",
+      "apfd": 0.4866666666666667,
+      "n_tests": 25,
+      "n_faults": 3
+    },
+    {
+      "build_id": "USH34.126",
+      "apfd": 0.5,
+      "n_tests": 4,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UTR34.91",
+      "apfd": 0.9624999999999999,
+      "n_tests": 40,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.93",
+      "apfd": 0.8318181818181818,
+      "n_tests": 66,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UTR34.92",
+      "apfd": 0.18749999999999997,
+      "n_tests": 24,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUD34.20",
+      "apfd": 0.7999999999999999,
+      "n_tests": 5,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUD34.25",
+      "apfd": 0.975609756097561,
+      "n_tests": 41,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTR34.88",
+      "apfd": 0.6052631578947368,
+      "n_tests": 19,
+      "n_faults": 5
+    },
+    {
+      "build_id": "U1TR34.8-7",
+      "apfd": 0.8875,
+      "n_tests": 40,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SL33.16-9",
+      "apfd": 0.8142857142857143,
+      "n_tests": 80,
+      "n_faults": 14
+    },
+    {
+      "build_id": "T3SL33.16-11",
+      "apfd": 0.4111111111111111,
+      "n_tests": 15,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UST34.30",
+      "apfd": 0.5952380952380952,
+      "n_tests": 21,
+      "n_faults": 2
+    },
+    {
+      "build_id": "USH34.104",
+      "apfd": 0.9444444444444444,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTPN34.141",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTPN34.152",
+      "apfd": 0.6865079365079365,
+      "n_tests": 18,
+      "n_faults": 7
+    },
+    {
+      "build_id": "UTP34.61",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTPN34.147",
+      "apfd": 0.8125,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTP34.84",
+      "apfd": 0.29999999999999993,
+      "n_tests": 19,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UTP34.83",
+      "apfd": 0.3723404255319149,
+      "n_tests": 47,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UTPN34.124",
+      "apfd": 0.20967741935483875,
+      "n_tests": 31,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.14",
+      "apfd": 0.875,
+      "n_tests": 12,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T3TF33.16",
+      "apfd": 0.5108932461873639,
+      "n_tests": 51,
+      "n_faults": 9
+    },
+    {
+      "build_id": "T3TF33.19",
+      "apfd": 0.7999999999999999,
+      "n_tests": 5,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TF33.13",
+      "apfd": 0.7227272727272727,
+      "n_tests": 22,
+      "n_faults": 5
+    },
+    {
+      "build_id": "T3TF33.18",
+      "apfd": 0.1875,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.11",
+      "apfd": 0.40476190476190477,
+      "n_tests": 21,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TF33.36",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SL33.16-7",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUD34.26",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-73",
+      "apfd": 0.9615384615384616,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.114",
+      "apfd": 0.5,
+      "n_tests": 9,
+      "n_faults": 9
+    },
+    {
+      "build_id": "UUFN34.6",
+      "apfd": 0.5,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.8",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-74",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TN33.14-90-9",
+      "apfd": 0.923076923076923,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUG34.4",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TPN33.58-37-2-1",
+      "apfd": 0.7500000000000001,
+      "n_tests": 6,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T3TC33.18-27-4",
+      "apfd": 0.19565217391304346,
+      "n_tests": 23,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-79",
+      "apfd": 0.24999999999999994,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TZ33.18-59",
+      "apfd": 0.423076923076923,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.11",
+      "apfd": 0.8194444444444444,
+      "n_tests": 36,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UUFN34.25",
+      "apfd": 0.6458333333333333,
+      "n_tests": 8,
+      "n_faults": 3
+    },
+    {
+      "build_id": "T2TZ33.18-58",
+      "apfd": 0.9878048780487805,
+      "n_tests": 41,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.26",
+      "apfd": 0.8333333333333334,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.27",
+      "apfd": 0.875,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTPN34.144",
+      "apfd": 0.5625,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3TF33.33",
+      "apfd": 0.6000000000000001,
+      "n_tests": 10,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TPN34.11",
+      "apfd": 0.5,
+      "n_tests": 3,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UTB34.97",
+      "apfd": 0.8636363636363635,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.24",
+      "apfd": 0.5,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SR33.72-13",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2SE33.73-8",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TB34.21",
+      "apfd": 0.11206896551724137,
+      "n_tests": 58,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SG33.102",
+      "apfd": 0.5263157894736842,
+      "n_tests": 19,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T3SG33.92",
+      "apfd": 0.48214285714285715,
+      "n_tests": 12,
+      "n_faults": 7
+    },
+    {
+      "build_id": "T3SG33.99",
+      "apfd": 0.9583333333333333,
+      "n_tests": 12,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SG33.131",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3SG33.129",
+      "apfd": 0.5138888888888888,
+      "n_tests": 12,
+      "n_faults": 9
+    },
+    {
+      "build_id": "UUG34.20",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.116",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1RD33.116-33-13",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1SQ34.18",
+      "apfd": 0.48850574712643674,
+      "n_tests": 29,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1SQ34.45",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1SQ34.51",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UFN34.17",
+      "apfd": 0.8500000000000001,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TR34.8-5",
+      "apfd": 0.9791666666666667,
+      "n_tests": 24,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UFN34.15",
+      "apfd": 0.7142857142857142,
+      "n_tests": 7,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TPN33.58-92",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T1TPN33.58-94",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUB34.4",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TPN34.18",
+      "apfd": 0.5833333333333334,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-110",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UD34.11",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UD34.12",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2TV33.45-109",
+      "apfd": 0.375,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TDC33.16-63",
+      "apfd": 0.7291666666666666,
+      "n_tests": 24,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UD34.10",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTPN34.177",
+      "apfd": 0.2857142857142857,
+      "n_tests": 7,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTPN34.176",
+      "apfd": 0.16666666666666666,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.127",
+      "apfd": 0.5681818181818182,
+      "n_tests": 44,
+      "n_faults": 2
+    },
+    {
+      "build_id": "USH34.151",
+      "apfd": 0.4756944444444445,
+      "n_tests": 24,
+      "n_faults": 12
+    },
+    {
+      "build_id": "U1SH34.15",
+      "apfd": 0.4375,
+      "n_tests": 8,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1UFN34.18",
+      "apfd": 0.7,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UD34.16-2",
+      "apfd": 0.5892857142857143,
+      "n_tests": 28,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUB34.24",
+      "apfd": 0.655,
+      "n_tests": 50,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UUB34.22",
+      "apfd": 0.6428571428571428,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUB34.25",
+      "apfd": 0.9411764705882353,
+      "n_tests": 34,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1UD34.16-7",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.66-2",
+      "apfd": 0.12500000000000003,
+      "n_tests": 12,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TPC34.1",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1SSM34.31-19",
+      "apfd": 0.7424242424242424,
+      "n_tests": 11,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1TC34.42",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TC34.22-12",
+      "apfd": 0.7222222222222223,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTGN34.139",
+      "apfd": 0.9714285714285714,
+      "n_tests": 35,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2TZ34.9",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.153",
+      "apfd": 0.5821256038647343,
+      "n_tests": 23,
+      "n_faults": 9
+    },
+    {
+      "build_id": "UTGN34.142",
+      "apfd": 0.375,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2TR34.23",
+      "apfd": 0.45833333333333337,
+      "n_tests": 4,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2TB34.26",
+      "apfd": 0.09375,
+      "n_tests": 16,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UST34.88",
+      "apfd": 0.11538461538461534,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UST34.90",
+      "apfd": 0.3181818181818182,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTT34.104",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TR34.8-30",
+      "apfd": 0.8292682926829269,
+      "n_tests": 41,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UUM34.28",
+      "apfd": 0.7,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUM34.23",
+      "apfd": 0.3055555555555556,
+      "n_tests": 18,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TGN34.42-13",
+      "apfd": 0.9545454545454545,
+      "n_tests": 55,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UFN34.36",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TP34.29-18",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUB34.27",
+      "apfd": 0.9339622641509434,
+      "n_tests": 53,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2UB34.12",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUB34.29",
+      "apfd": 0.5657894736842105,
+      "n_tests": 19,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UUB34.28",
+      "apfd": 0.7318181818181818,
+      "n_tests": 22,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UUB34.31",
+      "apfd": 0.4166666666666667,
+      "n_tests": 12,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UUB34.30",
+      "apfd": 0.1363636363636364,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.12",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TGN34.33",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UU34.40-14-1",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TDJ34.70",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TN34.75",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UFN34.41-1",
+      "apfd": 0.6875,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TD33.16-78",
+      "apfd": 0.9545454545454546,
+      "n_tests": 22,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TD34.74",
+      "apfd": 0.8333333333333334,
+      "n_tests": 6,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2UM34.13",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.51",
+      "apfd": 0.7727272727272727,
+      "n_tests": 11,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UX34.29",
+      "apfd": 0.8333333333333334,
+      "n_tests": 6,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UX34.1",
+      "apfd": 0.05172413793103444,
+      "n_tests": 29,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.56",
+      "apfd": 0.6428571428571428,
+      "n_tests": 7,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UX34.54",
+      "apfd": 0.40686274509803927,
+      "n_tests": 34,
+      "n_faults": 9
+    },
+    {
+      "build_id": "U1TM34.84",
+      "apfd": 0.20000000000000004,
+      "n_tests": 25,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TDJ34.100-17",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1SQ34.52-21-1",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TGN34.42-19",
+      "apfd": 0.3554396423248882,
+      "n_tests": 61,
+      "n_faults": 11
+    },
+    {
+      "build_id": "U1UFN34.41-23",
+      "apfd": 0.8863636363636364,
+      "n_tests": 22,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1SQ34.53-14",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1SQ34.53-12",
+      "apfd": 0.375,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.66-37",
+      "apfd": 0.5568181818181819,
+      "n_tests": 22,
+      "n_faults": 8
+    },
+    {
+      "build_id": "U1TGN34.42-12",
+      "apfd": 0.7500000000000001,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.14",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UB34.42",
+      "apfd": 0.7500000000000001,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UB34.20",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.10",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUU34.15",
+      "apfd": 0.49999999999999994,
+      "n_tests": 6,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UUU34.25",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UU34.2",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UUU34.21",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UG34.23-23-5",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTR34.173",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUC34.7",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUV34.55",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUV34.54",
+      "apfd": 0.5833333333333334,
+      "n_tests": 12,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U2UB34.43",
+      "apfd": 0.5694444444444444,
+      "n_tests": 12,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2UB34.38",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UAN34.38",
+      "apfd": 0.5952380952380952,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.49",
+      "apfd": 0.26923076923076916,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.47",
+      "apfd": 0.7134146341463414,
+      "n_tests": 41,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UUV34.59",
+      "apfd": 0.425925925925926,
+      "n_tests": 36,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UUX34.48",
+      "apfd": 0.8368421052631578,
+      "n_tests": 19,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UUV34.63",
+      "apfd": 0.7533333333333334,
+      "n_tests": 25,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUV34.60",
+      "apfd": 0.15625,
+      "n_tests": 16,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUV34.57",
+      "apfd": 0.6083333333333333,
+      "n_tests": 20,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUV34.66",
+      "apfd": 0.9500000000000001,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TGN34.42-30",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.3",
+      "apfd": 0.73,
+      "n_tests": 50,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.7",
+      "apfd": 0.78,
+      "n_tests": 75,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UC34.9",
+      "apfd": 0.49609375,
+      "n_tests": 64,
+      "n_faults": 8
+    },
+    {
+      "build_id": "U3UC34.32",
+      "apfd": 0.5486111111111112,
+      "n_tests": 24,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3UC34.33",
+      "apfd": 0.9444444444444444,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUC34.37",
+      "apfd": 0.7916666666666667,
+      "n_tests": 24,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UV34.9",
+      "apfd": 0.5,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UC34.8",
+      "apfd": 0.6778846153846154,
+      "n_tests": 52,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U3UC34.5",
+      "apfd": 0.9204545454545454,
+      "n_tests": 44,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U3UC34.1",
+      "apfd": 0.6538461538461539,
+      "n_tests": 21,
+      "n_faults": 13
+    },
+    {
+      "build_id": "UUC34.34",
+      "apfd": 0.7678571428571429,
+      "n_tests": 28,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.54",
+      "apfd": 0.25,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.53",
+      "apfd": 0.5422077922077922,
+      "n_tests": 14,
+      "n_faults": 11
+    },
+    {
+      "build_id": "U1TL34.76",
+      "apfd": 0.5,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TL34.81",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.27-6",
+      "apfd": 0.23333333333333328,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.27-8",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TDC34.9-2",
+      "apfd": 0.74,
+      "n_tests": 25,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TM34.80",
+      "apfd": 0.8478260869565217,
+      "n_tests": 23,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TM34.85",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TM34.79",
+      "apfd": 0.6228070175438597,
+      "n_tests": 19,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U1TM34.81",
+      "apfd": 0.7727272727272727,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTB34.203",
+      "apfd": 0.875,
+      "n_tests": 16,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTC34.132",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TR34.13",
+      "apfd": 0.9838709677419355,
+      "n_tests": 31,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.6",
+      "apfd": 0.6661654135338346,
+      "n_tests": 133,
+      "n_faults": 10
+    },
+    {
+      "build_id": "UTZ34.31",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTZ34.33",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.5",
+      "apfd": 0.7321428571428572,
+      "n_tests": 28,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UC34.56",
+      "apfd": 0.6136363636363635,
+      "n_tests": 22,
+      "n_faults": 7
+    },
+    {
+      "build_id": "U3UC34.63-31",
+      "apfd": 0.8157894736842105,
+      "n_tests": 19,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TT34.125",
+      "apfd": 0.5952380952380952,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TT34.119",
+      "apfd": 0.8846153846153846,
+      "n_tests": 13,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1TT34.124",
+      "apfd": 0.9057971014492754,
+      "n_tests": 23,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1TT34.121",
+      "apfd": 0.8,
+      "n_tests": 10,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TT34.126",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UD34.16-62",
+      "apfd": 0.926470588235294,
+      "n_tests": 34,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2UU34.1",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1UG34.23-55",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.4",
+      "apfd": 0.5454545454545454,
+      "n_tests": 22,
+      "n_faults": 10
+    },
+    {
+      "build_id": "UTZ34.35",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTO34.163",
+      "apfd": 0.5666666666666667,
+      "n_tests": 5,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UFN34.1",
+      "apfd": 0.375,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTO34.179",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUFN34.94",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.30",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUX34.52",
+      "apfd": 0.7916666666666666,
+      "n_tests": 12,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UX34.3",
+      "apfd": 0.3055555555555556,
+      "n_tests": 18,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UX34.5",
+      "apfd": 0.6442307692307692,
+      "n_tests": 52,
+      "n_faults": 8
+    },
+    {
+      "build_id": "UUX34.65",
+      "apfd": 0.9375,
+      "n_tests": 24,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TD33.16-78-7",
+      "apfd": 0.9444444444444444,
+      "n_tests": 27,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2UB34.44",
+      "apfd": 0.4375,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2UU34.40-6",
+      "apfd": 0.07142857142857142,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.7",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.27-14",
+      "apfd": 0.9375,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TD34.100-7",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UB34.44-20",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.7",
+      "apfd": 0.7091097308488613,
+      "n_tests": 69,
+      "n_faults": 7
+    },
+    {
+      "build_id": "U3UC34.6",
+      "apfd": 0.9444444444444444,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UW34.44",
+      "apfd": 0.5833333333333334,
+      "n_tests": 9,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U2UU34.17",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T2RK33.71",
+      "apfd": 0.85,
+      "n_tests": 20,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T2RK33.91",
+      "apfd": 0.75,
+      "n_tests": 4,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUX34.63",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TGN34.42-67",
+      "apfd": 0.5,
+      "n_tests": 7,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2UM34.27-33",
+      "apfd": 0.888888888888889,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "T1TO33.33-147",
+      "apfd": 0.8333333333333334,
+      "n_tests": 18,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U3TR34.8",
+      "apfd": 0.4166666666666667,
+      "n_tests": 6,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UX34.8",
+      "apfd": 0.8589743589743589,
+      "n_tests": 13,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2SL34.1-4",
+      "apfd": 0.9423076923076924,
+      "n_tests": 26,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U2SL34.1-20",
+      "apfd": 0.44642857142857145,
+      "n_tests": 28,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2SL34.1-2",
+      "apfd": 0.72,
+      "n_tests": 25,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1UD34.16-82",
+      "apfd": 0.9444444444444444,
+      "n_tests": 18,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UX34.9",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TF34.67",
+      "apfd": 0.9285714285714286,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TF34.44",
+      "apfd": 0.5306306306306307,
+      "n_tests": 37,
+      "n_faults": 15
+    },
+    {
+      "build_id": "U1TF34.45",
+      "apfd": 0.9210526315789473,
+      "n_tests": 19,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.27-36",
+      "apfd": 0.9736842105263158,
+      "n_tests": 19,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1TO34.1-33",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2SL34.1-17",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.2-65",
+      "apfd": 0.7482758620689656,
+      "n_tests": 29,
+      "n_faults": 5
+    },
+    {
+      "build_id": "U3TZ34.2-38",
+      "apfd": 0.7741935483870968,
+      "n_tests": 31,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TV34.1-20",
+      "apfd": 0.69375,
+      "n_tests": 48,
+      "n_faults": 5
+    },
+    {
+      "build_id": "U3TV34.1-25",
+      "apfd": 0.6851851851851852,
+      "n_tests": 9,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UW34.36",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UW34.19",
+      "apfd": 0.5,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UW34.24",
+      "apfd": 0.7410714285714286,
+      "n_tests": 56,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U3UX34.26",
+      "apfd": 0.16666666666666666,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.2-20",
+      "apfd": 0.6057692307692307,
+      "n_tests": 52,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3TZ34.2-7",
+      "apfd": 0.5000638569604087,
+      "n_tests": 90,
+      "n_faults": 87
+    },
+    {
+      "build_id": "U3TZ34.2-18",
+      "apfd": 0.8196894848270995,
+      "n_tests": 109,
+      "n_faults": 13
+    },
+    {
+      "build_id": "U3TZ34.2-16",
+      "apfd": 0.3076923076923077,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TZ34.2-22",
+      "apfd": 0.9473684210526315,
+      "n_tests": 19,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TZ34.2-14",
+      "apfd": 0.09999999999999998,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.26",
+      "apfd": 0.9444444444444444,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.26-2",
+      "apfd": 0.8697916666666666,
+      "n_tests": 64,
+      "n_faults": 12
+    },
+    {
+      "build_id": "U3UV34.26-5",
+      "apfd": 0.6071428571428571,
+      "n_tests": 14,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.26-3",
+      "apfd": 0.9,
+      "n_tests": 15,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U2UU34.40-5",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UB34.44-42",
+      "apfd": 0.45,
+      "n_tests": 10,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-2",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UM34.27-38-4",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UUI34.40-6",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-1",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UW34.25",
+      "apfd": 0.7142857142857143,
+      "n_tests": 49,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UW34.27",
+      "apfd": 0.5833333333333334,
+      "n_tests": 18,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U1UD34.16-82-4",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.35",
+      "apfd": 0.125,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UAN34.72-16",
+      "apfd": 0.9705882352941176,
+      "n_tests": 17,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.2-15",
+      "apfd": 0.6481481481481481,
+      "n_tests": 9,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3TB34.26",
+      "apfd": 0.8125,
+      "n_tests": 8,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TDC34.9-34",
+      "apfd": 0.5952380952380952,
+      "n_tests": 21,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UC34.51",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.63",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UC34.38",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUI34.37",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-11",
+      "apfd": 0.5625,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.56-1",
+      "apfd": 0.8991228070175439,
+      "n_tests": 76,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3UX34.56-2",
+      "apfd": 0.793859649122807,
+      "n_tests": 57,
+      "n_faults": 8
+    },
+    {
+      "build_id": "U3UX34.56-4",
+      "apfd": 0.6041666666666667,
+      "n_tests": 8,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UX34.56-3",
+      "apfd": 0.7730263157894738,
+      "n_tests": 38,
+      "n_faults": 8
+    },
+    {
+      "build_id": "U3TV34.1-22",
+      "apfd": 0.880952380952381,
+      "n_tests": 21,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TV34.1-18",
+      "apfd": 0.5030701754385964,
+      "n_tests": 76,
+      "n_faults": 75
+    },
+    {
+      "build_id": "U3TV34.1-19",
+      "apfd": 0.7216312056737589,
+      "n_tests": 94,
+      "n_faults": 12
+    },
+    {
+      "build_id": "U3TV34.1-23",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UB34.44-71",
+      "apfd": 0.5,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.2-40",
+      "apfd": 0.515625,
+      "n_tests": 32,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTB34.309",
+      "apfd": 0.6481481481481481,
+      "n_tests": 27,
+      "n_faults": 2
+    },
+    {
+      "build_id": "USQ34.223",
+      "apfd": 0.5,
+      "n_tests": 3,
+      "n_faults": 3
+    },
+    {
+      "build_id": "USQ34.221",
+      "apfd": 0.5,
+      "n_tests": 5,
+      "n_faults": 5
+    },
+    {
+      "build_id": "UTB34.291",
+      "apfd": 0.6370967741935484,
+      "n_tests": 31,
+      "n_faults": 4
+    },
+    {
+      "build_id": "UTB34.293",
+      "apfd": 0.88,
+      "n_tests": 25,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UTB34.292",
+      "apfd": 0.34090909090909094,
+      "n_tests": 22,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3TZ34.2-43",
+      "apfd": 0.8458333333333333,
+      "n_tests": 40,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UTB34.294",
+      "apfd": 0.8970588235294117,
+      "n_tests": 34,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUFN34.170",
+      "apfd": 0.125,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTB34.295",
+      "apfd": 0.08536585365853654,
+      "n_tests": 41,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.26-25",
+      "apfd": 0.6754385964912281,
+      "n_tests": 19,
+      "n_faults": 9
+    },
+    {
+      "build_id": "U3TZ34.2-42",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UTO34.266",
+      "apfd": 0.053571428571428555,
+      "n_tests": 28,
+      "n_faults": 1
+    },
+    {
+      "build_id": "USQ34.227",
+      "apfd": 0.2857142857142857,
+      "n_tests": 14,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTB34.308",
+      "apfd": 0.6805555555555556,
+      "n_tests": 36,
+      "n_faults": 3
+    },
+    {
+      "build_id": "UUFN34.192",
+      "apfd": 0.462962962962963,
+      "n_tests": 9,
+      "n_faults": 3
+    },
+    {
+      "build_id": "USQ34.230",
+      "apfd": 0.7,
+      "n_tests": 5,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UTO34.265",
+      "apfd": 0.45833333333333337,
+      "n_tests": 20,
+      "n_faults": 6
+    },
+    {
+      "build_id": "UUC34.59",
+      "apfd": 0.5370370370370371,
+      "n_tests": 9,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U2UAN34.72-35",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UV34.26-22-1",
+      "apfd": 0.8333333333333334,
+      "n_tests": 21,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.66-52",
+      "apfd": 0.8472222222222222,
+      "n_tests": 18,
+      "n_faults": 4
+    },
+    {
+      "build_id": "U3UV34.26-27",
+      "apfd": 0.7023809523809524,
+      "n_tests": 14,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3UOC34.45",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-15",
+      "apfd": 0.7857142857142857,
+      "n_tests": 7,
+      "n_faults": 1
+    },
+    {
+      "build_id": "UUI34.31",
+      "apfd": 0.8571428571428571,
+      "n_tests": 7,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUI34.33",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1TR34.8-30-13-2-2",
+      "apfd": 0.9210526315789473,
+      "n_tests": 19,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1UG34.23-82",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2SL34.1-42",
+      "apfd": 0.9848484848484849,
+      "n_tests": 33,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U2UAN34.72-43",
+      "apfd": 0.9666666666666667,
+      "n_tests": 15,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.63-24",
+      "apfd": 0.6547619047619048,
+      "n_tests": 28,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U1SJ34.2-46",
+      "apfd": 0.375,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1SJ34.2-54",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.63-29",
+      "apfd": 0.8333333333333334,
+      "n_tests": 3,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.56-17",
+      "apfd": 0.8846153846153846,
+      "n_tests": 13,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UW34.67-6",
+      "apfd": 0.984375,
+      "n_tests": 32,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-45",
+      "apfd": 0.9166666666666667,
+      "n_tests": 6,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U1RD34.43",
+      "apfd": 0.6666666666666666,
+      "n_tests": 3,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U1RD34.44",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.63-23",
+      "apfd": 0.8461538461538461,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UC34.63-26",
+      "apfd": 0.7581300813008129,
+      "n_tests": 41,
+      "n_faults": 12
+    },
+    {
+      "build_id": "U3UX34.56-20",
+      "apfd": 0.2777777777777778,
+      "n_tests": 9,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.56-19",
+      "apfd": 0.8461538461538461,
+      "n_tests": 13,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3TZ34.2-58",
+      "apfd": 0.5,
+      "n_tests": 1,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-42",
+      "apfd": 0.29999999999999993,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UO34.49-15",
+      "apfd": 0.7352941176470588,
+      "n_tests": 17,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TZ34.67",
+      "apfd": 0.462962962962963,
+      "n_tests": 9,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3TV34.1-43",
+      "apfd": 0.9,
+      "n_tests": 5,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-48",
+      "apfd": 0.5,
+      "n_tests": 32,
+      "n_faults": 2
+    },
+    {
+      "build_id": "UUI34.32",
+      "apfd": 0.49999999999999994,
+      "n_tests": 6,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3TZ34.81",
+      "apfd": 0.38636363636363635,
+      "n_tests": 22,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-51",
+      "apfd": 0.5952380952380953,
+      "n_tests": 9,
+      "n_faults": 7
+    },
+    {
+      "build_id": "U2UAN34.72-43-2",
+      "apfd": 0.7886363636363637,
+      "n_tests": 44,
+      "n_faults": 5
+    },
+    {
+      "build_id": "U1UG34.23-85",
+      "apfd": 0.75,
+      "n_tests": 2,
+      "n_faults": 1
+    },
+    {
+      "build_id": "T3TF33.66-56",
+      "apfd": 0.66875,
+      "n_tests": 16,
+      "n_faults": 5
+    },
+    {
+      "build_id": "U3UX34.56-23",
+      "apfd": 0.6153846153846153,
+      "n_tests": 13,
+      "n_faults": 6
+    },
+    {
+      "build_id": "U3UX34.56-22",
+      "apfd": 0.5416666666666666,
+      "n_tests": 4,
+      "n_faults": 3
+    },
+    {
+      "build_id": "U3UW34.67-8",
+      "apfd": 0.8636363636363635,
+      "n_tests": 11,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UC34.63-32",
+      "apfd": 0.5625,
+      "n_tests": 8,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3TV34.1-52",
+      "apfd": 0.625,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UX34.56-37",
+      "apfd": 0.875,
+      "n_tests": 4,
+      "n_faults": 1
+    },
+    {
+      "build_id": "U3UO34.49-36",
+      "apfd": 0.888888888888889,
+      "n_tests": 9,
+      "n_faults": 2
+    },
+    {
+      "build_id": "U3UTC34.29",
+      "apfd": 0.5,
+      "n_tests": 2,
+      "n_faults": 2
+    }
+  ]
+}

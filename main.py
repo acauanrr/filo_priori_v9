@@ -45,6 +45,7 @@ from preprocessing.structural_feature_extractor_v2 import StructuralFeatureExtra
 from preprocessing.structural_feature_extractor_v2_5 import StructuralFeatureExtractorV2_5
 from preprocessing.structural_feature_extractor_v3 import StructuralFeatureExtractorV3
 from preprocessing.structural_feature_imputation import impute_structural_features
+from preprocessing.structural_coldstart_regressor import ColdStartRegressor, create_coldstart_regressor
 from embeddings import EmbeddingManager
 from phylogenetic.phylogenetic_graph_builder import build_phylogenetic_graph
 from phylogenetic.git_dag_builder import GitDAGBuilder, build_git_dag
@@ -188,21 +189,19 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     # Prepare combined dataframes for embedding generation
     # Note: EmbeddingManager needs train + val + test together to maintain cache consistency
     # But we'll only use train for initial generation, then reuse cache
-    logger.info(f"  Generating/loading embeddings for {len(df_train)} train + {len(df_val)} val + {len(df_test)} test samples...")
+    # Encode train + val together to avoid re-loading the SBERT model multiple times
+    logger.info(f"  Generating/loading embeddings for {len(df_train) + len(df_val)} train+val + {len(df_test)} test samples...")
+    train_val_df = pd.concat([df_train, df_val], ignore_index=True)
 
     # Get all embeddings at once (uses cache if available)
-    all_embeddings = embedding_manager.get_embeddings(df_train, df_test)
+    all_embeddings = embedding_manager.get_embeddings(train_val_df, df_test)
 
-    # Extract embeddings for each split
-    train_tc_embeddings = all_embeddings['train_tc']
-    train_commit_embeddings = all_embeddings['train_commit']
+    # Split train/val embeddings back out
+    train_tc_embeddings = all_embeddings['train_tc'][:len(df_train)]
+    val_tc_embeddings = all_embeddings['train_tc'][len(df_train):]
 
-    # For val and test, we need to generate them separately since EmbeddingManager only handles train/test
-    # We'll do a simple encoding without cache for val (it's small)
-    logger.info("\n  Encoding validation set...")
-    val_embeddings_dict = embedding_manager.get_embeddings(df_val, df_val)  # Use same df twice as workaround
-    val_tc_embeddings = val_embeddings_dict['train_tc']  # Get from 'train' key
-    val_commit_embeddings = val_embeddings_dict['train_commit']
+    train_commit_embeddings = all_embeddings['train_commit'][:len(df_train)]
+    val_commit_embeddings = all_embeddings['train_commit'][len(df_train):]
 
     test_tc_embeddings = all_embeddings['test_tc']
     test_commit_embeddings = all_embeddings['test_commit']
@@ -304,9 +303,9 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     logger.info("  Transforming test data...")
     test_struct = extractor.transform(df_test, is_test=True)
 
-    # Impute missing features using semantic similarity
-    logger.info("\n1.4b: Imputing missing structural features...")
-    logger.info("  (Uses semantic similarity to estimate features for tests without history)")
+    # Impute missing features using Cold-Start Regressor
+    logger.info("\n1.4b: Imputing missing structural features with Cold-Start Regressor...")
+    logger.info("  (Uses MLP to predict structural features from semantic embeddings)")
 
     # Get TC_Keys for each split
     tc_keys_train = df_train['TC_Key'].tolist()
@@ -320,27 +319,80 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     logger.info(f"  Validation samples needing imputation: {needs_imputation_val.sum()}/{len(tc_keys_val)}")
     logger.info(f"  Test samples needing imputation: {needs_imputation_test.sum()}/{len(tc_keys_test)}")
 
-    if needs_imputation_val.sum() > 0:
-        logger.info("  Imputing validation features...")
-        val_struct, val_imputation_stats = impute_structural_features(
-            train_embeddings, train_struct, tc_keys_train,
-            val_embeddings, val_struct, tc_keys_val,
-            extractor.tc_history,
-            k_neighbors=10,
-            similarity_threshold=0.5,
-            verbose=False
+    # Check if cold-start imputation is enabled
+    use_coldstart = config.get('coldstart', {}).get('enabled', True)
+    coldstart_cache_path = config.get('coldstart', {}).get('cache_path', 'cache/coldstart_regressor.pkl')
+
+    if use_coldstart and (needs_imputation_val.sum() > 0 or needs_imputation_test.sum() > 0):
+        logger.info("\n  Training Cold-Start Regressor on train data...")
+
+        # Create cold-start regressor
+        coldstart_regressor = create_coldstart_regressor(
+            config,
+            device='cuda' if torch.cuda.is_available() else 'cpu'
         )
 
-    if needs_imputation_test.sum() > 0:
-        logger.info("  Imputing test features...")
-        test_struct, test_imputation_stats = impute_structural_features(
-            train_embeddings, train_struct, tc_keys_train,
-            test_embeddings, test_struct, tc_keys_test,
-            extractor.tc_history,
-            k_neighbors=10,
-            similarity_threshold=0.5,
-            verbose=False
-        )
+        # Check for cached regressor
+        if sample_size is None and os.path.exists(coldstart_cache_path):
+            logger.info(f"  Loading cached Cold-Start Regressor from {coldstart_cache_path}")
+            coldstart_regressor.load(coldstart_cache_path)
+        else:
+            # Train on training data
+            coldstart_regressor.fit(
+                embeddings=train_embeddings,
+                structural_features=train_struct,
+                val_embeddings=val_embeddings if needs_imputation_val.sum() == 0 else None,
+                val_structural=val_struct if needs_imputation_val.sum() == 0 else None
+            )
+
+            # Save for future use
+            if sample_size is None:
+                os.makedirs(os.path.dirname(coldstart_cache_path), exist_ok=True)
+                coldstart_regressor.save(coldstart_cache_path)
+
+        # Impute validation features
+        if needs_imputation_val.sum() > 0:
+            logger.info("  Imputing validation features with Cold-Start Regressor...")
+            val_struct = coldstart_regressor.impute_features(
+                embeddings=val_embeddings,
+                real_features=val_struct,
+                needs_imputation=needs_imputation_val
+            )
+
+        # Impute test features
+        if needs_imputation_test.sum() > 0:
+            logger.info("  Imputing test features with Cold-Start Regressor...")
+            test_struct = coldstart_regressor.impute_features(
+                embeddings=test_embeddings,
+                real_features=test_struct,
+                needs_imputation=needs_imputation_test
+            )
+
+        logger.info("  ✅ Cold-Start imputation complete!")
+
+    elif needs_imputation_val.sum() > 0 or needs_imputation_test.sum() > 0:
+        # Fallback to k-NN imputation if cold-start is disabled
+        logger.info("  Using k-NN imputation (cold-start disabled)...")
+
+        if needs_imputation_val.sum() > 0:
+            val_struct, _ = impute_structural_features(
+                train_embeddings, train_struct, tc_keys_train,
+                val_embeddings, val_struct, tc_keys_val,
+                extractor.tc_history,
+                k_neighbors=10,
+                similarity_threshold=0.5,
+                verbose=False
+            )
+
+        if needs_imputation_test.sum() > 0:
+            test_struct, _ = impute_structural_features(
+                train_embeddings, train_struct, tc_keys_train,
+                test_embeddings, test_struct, tc_keys_test,
+                extractor.tc_history,
+                k_neighbors=10,
+                similarity_threshold=0.5,
+                verbose=False
+            )
 
     # Apply SMOTE if enabled
     if config['data'].get('smote', {}).get('enabled', False):
@@ -424,6 +476,7 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
         if use_multi_edge:
             # Multi-edge mode: pass embeddings for semantic edges
             logger.info("  Using multi-edge graph builder")
+
             graph_builder = build_phylogenetic_graph(
                 df_train,
                 cache_path=graph_cache_path,
@@ -499,10 +552,11 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
         'df': df_test
     }
 
-    # Extract edge_index and edge_weights for the ENTIRE training set
-    # This graph structure is used for all batches during training
+    # Extract edge_index and edge_weights for the graph
     logger.info("\n1.7: Extracting graph structure (edge_index and edge_weights)...")
-    all_tc_keys = df_train['TC_Key'].unique().tolist()
+
+    # Use TC_Keys from graph_builder
+    all_tc_keys = list(graph_builder.tc_to_idx.keys())
     edge_index, edge_weights = graph_builder.get_edge_index_and_weights(
         tc_keys=all_tc_keys,
         return_torch=True
@@ -510,8 +564,9 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     logger.info(f"Graph structure: {edge_index.shape[1]} edges among {len(all_tc_keys)} nodes")
 
     # Create TC_Key to global index mapping (for subgraph extraction)
+    # Use the mapping from graph_builder to ensure consistency
     logger.info("\n1.8: Creating TC_Key to global index mapping...")
-    tc_key_to_global_idx = {tc_key: idx for idx, tc_key in enumerate(all_tc_keys)}
+    tc_key_to_global_idx = graph_builder.tc_to_idx.copy()
     logger.info(f"  Mapped {len(tc_key_to_global_idx)} unique TC_Keys to global indices (0-{len(all_tc_keys)-1})")
 
     # Add global indices to each split's data
@@ -946,7 +1001,7 @@ def main():
         logger.info(f"  Phylo embeddings: {phylo_embeddings.shape}")
 
     # Extract structural features for GAT processing
-    # IMPORTANT: For subgraph extraction, we always use the FULL training graph features (161 nodes)
+    logger.info("\nPreparing structural features for graph...")
     train_structural_features = torch.FloatTensor(train_data['structural_features'])
 
     # Create data loaders
@@ -1027,6 +1082,13 @@ def main():
     logger.info("STEP 3: TRAINING")
     logger.info("="*70)
 
+    # Resolve checkpoint path inside results dir to avoid stale root-level files
+    results_dir = config['output']['results_dir']
+    checkpoint_cfg = config.get('checkpoint', {})
+    checkpoint_dir = checkpoint_cfg.get('dir', results_dir)
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    best_model_path = os.path.join(checkpoint_dir, checkpoint_cfg.get('best_name', 'best_model.pt'))
+
     best_val_f1 = 0.0
     patience_counter = 0
     patience = config['training']['early_stopping']['patience']
@@ -1065,7 +1127,7 @@ def main():
             patience_counter = 0
 
             # Save best model
-            torch.save(model.state_dict(), 'best_model_v8.pt')
+            torch.save(model.state_dict(), best_model_path)
             logger.info(f"  → New best model saved! (F1={best_val_f1:.4f})")
         else:
             patience_counter += 1
@@ -1074,9 +1136,14 @@ def main():
                 break
 
     # Load best model (if it exists)
-    if os.path.exists('best_model_v8.pt'):
+    if os.path.exists(best_model_path):
         logger.info("\nLoading best model...")
-        model.load_state_dict(torch.load('best_model_v8.pt'))
+        try:
+            model.load_state_dict(torch.load(best_model_path))
+        except RuntimeError as e:
+            logger.error(f"❌ Failed to load checkpoint at {best_model_path}: {e}")
+            logger.error("   The file may come from an older architecture (e.g., 6 structural features).")
+            logger.error("   Delete or rename the stale checkpoint and re-run training.")
     else:
         logger.warning("\nNo best model checkpoint found - using final model state")
 
@@ -1359,174 +1426,185 @@ def main():
     # STEP 6: PROCESS FULL TEST.CSV (277 BUILDS) FOR FINAL APFD CALCULATION
     # ==============================================================================
 
-    logger.info("\n"+"="*70)
-    logger.info("STEP 6: PROCESSING FULL TEST.CSV FOR FINAL APFD")
-    logger.info("="*70)
+    if args.sample_size is not None:
+        logger.info("\nSample-size mode detected - skipping full test.csv processing (STEP 6).")
+    else:
+        logger.info("\n"+"="*70)
+        logger.info("STEP 6: PROCESSING FULL TEST.CSV FOR FINAL APFD")
+        logger.info("="*70)
 
-    try:
-        # Load FULL test dataset (test.csv)
-        logger.info("\n6.1: Loading FULL test.csv...")
-        test_df_full = data_loader.load_full_test_dataset()
+        try:
+            # Load FULL test dataset (test.csv)
+            logger.info("\n6.1: Loading FULL test.csv...")
+            test_df_full = data_loader.load_full_test_dataset()
 
-        logger.info(f"✅ Loaded full test.csv:")
-        logger.info(f"   Total samples: {len(test_df_full)}")
-        logger.info(f"   Total builds: {test_df_full['Build_ID'].nunique()}")
+            logger.info(f"✅ Loaded full test.csv:")
+            logger.info(f"   Total samples: {len(test_df_full)}")
+            logger.info(f"   Total builds: {test_df_full['Build_ID'].nunique()}")
 
-        builds_with_fail = test_df_full[test_df_full['TE_Test_Result'] == 'Fail']['Build_ID'].nunique()
-        logger.info(f"   Builds with 'Fail': {builds_with_fail}")
+            builds_with_fail = test_df_full[test_df_full['TE_Test_Result'] == 'Fail']['Build_ID'].nunique()
+            logger.info(f"   Builds with 'Fail': {builds_with_fail}")
 
-        if builds_with_fail != 277:
-            logger.warning(f"⚠️  WARNING: Expected 277 builds but found {builds_with_fail}")
+            if builds_with_fail != 277:
+                logger.warning(f"⚠️  WARNING: Expected 277 builds but found {builds_with_fail}")
 
-        # Generate embeddings for full test set
-        logger.info("\n6.2: Generating semantic embeddings for full test set...")
+            # Generate embeddings for full test set using a dedicated cache to avoid clobbering train/val cache
+            logger.info("\n6.2: Generating semantic embeddings for full test set...")
+            embedding_cfg = config.get('embedding', config.get('semantic', {}))
+            base_cache_dir = embedding_cfg.get('cache_dir', 'cache')
+            use_cache = embedding_cfg.get('use_cache', True)
+            full_test_cache = os.path.join(base_cache_dir, 'full_test') if (base_cache_dir and use_cache) else None
 
-        # Use embedding_manager to generate embeddings for full test.csv
-        # Use the same df for train and test to get embeddings (it will use the pattern for both)
-        full_test_embeddings_dict = embedding_manager.get_embeddings(test_df_full, test_df_full)
-
-        # Extract embeddings
-        test_tc_embeddings_full = full_test_embeddings_dict['train_tc']  # Use 'train' key for the full test set
-        test_commit_embeddings_full = full_test_embeddings_dict['train_commit']
-
-        # Concatenate TC and Commit embeddings
-        test_embeddings_full = np.concatenate([test_tc_embeddings_full, test_commit_embeddings_full], axis=1)
-        logger.info(f"✅ Generated embeddings: {test_embeddings_full.shape}")
-
-        # Extract structural features for full test set
-        logger.info("\n6.3: Extracting structural features for full test set...")
-
-        # Use the already fitted extractor
-        test_struct_full = extractor.transform(test_df_full, is_test=True)
-        logger.info(f"✅ Extracted structural features: {test_struct_full.shape}")
-
-        # Impute if needed
-        tc_keys_test_full = test_df_full['TC_Key'].tolist()
-        needs_imputation_full = extractor.get_imputation_mask(tc_keys_test_full)
-
-        logger.info(f"   Samples needing imputation: {needs_imputation_full.sum()}/{len(tc_keys_test_full)}")
-
-        if needs_imputation_full.sum() > 0:
-            logger.info("   Imputing features...")
-            test_struct_full, _ = impute_structural_features(
-                train_embeddings, train_struct, tc_keys_train,
-                test_embeddings_full, test_struct_full, tc_keys_test_full,
-                extractor.tc_history,
-                k_neighbors=10,
-                similarity_threshold=0.5,
-                verbose=False
+            full_test_embedding_manager = EmbeddingManager(
+                config,
+                force_regenerate=config.get('_force_regen_embeddings', False),
+                cache_dir=full_test_cache
             )
 
-        # Map TC_Keys to global indices for subgraph extraction
-        logger.info("\n6.3b: Mapping TC_Keys to global indices...")
-        # Use the same tc_key_to_global_idx from training
-        tc_key_to_global_idx_full = {tc_key: idx for idx, tc_key in enumerate(train_data['df']['TC_Key'].unique())}
-        global_indices_full = np.array([tc_key_to_global_idx_full.get(tc_key, -1) for tc_key in tc_keys_test_full])
+            full_test_embeddings_dict = full_test_embedding_manager.get_embeddings(test_df_full, test_df_full)
 
-        samples_in_graph = (global_indices_full != -1).sum()
-        logger.info(f"   Samples in training graph: {samples_in_graph}/{len(global_indices_full)} ({100*samples_in_graph/len(global_indices_full):.1f}%)")
-        logger.info(f"   Orphan samples: {len(global_indices_full) - samples_in_graph}/{len(global_indices_full)}")
+            # Extract embeddings
+            test_tc_embeddings_full = full_test_embeddings_dict['train_tc']  # Use 'train' key for the full test set
+            test_commit_embeddings_full = full_test_embeddings_dict['train_commit']
 
-        # Generate predictions on full test set using subgraph approach
-        logger.info("\n6.4: Generating predictions on full test set...")
+            # Concatenate TC and Commit embeddings
+            test_embeddings_full = np.concatenate([test_tc_embeddings_full, test_commit_embeddings_full], axis=1)
+            logger.info(f"✅ Generated embeddings: {test_embeddings_full.shape}")
 
-        # Create DataLoader with global indices
-        test_dataset_full = torch.utils.data.TensorDataset(
-            torch.FloatTensor(test_embeddings_full),
-            torch.FloatTensor(test_struct_full),
-            torch.zeros(len(test_embeddings_full), dtype=torch.long),  # Dummy labels (Long type for loss)
-            torch.LongTensor(global_indices_full)  # Global indices
-        )
+            # Extract structural features for full test set
+            logger.info("\n6.3: Extracting structural features for full test set...")
 
-        test_loader_full = torch.utils.data.DataLoader(
-            test_dataset_full,
-            batch_size=config['training']['batch_size'],
-            shuffle=False
-        )
+            # Use the already fitted extractor
+            test_struct_full = extractor.transform(test_df_full, is_test=True)
+            logger.info(f"✅ Extracted structural features: {test_struct_full.shape}")
 
-        # Use evaluate() function with subgraph extraction
-        # We don't care about loss/metrics here, just need probabilities
-        _, _, all_probs_full = evaluate(
-            model, test_loader_full, criterion, device, edge_index, edge_weights,
-            train_structural_features, num_nodes_global,
-            return_full_probs=True, dataset_size=len(test_df_full),
-            phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-            phylo_path_lengths=phylo_path_lengths
-        )
+            # Impute if needed
+            tc_keys_test_full = test_df_full['TC_Key'].tolist()
+            needs_imputation_full = extractor.get_imputation_mask(tc_keys_test_full)
 
-        logger.info(f"✅ Predictions generated: {all_probs_full.shape}")
-        orphan_count_full = np.sum(np.abs(all_probs_full[:, 0] - 0.5) < 0.001)
-        logger.info(f"   Samples with actual predictions: {len(all_probs_full) - orphan_count_full}")
-        logger.info(f"   Orphan samples (default prob 0.5): {orphan_count_full}")
+            logger.info(f"   Samples needing imputation: {needs_imputation_full.sum()}/{len(tc_keys_test_full)}")
 
-        # Prepare DataFrame for APFD
-        logger.info("\n6.5: Preparing data for APFD calculation...")
+            if needs_imputation_full.sum() > 0:
+                logger.info("   Imputing features...")
+                test_struct_full, _ = impute_structural_features(
+                    train_embeddings, train_struct, tc_keys_train,
+                    test_embeddings_full, test_struct_full, tc_keys_test_full,
+                    extractor.tc_history,
+                    k_neighbors=10,
+                    similarity_threshold=0.5,
+                    verbose=False
+                )
 
-        # P(Fail) = probabilities[:, 0] (class 0 with pass_vs_fail)
-        failure_probs_full = all_probs_full[:, 0]
-        test_df_full['probability'] = failure_probs_full
+            # Map TC_Keys to global indices for subgraph extraction
+            logger.info("\n6.3b: Mapping TC_Keys to global indices...")
+            # Use the same tc_key_to_global_idx from training
+            tc_key_to_global_idx_full = {tc_key: idx for idx, tc_key in enumerate(train_data['df']['TC_Key'].unique())}
+            global_indices_full = np.array([tc_key_to_global_idx_full.get(tc_key, -1) for tc_key in tc_keys_test_full])
 
-        # CRITICAL: Use TE_Test_Result for APFD
-        test_df_full['label_binary'] = (test_df_full['TE_Test_Result'].astype(str).str.strip() == 'Fail').astype(int)
+            samples_in_graph = (global_indices_full != -1).sum()
+            logger.info(f"   Samples in training graph: {samples_in_graph}/{len(global_indices_full)} ({100*samples_in_graph/len(global_indices_full):.1f}%)")
+            logger.info(f"   Orphan samples: {len(global_indices_full) - samples_in_graph}/{len(global_indices_full)}")
 
-        logger.info(f"   Failures (TE_Test_Result=='Fail'): {test_df_full['label_binary'].sum()}")
-        logger.info(f"   Passes: {(test_df_full['label_binary'] == 0).sum()}")
+            # Generate predictions on full test set using subgraph approach
+            logger.info("\n6.4: Generating predictions on full test set...")
 
-        # Generate prioritized CSV with ranks per build
-        logger.info("\n6.6: Generating prioritized test cases CSV...")
+            # Create DataLoader with global indices
+            test_dataset_full = torch.utils.data.TensorDataset(
+                torch.FloatTensor(test_embeddings_full),
+                torch.FloatTensor(test_struct_full),
+                torch.zeros(len(test_embeddings_full), dtype=torch.long),  # Dummy labels (Long type for loss)
+                torch.LongTensor(global_indices_full)  # Global indices
+            )
 
-        prioritized_path_full = os.path.join(results_dir, 'prioritized_test_cases_FULL_testcsv.csv')
-        test_df_full_with_ranks = generate_prioritized_csv(
-            test_df_full,
-            output_path=prioritized_path_full,
-            probability_col='probability',
-            label_col='label_binary',
-            build_col='Build_ID'
-        )
-        logger.info(f"✅ Prioritized test cases (FULL) saved to: {prioritized_path_full}")
+            test_loader_full = torch.utils.data.DataLoader(
+                test_dataset_full,
+                batch_size=config['training']['batch_size'],
+                shuffle=False
+            )
 
-        # Calculate APFD per build
-        logger.info("\n6.7: Calculating APFD per build on FULL test.csv...")
+            # Use evaluate() function with subgraph extraction
+            # We don't care about loss/metrics here, just need probabilities
+            _, _, all_probs_full = evaluate(
+                model, test_loader_full, criterion, device, edge_index, edge_weights,
+                train_structural_features, num_nodes_global,
+                return_full_probs=True, dataset_size=len(test_df_full),
+                phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
+                phylo_path_lengths=phylo_path_lengths
+            )
 
-        apfd_path_full = os.path.join(results_dir, 'apfd_per_build_FULL_testcsv.csv')
-        method_name_full = f"{config['experiment']['name']}_FULL_testcsv"
+            logger.info(f"✅ Predictions generated: {all_probs_full.shape}")
+            orphan_count_full = np.sum(np.abs(all_probs_full[:, 0] - 0.5) < 0.001)
+            logger.info(f"   Samples with actual predictions: {len(all_probs_full) - orphan_count_full}")
+            logger.info(f"   Orphan samples (default prob 0.5): {orphan_count_full}")
 
-        apfd_results_df_full, apfd_summary_full = generate_apfd_report(
-            test_df_full_with_ranks,
-            method_name=method_name_full,
-            test_scenario="full_test_csv_277_builds",
-            output_path=apfd_path_full
-        )
+            # Prepare DataFrame for APFD
+            logger.info("\n6.5: Preparing data for APFD calculation...")
 
-        # Print APFD summary
-        logger.info("\n" + "="*70)
-        logger.info("FINAL APFD RESULTS - FULL TEST.CSV (277 BUILDS)")
-        logger.info("="*70)
-        print_apfd_summary(apfd_summary_full)
+            # P(Fail) = probabilities[:, 0] (class 0 with pass_vs_fail)
+            failure_probs_full = all_probs_full[:, 0]
+            test_df_full['probability'] = failure_probs_full
 
-        # Validation
-        logger.info("\n" + "="*70)
-        logger.info("VALIDATION")
-        logger.info("="*70)
+            # CRITICAL: Use TE_Test_Result for APFD
+            test_df_full['label_binary'] = (test_df_full['TE_Test_Result'].astype(str).str.strip() == 'Fail').astype(int)
 
-        if apfd_summary_full and apfd_summary_full['total_builds'] == 277:
-            logger.info("✅ SUCCESS: Found exactly 277 builds with failures!")
-            logger.info(f"✅ Mean APFD: {apfd_summary_full['mean_apfd']:.4f}")
-        else:
-            builds_found = apfd_summary_full['total_builds'] if apfd_summary_full else 0
-            logger.warning(f"⚠️  WARNING: Expected 277 builds but found {builds_found}")
+            logger.info(f"   Failures (TE_Test_Result=='Fail'): {test_df_full['label_binary'].sum()}")
+            logger.info(f"   Passes: {(test_df_full['label_binary'] == 0).sum()}")
 
-        logger.info(f"\n✅ All results saved to: {results_dir}/")
-        logger.info(f"   - prioritized_test_cases.csv (test split)")
-        logger.info(f"   - apfd_per_build.csv (test split)")
-        logger.info(f"   - prioritized_test_cases_FULL_testcsv.csv (all 277 builds)")
-        logger.info(f"   - apfd_per_build_FULL_testcsv.csv (all 277 builds)")
+            # Generate prioritized CSV with ranks per build
+            logger.info("\n6.6: Generating prioritized test cases CSV...")
 
-    except Exception as e:
-        logger.error(f"\n❌ ERROR processing full test.csv: {e}")
-        logger.error("   Continuing with split test results only...")
-        import traceback
-        traceback.print_exc()
+            prioritized_path_full = os.path.join(results_dir, 'prioritized_test_cases_FULL_testcsv.csv')
+            test_df_full_with_ranks = generate_prioritized_csv(
+                test_df_full,
+                output_path=prioritized_path_full,
+                probability_col='probability',
+                label_col='label_binary',
+                build_col='Build_ID'
+            )
+            logger.info(f"✅ Prioritized test cases (FULL) saved to: {prioritized_path_full}")
+
+            # Calculate APFD per build
+            logger.info("\n6.7: Calculating APFD per build on FULL test.csv...")
+
+            apfd_path_full = os.path.join(results_dir, 'apfd_per_build_FULL_testcsv.csv')
+            method_name_full = f"{config['experiment']['name']}_FULL_testcsv"
+
+            apfd_results_df_full, apfd_summary_full = generate_apfd_report(
+                test_df_full_with_ranks,
+                method_name=method_name_full,
+                test_scenario="full_test_csv_277_builds",
+                output_path=apfd_path_full
+            )
+
+            # Print APFD summary
+            logger.info("\n" + "="*70)
+            logger.info("FINAL APFD RESULTS - FULL TEST.CSV (277 BUILDS)")
+            logger.info("="*70)
+            print_apfd_summary(apfd_summary_full)
+
+            # Validation
+            logger.info("\n" + "="*70)
+            logger.info("VALIDATION")
+            logger.info("="*70)
+
+            if apfd_summary_full and apfd_summary_full['total_builds'] == 277:
+                logger.info("✅ SUCCESS: Found exactly 277 builds with failures!")
+                logger.info(f"✅ Mean APFD: {apfd_summary_full['mean_apfd']:.4f}")
+            else:
+                builds_found = apfd_summary_full['total_builds'] if apfd_summary_full else 0
+                logger.warning(f"⚠️  WARNING: Expected 277 builds but found {builds_found}")
+
+            logger.info(f"\n✅ All results saved to: {results_dir}/")
+            logger.info(f"   - prioritized_test_cases.csv (test split)")
+            logger.info(f"   - apfd_per_build.csv (test split)")
+            logger.info(f"   - prioritized_test_cases_FULL_testcsv.csv (all 277 builds)")
+            logger.info(f"   - apfd_per_build_FULL_testcsv.csv (all 277 builds)")
+
+        except Exception as e:
+            logger.error(f"\n❌ ERROR processing full test.csv: {e}")
+            logger.error("   Continuing with split test results only...")
+            import traceback
+            traceback.print_exc()
 
     # ==============================================================================
     # TRAINING COMPLETE

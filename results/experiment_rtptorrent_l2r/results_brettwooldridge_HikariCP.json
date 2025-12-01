@@ -1,13 +1,13 @@
 {
   "model": {
     "n_builds": 4,
-    "mean_apfd": 0.7113095238095238,
-    "median_apfd": 0.6904761904761905,
-    "std_apfd": 0.2539139946998975,
-    "mean_first_failure": 3.0,
-    "mean_apfd_at_5": 0.475,
-    "mean_apfd_at_10": 0.640625,
-    "mean_apfd_at_20": 0.7515625
+    "mean_apfd": 0.2717086834733894,
+    "median_apfd": 0.28571428571428575,
+    "std_apfd": 0.21489663498705486,
+    "mean_first_failure": 15.25,
+    "mean_apfd_at_5": 0.125,
+    "mean_apfd_at_10": 0.13437500000000002,
+    "mean_apfd_at_20": 0.15546875000000002
   },
   "baselines": {
     "untreated": {
@@ -104,38 +104,38 @@
   },
   "comparison": {
     "untreated": {
-      "improvement": 0.21691176470588236,
-      "improvement_pct": 43.873937677053824,
-      "model_better": "True"
+      "improvement": -0.2226890756302521,
+      "improvement_pct": -45.04249291784702,
+      "model_better": "False"
     },
     "random": {
-      "improvement": 0.23651960784313725,
-      "improvement_pct": 49.81563421828908,
-      "model_better": "True"
+      "improvement": -0.2030812324929972,
+      "improvement_pct": -42.772861356932154,
+      "model_better": "False"
     },
     "recently-failed": {
-      "improvement": -0.07440476190476186,
-      "improvement_pct": -9.469696969696964,
+      "improvement": -0.5140056022408963,
+      "improvement_pct": -65.41889483065954,
       "model_better": "False"
     },
     "optimal-failure": {
-      "improvement": -0.07440476190476186,
-      "improvement_pct": -9.469696969696964,
+      "improvement": -0.5140056022408963,
+      "improvement_pct": -65.41889483065954,
       "model_better": "False"
     },
     "optimal-failure-duration": {
-      "improvement": 0.16369047619047616,
-      "improvement_pct": 29.891304347826082,
-      "model_better": "True"
+      "improvement": -0.2759103641456583,
+      "improvement_pct": -50.38363171355499,
+      "model_better": "False"
     },
     "matrix-naive": {
-      "improvement": -0.030987394957983194,
-      "improvement_pct": -4.1745283018867925,
+      "improvement": -0.47058823529411764,
+      "improvement_pct": -63.39622641509434,
       "model_better": "False"
     },
     "matrix-conditional-prob": {
-      "improvement": -0.030987394957983194,
-      "improvement_pct": -4.1745283018867925,
+      "improvement": -0.47058823529411764,
+      "improvement_pct": -63.39622641509434,
       "model_better": "False"
     }
   }

@@ -48,14 +48,14 @@ commit:
   include_commit_metadata: false
 
 # Semantic Embeddings with SBERT
-# OPTIMIZED FOR RTX 4060 (8GB VRAM)
+# OPTIMIZED FOR RTX 4060 (6GB VRAM LIMIT)
 embedding:
   model_name: "sentence-transformers/all-mpnet-base-v2"
   embedding_dim: 768
   combined_embedding_dim: 1536
 
   max_length: 128  # Shorter since text is simpler
-  batch_size: 32  # REDUCED from 256 - prevents OOM on 8GB VRAM
+  batch_size: 16  # REDUZIDO para limite 6GB VRAM
   normalize_embeddings: true
   device: "cuda"
 
@@ -68,7 +68,7 @@ semantic:
   embedding_dim: 768
   combined_embedding_dim: 1536
   max_length: 128
-  batch_size: 32  # REDUCED - RTX 4060 optimization
+  batch_size: 16  # REDUZIDO para limite 6GB VRAM
 
 # Structural Features (more important for RTPTorrent)
 structural:
@@ -77,6 +77,19 @@ structural:
     min_history: 2
     cache_path: "cache/02_rtptorrent/structural_features.pkl"
   input_dim: 6
+
+# Cold-Start Regressor Configuration
+# Uses MLP to predict structural features for TCs without history
+coldstart:
+  enabled: true
+  cache_path: "cache/02_rtptorrent/coldstart_regressor.pkl"
+  hidden_dims: [512, 256, 128]
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_epochs: 100
+  patience: 10
 
 # Multi-Edge Graph
 graph:
@@ -101,6 +114,8 @@ graph:
 
   cache_path: "cache/02_rtptorrent/multi_edge_graph.pkl"
   type: "co_failure"
+
+  # Inductive mode: only train TCs in graph
 
 # Model Architecture
 model:
@@ -148,7 +163,7 @@ model:
 training:
   num_epochs: 50
   epochs: 50
-  batch_size: 16  # REDUCED - small dataset + RTX 4060 optimization
+  batch_size: 8  # REDUZIDO para limite 6GB VRAM
   learning_rate: 0.0001  # Slightly higher LR
   weight_decay: 0.0001
 

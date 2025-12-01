@@ -1,0 +1,19 @@
+{
+  "filo_priori_v10_apfd": null,
+  "ranking": [
+    [
+      "failure_rate",
+      0.4622002841540657
+    ],
+    [
+      "recently_failed",
+      0.45358172561954074
+    ],
+    [
+      "Filo-Priori V10 (Ours)",
+      0.37665453049906833
+    ]
+  ],
+  "improvement_vs_recently_failed": -16.95994145606256,
+  "p_value": 0.828125
+}

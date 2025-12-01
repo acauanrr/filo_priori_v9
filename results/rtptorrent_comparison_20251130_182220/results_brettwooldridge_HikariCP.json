@@ -1,0 +1,142 @@
+{
+  "model": {
+    "n_builds": 4,
+    "mean_apfd": 0.7514005602240896,
+    "median_apfd": 0.7619047619047619,
+    "std_apfd": 0.20114014868830632,
+    "mean_first_failure": 4.25,
+    "mean_apfd_at_5": 0.4125,
+    "mean_apfd_at_10": 0.5152777777777778,
+    "mean_apfd_at_20": 0.665625
+  },
+  "baselines": {
+    "untreated": {
+      "n_builds": 2,
+      "mean_apfd": 0.4943977591036415,
+      "median_apfd": 0.4943977591036415,
+      "std_apfd": 0.007922765055311429,
+      "mean_first_failure": 6.0,
+      "mean_apfd_at_5": 0.22499999999999998,
+      "mean_recall_at_5": 0.11764705882352941,
+      "mean_apfd_at_10": 0.2678571428571429,
+      "mean_recall_at_10": 0.20588235294117646,
+      "mean_apfd_at_20": 0.46911764705882353,
+      "mean_recall_at_20": 1.0
+    },
+    "random": {
+      "n_builds": 2,
+      "mean_apfd": 0.4747899159663866,
+      "median_apfd": 0.4747899159663866,
+      "std_apfd": 0.03169106022124579,
+      "mean_first_failure": 7.0,
+      "mean_apfd_at_5": 0.2,
+      "mean_recall_at_5": 0.11764705882352941,
+      "mean_apfd_at_10": 0.24375,
+      "mean_recall_at_10": 0.23529411764705882,
+      "mean_apfd_at_20": 0.46406250000000004,
+      "mean_recall_at_20": 0.9705882352941176
+    },
+    "recently-failed": {
+      "n_builds": 2,
+      "mean_apfd": 0.7857142857142857,
+      "median_apfd": 0.7857142857142857,
+      "std_apfd": 0.2693740118805895,
+      "mean_first_failure": 1.0,
+      "mean_apfd_at_5": 0.7,
+      "mean_recall_at_5": 0.6470588235294118,
+      "mean_apfd_at_10": 0.725,
+      "mean_recall_at_10": 0.7941176470588236,
+      "mean_apfd_at_20": 0.775,
+      "mean_recall_at_20": 1.0
+    },
+    "optimal-failure": {
+      "n_builds": 2,
+      "mean_apfd": 0.7857142857142857,
+      "median_apfd": 0.7857142857142857,
+      "std_apfd": 0.2693740118805895,
+      "mean_first_failure": 1.0,
+      "mean_apfd_at_5": 0.7,
+      "mean_recall_at_5": 0.6470588235294118,
+      "mean_apfd_at_10": 0.725,
+      "mean_recall_at_10": 0.7941176470588236,
+      "mean_apfd_at_20": 0.775,
+      "mean_recall_at_20": 1.0
+    },
+    "optimal-failure-duration": {
+      "n_builds": 2,
+      "mean_apfd": 0.5476190476190477,
+      "median_apfd": 0.5476190476190477,
+      "std_apfd": 0.06734350297014738,
+      "mean_first_failure": 6.0,
+      "mean_apfd_at_5": 0.25,
+      "mean_recall_at_5": 0.14705882352941177,
+      "mean_apfd_at_10": 0.24999999999999997,
+      "mean_recall_at_10": 0.29411764705882354,
+      "mean_apfd_at_20": 0.525,
+      "mean_recall_at_20": 1.0
+    },
+    "matrix-naive": {
+      "n_builds": 2,
+      "mean_apfd": 0.742296918767507,
+      "median_apfd": 0.742296918767507,
+      "std_apfd": 0.3307754410592533,
+      "mean_first_failure": 1.0,
+      "mean_apfd_at_5": 0.75,
+      "mean_recall_at_5": 0.6176470588235294,
+      "mean_apfd_at_10": 0.7375,
+      "mean_recall_at_10": 0.7352941176470589,
+      "mean_apfd_at_20": 0.7294117647058824,
+      "mean_recall_at_20": 1.0
+    },
+    "matrix-conditional-prob": {
+      "n_builds": 2,
+      "mean_apfd": 0.742296918767507,
+      "median_apfd": 0.742296918767507,
+      "std_apfd": 0.3307754410592533,
+      "mean_first_failure": 1.0,
+      "mean_apfd_at_5": 0.75,
+      "mean_recall_at_5": 0.6176470588235294,
+      "mean_apfd_at_10": 0.7375,
+      "mean_recall_at_10": 0.7352941176470589,
+      "mean_apfd_at_20": 0.7294117647058824,
+      "mean_recall_at_20": 1.0
+    }
+  },
+  "comparison": {
+    "untreated": {
+      "improvement": 0.25700280112044815,
+      "improvement_pct": 51.98300283286118,
+      "model_better": "True"
+    },
+    "random": {
+      "improvement": 0.27661064425770304,
+      "improvement_pct": 58.25958702064895,
+      "model_better": "True"
+    },
+    "recently-failed": {
+      "improvement": -0.03431372549019607,
+      "improvement_pct": -4.367201426024954,
+      "model_better": "False"
+    },
+    "optimal-failure": {
+      "improvement": -0.03431372549019607,
+      "improvement_pct": -4.367201426024954,
+      "model_better": "False"
+    },
+    "optimal-failure-duration": {
+      "improvement": 0.20378151260504196,
+      "improvement_pct": 37.21227621483374,
+      "model_better": "True"
+    },
+    "matrix-naive": {
+      "improvement": 0.0091036414565826,
+      "improvement_pct": 1.2264150943396182,
+      "model_better": "True"
+    },
+    "matrix-conditional-prob": {
+      "improvement": 0.0091036414565826,
+      "improvement_pct": 1.2264150943396182,
+      "model_better": "True"
+    }
+  }
+}

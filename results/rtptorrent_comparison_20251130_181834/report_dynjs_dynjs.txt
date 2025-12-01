@@ -1,0 +1,24 @@
+======================================================================
+RTPTORRENT EVALUATION REPORT
+Project: dynjs@dynjs
+======================================================================
+
+📊 MODEL RESULTS:
+
+📈 BASELINE COMPARISON:
+----------------------------------------------------------------------
+Strategy                   Mean APFD  Improvement  Better?
+----------------------------------------------------------------------
+untreated                        N/A          N/A      N/A
+random                           N/A          N/A      N/A
+recently-failed                  N/A          N/A      N/A
+optimal-failure                  N/A          N/A      N/A
+optimal-failure-duration         N/A          N/A      N/A
+matrix-naive                     N/A          N/A      N/A
+matrix-conditional-prob          N/A          N/A      N/A
+----------------------------------------------------------------------
+Filo-Priori (Model)           0.0000   (baseline)
+
+📉 APFD@k RESULTS:
+
+======================================================================

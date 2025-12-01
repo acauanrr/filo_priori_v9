@@ -25,7 +25,7 @@ dataset:
 
   # Projects to use (from preset: small, medium, large, or custom list)
   projects:
-    preset: "small"  # small = dynjs, jsprit, HikariCP
+    preset: "all"  # all = all 20 projects
     # custom: ["square@okhttp", "jOOQ@jOOQ"]
 
   # Data loading
@@ -113,8 +113,9 @@ training:
 
   # Training parameters
   epochs: 50
-  batch_size: 32  # Number of builds per batch
-  max_tests_per_build: 100  # Truncate to avoid memory issues
+  batch_size: 4  # REDUZIDO para limite 6GB VRAM
+  max_tests_per_build: 50  # Truncate to avoid memory issues
+  gradient_accumulation_steps: 8  # Effective batch = 4*8 = 32
 
   # Early stopping based on validation APFD
   early_stopping:
@@ -159,7 +160,7 @@ evaluation:
 # =============================================================================
 embeddings:
   model: "sentence-transformers/all-mpnet-base-v2"
-  batch_size: 64
+  batch_size: 32  # REDUZIDO para limite 6GB VRAM
   max_length: 64  # Shorter for class names
   cache_dir: "cache/rtptorrent_embeddings"
 

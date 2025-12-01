@@ -462,7 +462,7 @@ def build_phylogenetic_graph(df_train: pd.DataFrame,
         ...     cache_path='cache/phylogenetic_graph.pkl'
         ... )
 
-        >>> # Multi-edge graph with semantic similarity
+        >>> # Multi-edge graph with semantic edges
         >>> graph_builder = build_phylogenetic_graph(
         ...     df_train,
         ...     use_multi_edge=True,

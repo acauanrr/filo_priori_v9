@@ -1,13 +1,13 @@
 {
   "model": {
     "n_builds": 3,
-    "mean_apfd": 0.5495931537598203,
-    "median_apfd": 0.5277777777777777,
-    "std_apfd": 0.2187257141333456,
-    "mean_first_failure": 16.333333333333332,
-    "mean_apfd_at_5": 0.2333333333333333,
-    "mean_apfd_at_10": 0.2833333333333334,
-    "mean_apfd_at_20": 0.17333333333333334
+    "mean_apfd": 0.7354405162738495,
+    "median_apfd": 0.8011363636363636,
+    "std_apfd": 0.13414435736714603,
+    "mean_first_failure": 7.333333333333333,
+    "mean_apfd_at_5": 0.4333333333333333,
+    "mean_apfd_at_10": 0.41111111111111115,
+    "mean_apfd_at_20": 0.48833333333333334
   },
   "baselines": {
     "untreated": {
@@ -104,38 +104,38 @@
   },
   "comparison": {
     "untreated": {
-      "improvement": 0.18615600448933772,
-      "improvement_pct": 51.220962101151066,
+      "improvement": 0.37200336700336695,
+      "improvement_pct": 102.35700113488097,
       "model_better": "True"
     },
     "random": {
-      "improvement": -0.04331649831649842,
-      "improvement_pct": -7.305750237798922,
-      "model_better": "False"
+      "improvement": 0.1425308641975308,
+      "improvement_pct": 24.039221439286734,
+      "model_better": "True"
     },
     "recently-failed": {
-      "improvement": 0.03068462401795724,
-      "improvement_pct": 5.913301142538869,
+      "improvement": 0.21653198653198646,
+      "improvement_pct": 41.72835367337337,
       "model_better": "True"
     },
     "optimal-failure": {
-      "improvement": -0.415179573512907,
-      "improvement_pct": -43.03392516977127,
+      "improvement": -0.2293322109988778,
+      "improvement_pct": -23.770594308482032,
       "model_better": "False"
     },
     "optimal-failure-duration": {
-      "improvement": -0.415179573512907,
-      "improvement_pct": -43.03392516977127,
+      "improvement": -0.2293322109988778,
+      "improvement_pct": -23.770594308482032,
       "model_better": "False"
     },
     "matrix-naive": {
-      "improvement": 0.18689674523007854,
-      "improvement_pct": 51.529803117626585,
+      "improvement": 0.37274410774410777,
+      "improvement_pct": 102.77027811085757,
       "model_better": "True"
     },
     "matrix-conditional-prob": {
-      "improvement": 0.18615600448933772,
-      "improvement_pct": 51.220962101151066,
+      "improvement": 0.37200336700336695,
+      "improvement_pct": 102.35700113488097,
       "model_better": "True"
     }
   }

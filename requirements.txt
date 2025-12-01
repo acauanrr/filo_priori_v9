@@ -24,3 +24,5 @@ datasets
 
 # Embedding Models (Qodo-Embed-1-1.5B)
 sentence-transformers>=2.2.2
+
+psutil
