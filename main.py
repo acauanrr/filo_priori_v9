@@ -723,10 +723,9 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
     edge_index = edge_index.to(device)
     if edge_weights is not None:
         edge_weights = edge_weights.to(device)
-    all_structural_features_device = all_structural_features.to(device)
-
     for embeddings, structural_features, labels, global_indices in loader:
         embeddings = embeddings.to(device)
+        structural_features = structural_features.to(device)
         labels = labels.to(device)
         global_indices = global_indices.to(device)
 
@@ -752,7 +751,7 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
         )
 
         # Get structural features for the batch nodes (from full graph features)
-        batch_structural_features = all_structural_features_device[global_indices_valid]
+        batch_structural_features = structural_features[valid_mask]
 
         # Use different forward path based on model type
         if is_phylogenetic:
@@ -828,12 +827,11 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     edge_index = edge_index.to(device)
     if edge_weights is not None:
         edge_weights = edge_weights.to(device)
-    all_structural_features_device = all_structural_features.to(device)
-
     batch_start_idx = 0
     for embeddings, structural_features, labels, global_indices in loader:
         batch_size = embeddings.size(0)
         embeddings = embeddings.to(device)
+        structural_features = structural_features.to(device)
         labels = labels.to(device)
         global_indices = global_indices.to(device)
 
@@ -863,7 +861,7 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         )
 
         # Get structural features for the batch nodes (from full graph features)
-        batch_structural_features = all_structural_features_device[global_indices_valid]
+        batch_structural_features = structural_features[valid_mask]
 
         # Use different forward path based on model type
         if is_phylogenetic:
@@ -1448,6 +1446,9 @@ def main():
             if builds_with_fail != 277:
                 logger.warning(f"⚠️  WARNING: Expected 277 builds but found {builds_with_fail}")
 
+            # Prepare labels early for evaluation and APFD
+            test_df_full['label_binary'] = (test_df_full['TE_Test_Result'].astype(str).str.strip() == 'Fail').astype(int)
+
             # Generate embeddings for full test set using a dedicated cache to avoid clobbering train/val cache
             logger.info("\n6.2: Generating semantic embeddings for full test set...")
             embedding_cfg = config.get('embedding', config.get('semantic', {}))
@@ -1512,7 +1513,7 @@ def main():
             test_dataset_full = torch.utils.data.TensorDataset(
                 torch.FloatTensor(test_embeddings_full),
                 torch.FloatTensor(test_struct_full),
-                torch.zeros(len(test_embeddings_full), dtype=torch.long),  # Dummy labels (Long type for loss)
+                torch.LongTensor(test_df_full['label_binary'].values),
                 torch.LongTensor(global_indices_full)  # Global indices
             )
 
@@ -1543,9 +1544,6 @@ def main():
             # P(Fail) = probabilities[:, 0] (class 0 with pass_vs_fail)
             failure_probs_full = all_probs_full[:, 0]
             test_df_full['probability'] = failure_probs_full
-
-            # CRITICAL: Use TE_Test_Result for APFD
-            test_df_full['label_binary'] = (test_df_full['TE_Test_Result'].astype(str).str.strip() == 'Fail').astype(int)
 
             logger.info(f"   Failures (TE_Test_Result=='Fail'): {test_df_full['label_binary'].sum()}")
             logger.info(f"   Passes: {(test_df_full['label_binary'] == 0).sum()}")

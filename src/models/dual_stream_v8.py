@@ -522,16 +522,18 @@ class DualStreamModelV8(nn.Module):
             structural_hidden = semantic_hidden
 
         # Build streams
+        semantic_input_dim = semantic_config.get('input_dim', 1024)
         self.semantic_stream = SemanticStream(
-            input_dim=semantic_config.get('input_dim', 1024),
+            input_dim=semantic_input_dim,
             hidden_dim=semantic_hidden,
             num_layers=semantic_config.get('num_layers', 2),
             dropout=semantic_config.get('dropout', 0.3),
             activation=semantic_config.get('activation', 'gelu')
         )
 
+        structural_input_dim = structural_config.get('input_dim', 6)
         self.structural_stream = StructuralStreamV8(
-            input_dim=structural_config.get('input_dim', 6),
+            input_dim=structural_input_dim,
             hidden_dim=structural_hidden,
             num_heads=structural_config.get('num_heads', 4),  # GAT: multi-head attention
             dropout=structural_config.get('dropout', 0.3),
@@ -571,8 +573,8 @@ class DualStreamModelV8(nn.Module):
         logger.info("="*70)
         logger.info("DUAL-STREAM MODEL V8 INITIALIZED")
         logger.info("="*70)
-        logger.info(f"Semantic Stream: [batch, 1024] → [batch, {semantic_hidden}]")
-        logger.info(f"Structural Stream: [batch, 6] → [batch, {structural_hidden}]")
+        logger.info(f"Semantic Stream: [batch, {semantic_input_dim}] → [batch, {semantic_hidden}]")
+        logger.info(f"Structural Stream: [batch, {structural_input_dim}] → [batch, {structural_hidden}]")
         logger.info(f"Fusion: [batch, {fusion_dim}]")
         logger.info(f"Classifier: [batch, {fusion_dim}] → [batch, {num_classes}]")
         logger.info("="*70)
