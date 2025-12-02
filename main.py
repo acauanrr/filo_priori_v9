@@ -587,13 +587,14 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
                        use_balanced_sampling: bool = False, minority_weight: float = 1.0,
                        majority_weight: float = 0.05):
     """
-    Create PyTorch DataLoaders with global indices for subgraph extraction
+    Create PyTorch DataLoaders with global indices for subgraph extraction.
 
     Args:
-        train_data: Training data dictionary
+        train_data: Training data dictionary with 'embeddings', 'structural_features',
+                    'labels', and 'global_indices'
         val_data: Validation data dictionary
         test_data: Test data dictionary
-        batch_size: Batch size
+        batch_size: Batch size for training
         use_balanced_sampling: If True, use WeightedRandomSampler for training
         minority_weight: Weight for minority class (default 1.0)
         majority_weight: Weight for majority class (default 0.05, i.e., 20:1 ratio)
@@ -611,21 +612,21 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
         torch.FloatTensor(train_data['embeddings']),
         torch.FloatTensor(train_data['structural_features']),
         torch.LongTensor(train_data['labels']),
-        torch.LongTensor(train_data['global_indices'])  # NEW: global indices
+        torch.LongTensor(train_data['global_indices'])
     )
 
     val_dataset = TensorDataset(
         torch.FloatTensor(val_data['embeddings']),
         torch.FloatTensor(val_data['structural_features']),
         torch.LongTensor(val_data['labels']),
-        torch.LongTensor(val_data['global_indices'])  # NEW: global indices
+        torch.LongTensor(val_data['global_indices'])
     )
 
     test_dataset = TensorDataset(
         torch.FloatTensor(test_data['embeddings']),
         torch.FloatTensor(test_data['structural_features']),
         torch.LongTensor(test_data['labels']),
-        torch.LongTensor(test_data['global_indices'])  # NEW: global indices
+        torch.LongTensor(test_data['global_indices'])
     )
 
     # Create train loader with optional balanced sampling
@@ -702,7 +703,7 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
                 all_structural_features, num_nodes_global,
                 phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None):
     """
-    Train for one epoch using subgraph extraction
+    Train for one epoch using subgraph extraction.
 
     Args:
         edge_index: Full graph edge_index [2, num_edges]
@@ -723,6 +724,7 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
     edge_index = edge_index.to(device)
     if edge_weights is not None:
         edge_weights = edge_weights.to(device)
+
     for embeddings, structural_features, labels, global_indices in loader:
         embeddings = embeddings.to(device)
         structural_features = structural_features.to(device)
@@ -1006,7 +1008,7 @@ def main():
     logger.info("\nCreating data loaders...")
     batch_size = config['training']['batch_size']
 
-    # Get balanced sampling config
+    # Get sampling config
     sampling_config = config['training'].get('sampling', {})
     use_balanced_sampling = sampling_config.get('use_balanced_sampling', False)
     minority_weight = sampling_config.get('minority_weight', 1.0)
@@ -1113,11 +1115,11 @@ def main():
 
         # Log
         logger.info(
-            f"Epoch {epoch+1}/{config['training']['num_epochs']}: "
-            f"Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}, "
-            f"Val F1={val_metrics['f1_macro']:.4f}, "
-            f"Val Acc={val_metrics['accuracy']:.4f}"
-        )
+                f"Epoch {epoch+1}/{config['training']['num_epochs']}: "
+                f"Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}, "
+                f"Val F1={val_metrics['f1_macro']:.4f}, "
+                f"Val Acc={val_metrics['accuracy']:.4f}"
+            )
 
         # Early stopping
         if val_metrics['f1_macro'] > best_val_f1:
@@ -1350,6 +1352,7 @@ def main():
         logger.error(f"❌ Size mismatch: test_df={len(test_df)}, test_probs={len(test_probs)}")
         raise ValueError(f"Size mismatch between test_df ({len(test_df)}) and test_probs ({len(test_probs)})")
 
+    # Add model predictions to test DataFrame
     test_df['probability'] = test_probs[:, 0]  # P(Fail) - class 0 with pass_vs_fail
 
     # Count how many samples have default probabilities (orphans)

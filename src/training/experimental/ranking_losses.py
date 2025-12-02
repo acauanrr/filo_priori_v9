@@ -420,6 +420,293 @@ class RankingMSELoss(nn.Module):
         return self.mse(scores, relevance.float())
 
 
+class APFDWeightedPairwiseLoss(nn.Module):
+    """
+    APFD-Impact Weighted Pairwise Loss (Proposal #3).
+
+    This loss weights each failure-pass pair by its actual impact on the APFD score,
+    focusing gradient updates on pairs that matter most for the ranking metric.
+
+    Key insight: In APFD calculation, detecting a failure earlier has more impact
+    than detecting it later. This loss uses position-weighted importance to
+    prioritize correctly ordering failures at the top of the ranking.
+
+    Loss = sum_i sum_j w_ij * max(0, margin + s_j - s_i)
+    where i=failure, j=pass, and w_ij is the APFD-impact weight.
+    """
+
+    def __init__(
+        self,
+        margin: float = 0.5,
+        temperature: float = 1.0,
+        position_decay: str = 'linear',
+        min_pairs_for_loss: int = 1,
+        use_soft_margin: bool = True,
+        normalize_weights: bool = True,
+        eps: float = 1e-10
+    ):
+        """
+        Args:
+            margin: Margin for hinge loss (soft or hard)
+            temperature: Temperature for soft operations
+            position_decay: How to decay weight by position ('linear', 'exponential', 'logarithmic')
+            min_pairs_for_loss: Minimum number of pairs to compute loss
+            use_soft_margin: Use softplus instead of ReLU for smooth gradients
+            normalize_weights: Whether to normalize weights for stability
+            eps: Small constant for numerical stability
+        """
+        super().__init__()
+        self.margin = margin
+        self.temperature = temperature
+        self.position_decay = position_decay
+        self.min_pairs_for_loss = min_pairs_for_loss
+        self.use_soft_margin = use_soft_margin
+        self.normalize_weights = normalize_weights
+        self.eps = eps
+
+    def _compute_position_weight(
+        self,
+        fail_rank: torch.Tensor,
+        total_failures: int,
+        n_tests: int
+    ) -> torch.Tensor:
+        """
+        Compute APFD-based position weight.
+
+        The weight reflects how much this failure's position impacts APFD.
+        Earlier positions have higher weight.
+
+        Args:
+            fail_rank: Rank of the failure (0-indexed)
+            total_failures: Total number of failures in the build
+            n_tests: Total number of tests
+
+        Returns:
+            Position weight
+        """
+        # Normalize position to [0, 1]
+        normalized_pos = fail_rank.float() / max(n_tests - 1, 1)
+
+        if self.position_decay == 'linear':
+            # Linear decay: weight = 1 - pos/n
+            weight = 1.0 - normalized_pos
+        elif self.position_decay == 'exponential':
+            # Exponential decay: weight = exp(-pos/n)
+            weight = torch.exp(-2.0 * normalized_pos)
+        elif self.position_decay == 'logarithmic':
+            # Logarithmic decay: weight = 1/log2(pos+2)
+            weight = 1.0 / torch.log2(fail_rank.float() + 2.0)
+        else:
+            weight = torch.ones_like(fail_rank.float())
+
+        return weight
+
+    def forward(
+        self,
+        scores: torch.Tensor,
+        relevance: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+        return_stats: bool = False
+    ) -> torch.Tensor:
+        """
+        Compute APFD-weighted pairwise loss.
+
+        Args:
+            scores: Predicted scores [batch_size, list_size] or [list_size]
+            relevance: Binary relevance (1=failure, 0=pass) [batch_size, list_size] or [list_size]
+            mask: Optional mask for padding
+            return_stats: If True, return loss statistics
+
+        Returns:
+            Loss value (scalar)
+        """
+        # Handle 1D input
+        if scores.dim() == 1:
+            scores = scores.unsqueeze(0)
+            relevance = relevance.unsqueeze(0)
+            if mask is not None:
+                mask = mask.unsqueeze(0)
+
+        batch_size, list_size = scores.shape
+        device = scores.device
+
+        total_loss = torch.tensor(0.0, device=device)
+        valid_batches = 0
+        total_pairs = 0
+
+        for b in range(batch_size):
+            batch_scores = scores[b]
+            batch_relevance = relevance[b]
+
+            if mask is not None:
+                batch_mask = mask[b]
+                batch_scores = batch_scores[batch_mask]
+                batch_relevance = batch_relevance[batch_mask]
+
+            # Get failure and pass indices
+            fail_idx = (batch_relevance > 0.5).nonzero(as_tuple=True)[0]
+            pass_idx = (batch_relevance <= 0.5).nonzero(as_tuple=True)[0]
+
+            n_failures = len(fail_idx)
+            n_passes = len(pass_idx)
+
+            # Skip if not enough pairs
+            if n_failures < 1 or n_passes < 1:
+                continue
+
+            n_pairs = n_failures * n_passes
+            if n_pairs < self.min_pairs_for_loss:
+                continue
+
+            # Get scores for failures and passes
+            fail_scores = batch_scores[fail_idx]
+            pass_scores = batch_scores[pass_idx]
+
+            # Compute pairwise differences: fail_score - pass_score
+            # Shape: [n_failures, n_passes]
+            score_diff = fail_scores.unsqueeze(1) - pass_scores.unsqueeze(0)
+
+            # Compute position weights for each failure
+            # Use predicted ranking to determine positions
+            _, pred_order = batch_scores.sort(descending=True)
+            pred_ranks = torch.zeros_like(pred_order)
+            pred_ranks[pred_order] = torch.arange(len(batch_scores), device=device)
+
+            fail_ranks = pred_ranks[fail_idx]
+            position_weights = self._compute_position_weight(
+                fail_ranks, n_failures, len(batch_scores)
+            )
+
+            # Expand weights to pair matrix
+            pair_weights = position_weights.unsqueeze(1).expand(-1, n_passes)
+
+            if self.normalize_weights:
+                pair_weights = pair_weights / (pair_weights.sum() + self.eps)
+
+            # Compute hinge loss: max(0, margin - score_diff)
+            # We want failures to have higher scores than passes
+            if self.use_soft_margin:
+                # Softplus for smooth gradients
+                pair_loss = F.softplus(self.margin - score_diff) / self.temperature
+            else:
+                # Hard margin
+                pair_loss = F.relu(self.margin - score_diff)
+
+            # Weighted loss
+            weighted_loss = (pair_weights * pair_loss).sum()
+
+            total_loss = total_loss + weighted_loss
+            valid_batches += 1
+            total_pairs += n_pairs
+
+        if valid_batches == 0:
+            return torch.tensor(0.0, device=device, requires_grad=True)
+
+        final_loss = total_loss / valid_batches
+
+        if return_stats:
+            return final_loss, {'pairs': total_pairs, 'batches': valid_batches}
+
+        return final_loss
+
+
+class SoftAPFDLoss(nn.Module):
+    """
+    Differentiable approximation of APFD loss.
+
+    APFD = 1 - (sum of failure positions) / (n * m) + 1/(2n)
+
+    This loss uses a soft ranking function to make the position computation
+    differentiable.
+    """
+
+    def __init__(self, temperature: float = 1.0, eps: float = 1e-10):
+        """
+        Args:
+            temperature: Temperature for soft ranking (lower = sharper)
+            eps: Small constant for numerical stability
+        """
+        super().__init__()
+        self.temperature = temperature
+        self.eps = eps
+
+    def _soft_rank(self, scores: torch.Tensor) -> torch.Tensor:
+        """
+        Compute differentiable soft ranks.
+
+        Rank of item i ≈ 1 + sum_j sigmoid((s_j - s_i) / temperature)
+        Higher score = lower (better) rank
+        """
+        n = scores.shape[-1]
+        # Pairwise differences: s_j - s_i
+        diff = scores.unsqueeze(-1) - scores.unsqueeze(-2)
+        # Soft comparison
+        comparison = torch.sigmoid(diff / self.temperature)
+        # Sum to get rank (1-indexed)
+        soft_ranks = 1.0 + comparison.sum(dim=-1)
+        return soft_ranks
+
+    def forward(
+        self,
+        scores: torch.Tensor,
+        relevance: torch.Tensor,
+        mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Compute soft APFD loss (1 - soft_APFD).
+
+        Args:
+            scores: Predicted scores [batch_size, list_size] or [list_size]
+            relevance: Binary relevance (1=failure, 0=pass)
+            mask: Optional mask for padding
+
+        Returns:
+            Loss = 1 - soft_APFD
+        """
+        if scores.dim() == 1:
+            scores = scores.unsqueeze(0)
+            relevance = relevance.unsqueeze(0)
+            if mask is not None:
+                mask = mask.unsqueeze(0)
+
+        batch_size, list_size = scores.shape
+        device = scores.device
+
+        # Compute soft ranks
+        soft_ranks = self._soft_rank(scores)
+
+        # Compute soft APFD for each batch
+        losses = []
+        for b in range(batch_size):
+            batch_ranks = soft_ranks[b]
+            batch_relevance = relevance[b]
+
+            if mask is not None:
+                batch_mask = mask[b]
+                batch_ranks = batch_ranks[batch_mask]
+                batch_relevance = batch_relevance[batch_mask]
+
+            n_tests = len(batch_ranks)
+            n_failures = batch_relevance.sum()
+
+            if n_failures < 1:
+                continue
+
+            # Sum of failure positions (soft)
+            failure_positions_sum = (batch_ranks * batch_relevance).sum()
+
+            # Soft APFD
+            soft_apfd = 1.0 - failure_positions_sum / (n_tests * n_failures + self.eps) + 1.0 / (2 * n_tests)
+
+            # Loss = 1 - APFD (we want to maximize APFD)
+            losses.append(1.0 - soft_apfd)
+
+        if not losses:
+            return torch.tensor(0.0, device=device, requires_grad=True)
+
+        return torch.stack(losses).mean()
+
+
 def create_ranking_loss(config: dict) -> nn.Module:
     """
     Create ranking loss function based on configuration.
@@ -448,6 +735,19 @@ def create_ranking_loss(config: dict) -> nn.Module:
         return ApproxNDCGLoss(
             temperature=loss_config.get('temperature', 1.0),
             k=loss_config.get('k', None)
+        )
+    elif loss_type == 'apfd_weighted':
+        return APFDWeightedPairwiseLoss(
+            margin=loss_config.get('margin', 0.5),
+            temperature=loss_config.get('temperature', 1.0),
+            position_decay=loss_config.get('position_decay', 'linear'),
+            min_pairs_for_loss=loss_config.get('min_pairs_for_loss', 1),
+            use_soft_margin=loss_config.get('use_soft_margin', True),
+            normalize_weights=loss_config.get('normalize_weights', True)
+        )
+    elif loss_type == 'soft_apfd':
+        return SoftAPFDLoss(
+            temperature=loss_config.get('temperature', 1.0)
         )
     elif loss_type == 'mse':
         return RankingMSELoss()

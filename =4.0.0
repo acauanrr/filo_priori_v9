@@ -1,0 +1,7 @@
+Collecting lightgbm
+  Using cached lightgbm-4.6.0-py3-none-manylinux_2_28_x86_64.whl.metadata (17 kB)
+Requirement already satisfied: numpy>=1.17.0 in ./venv/lib/python3.12/site-packages (from lightgbm) (2.3.5)
+Requirement already satisfied: scipy in ./venv/lib/python3.12/site-packages (from lightgbm) (1.16.3)
+Using cached lightgbm-4.6.0-py3-none-manylinux_2_28_x86_64.whl (3.6 MB)
+Installing collected packages: lightgbm
+Successfully installed lightgbm-4.6.0

@@ -162,37 +162,17 @@ training:
     monitor: "val_f1_macro"
     mode: "max"
 
-  # SEM balanced sampling (exp07 não usava)
-  sampling:
-    use_balanced_sampling: false
-
-  # WEIGHTED FOCAL LOSS (configuração exp07)
+  # Loss configuration
   loss:
     type: "weighted_focal"
-    use_class_weights: true  # Usa pesos automáticos
+    use_class_weights: true
     focal_alpha: 0.75
     focal_gamma: 2.5
     label_smoothing: 0.0
 
-  # RANKING LOSS HABILITADO (CRÍTICO!)
-  ranking:
-    enabled: true
-    use_grouped_sampler: true
-    weight: 0.3
-    loss_type: "logistic"
-    score_type: "logit"
-    margin: 0.5
-    hard_negative_top_k: 5
-    hard_negative_percent: 0.2
-    max_pairs_per_build: 50
-    start_epoch: 3
-
-# Legacy loss config
-loss:
-  type: "weighted_focal"
-  focal_alpha: 0.75
-  focal_gamma: 2.5
-  label_smoothing: 0.0
+  # Sampling configuration
+  sampling:
+    use_balanced_sampling: false
 
 # Threshold Optimization (exp07)
 evaluation:
@@ -250,3 +230,4 @@ output:
   save_rankings: true
   save_apfd: true
   save_plots: true
+
