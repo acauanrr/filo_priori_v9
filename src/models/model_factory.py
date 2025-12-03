@@ -5,6 +5,8 @@ Unified factory for creating different model types based on configuration.
 
 Supported model types:
 - 'dual_stream_v8': Original DualStreamModelV8 (GATv2 + Semantic)
+- 'dual_stream' or 'dual_stream_v8': Alias for dual_stream_v8
+- 'dual_head': DualHeadModel (Classification + Regression heads, DeepOrder-inspired)
 - 'phylogenetic_dual_stream': PhylogeneticDualStreamModel (GGNN + Hierarchical Attention)
 
 Author: Filo-Priori V9 Team
@@ -57,7 +59,9 @@ def create_model(config: Dict) -> nn.Module:
 
     if model_type == 'phylogenetic_dual_stream':
         return _create_phylogenetic_model(config)
-    elif model_type in ['dual_stream_v8', 'v8', 'default']:
+    elif model_type == 'dual_head':
+        return _create_dual_head_model(config)
+    elif model_type in ['dual_stream_v8', 'dual_stream', 'v8', 'default']:
         return _create_v8_model(config)
     else:
         logger.warning(f"Unknown model type '{model_type}', falling back to dual_stream_v8")
@@ -81,6 +85,31 @@ def _create_v8_model(config: Dict) -> nn.Module:
     logger.info("="*70)
 
     return create_model_v8(config)
+
+
+def _create_dual_head_model(config: Dict) -> nn.Module:
+    """
+    Create DualHeadModel from config.
+
+    DualHeadModel has two heads:
+    - Classification head: Focal Loss for Fail/Pass
+    - Regression head: MSE Loss for priority score
+
+    Args:
+        config: Model configuration
+
+    Returns:
+        DualHeadModel instance
+    """
+    from .dual_head_model import create_dual_head_model
+
+    logger.info("="*70)
+    logger.info("CREATING MODEL: DualHeadModel (DeepOrder-inspired)")
+    logger.info("="*70)
+    logger.info("  - Classification Head: Fail/Pass with Focal Loss")
+    logger.info("  - Regression Head: Priority Score with MSE Loss")
+
+    return create_dual_head_model(config)
 
 
 def _create_phylogenetic_model(config: Dict) -> nn.Module:

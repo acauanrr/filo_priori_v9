@@ -1,0 +1,250 @@
+# =============================================================================
+# Experimento Industry - OTIMIZADO
+# =============================================================================
+# Baseado na config original (APFD = 0.6503) com melhorias:
+# - Modelo dual_stream (comprovadamente funcional)
+# - DeepOrder features como input (não como target de regressão)
+# - KNN para órfãos durante inferência (melhoria de ranking)
+# - Hyperparameters otimizados
+# =============================================================================
+
+experiment:
+  name: "experiment_industry_optimized"
+  version: "2.1"
+  description: "Industry dataset - dual_stream otimizado com KNN para órfãos"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text and Embedding
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Embedding - RTX 4060 optimized
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache/01_industry"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16
+
+# Structural Features - V2.5 (10) + DeepOrder (9) = 19
+structural:
+  input_dim: 19
+  extractor:
+    use_v2_5: true
+    recent_window: 5
+    very_recent_window: 2
+    medium_term_window: 10
+    min_history: 2
+    cache_path: "cache/01_industry/structural_features_v2_5.pkl"
+
+# Cold-Start Regressor
+coldstart:
+  enabled: true
+  cache_path: "cache/01_industry/coldstart_regressor.pkl"
+  hidden_dims: [512, 256, 128]
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_epochs: 100
+  patience: 10
+
+# DeepOrder Priority Score (usado como FEATURE, não como target)
+priority_score:
+  enabled: true
+  num_cycles: 10
+  decay_type: 'exponential'
+  decay_factor: 0.8
+  normalize: true
+
+# Graph Configuration
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/01_industry/multi_edge_graph.pkl"
+  type: "co_failure"
+
+# =============================================================================
+# MODEL - dual_stream (COMPROVADAMENTE FUNCIONAL)
+# =============================================================================
+model:
+  type: "dual_stream"  # NÃO usar dual_head!
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  structural:
+    input_dim: 19  # V2.5 (10) + DeepOrder (9)
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.1
+    activation: "elu"
+
+  fusion:
+    input_dim: 320
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.2
+
+# =============================================================================
+# TRAINING - Configuração comprovada
+# =============================================================================
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 16
+  learning_rate: 0.00003  # 3e-5 (proven optimal)
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # Loss - weighted_focal (NÃO usar dual_head!)
+  loss:
+    type: "weighted_focal"
+    use_class_weights: true
+    focal_alpha: 0.75
+    focal_gamma: 2.5
+    label_smoothing: 0.0
+
+  sampling:
+    use_balanced_sampling: false
+
+# =============================================================================
+# RANKING - NOVA CONFIGURAÇÃO PARA KNN DE ÓRFÃOS
+# =============================================================================
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+  # NOVO: Estratégia KNN para órfãos
+  orphan_strategy:
+    enabled: true
+    method: "knn_pfail"  # Usar P(Fail) dos vizinhos
+    k_neighbors: 10
+    alpha_blend: 0.5  # 50% KNN + 50% próprio P(Fail)
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+# System
+system:
+  device: "cuda"
+  num_workers: 2
+  pin_memory: true
+  use_amp: true
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  num_workers: 2
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_industry_optimized"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true

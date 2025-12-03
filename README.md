@@ -27,10 +27,16 @@ The key insight: tests that fail together often indicate related functionality, 
 
 | Metric | Value | Description |
 |--------|-------|-------------|
-| **Mean APFD** | **0.6413** | Average Percentage of Faults Detected |
-| **vs FailureRate** | **+2.0%** | Beats the strongest baseline |
-| **vs Random** | **+14.6%** | Statistically significant (p < 0.001) |
+| **Mean APFD** | **0.6661** | Average Percentage of Faults Detected (277 builds) |
+| **APFD Test Split** | **0.7086** | 64 builds from test split |
+| **F1 Macro** | **0.5875** | Balanced classification metric |
+| **Recall (Fail)** | **30.2%** | Fault detection sensitivity |
+| **vs FailureRate** | **+5.9%** | Beats the strongest baseline |
+| **vs Random** | **+19.0%** | Statistically significant |
 | **Graph Attention** | **+17.0%** | Most critical component (ablation) |
+
+> **Baseline Config**: `configs/experiment_industry_optimized_v3.yaml`
+> See [docs/BASELINE_RESULTS.md](docs/BASELINE_RESULTS.md) for detailed benchmark documentation.
 
 ### RTPTorrent Dataset (V10 Full - 20 Projects)
 
@@ -150,6 +156,9 @@ pip install -r requirements.txt
 ### Training
 
 ```bash
+# Train on Industrial Dataset with BEST configuration (APFD 0.6661)
+python main.py --config configs/experiment_industry_optimized_v3.yaml
+
 # Train on Industrial Dataset (default - Classification Mode)
 python main.py --config configs/experiment_industry.yaml
 
@@ -159,9 +168,6 @@ python main_rtptorrent.py --config configs/experiment_rtptorrent_l2r.yaml
 
 # Cross-dataset evaluation (Train Industry, Test RTPTorrent)
 python main.py --config configs/experiment_cross_dataset.yaml
-
-# Or use best configuration for Industry
-python main.py --config configs/experiment_07_ranking_optimized.yaml
 ```
 
 ### Results
@@ -327,14 +333,16 @@ Multi-Edge Test Relationship Graph:
 ### Loss Function
 
 ```python
-Weighted Focal Loss: L = -alpha * w_t * (1 - p_t)^gamma * log(p_t)
+Weighted Focal Loss: L = -alpha * (1 - p_t)^gamma * log(p_t)
 ```
 
-| Parameter | Value | Purpose |
-|-----------|-------|---------|
-| **alpha** | 0.75 | Class balancing weight |
-| **gamma** | 2.5 | Focusing parameter (down-weights easy examples) |
-| **w_t** | inverse freq | Additional class weighting |
+| Parameter | V3 Value | Purpose |
+|-----------|----------|---------|
+| **alpha** | 0.5 | Neutral (no class preference in focal term) |
+| **gamma** | 2.0 | Focusing parameter (down-weights easy examples) |
+| **class_weights** | disabled | Single balancing mechanism via sampling |
+
+> **Key Insight**: Use ONLY ONE balancing mechanism. V3 uses `balanced_sampling` (10:1 ratio) instead of class weights to avoid mode collapse.
 
 ### Key Hyperparameters
 
@@ -360,7 +368,8 @@ Weighted Focal Loss: L = -alpha * w_t * (1 - p_t)^gamma * log(p_t)
 
 | Method | Mean APFD | vs Random |
 |--------|-----------|-----------|
-| **Filo-Priori** | **0.6413** | **+14.6%** |
+| **Filo-Priori V3** | **0.6661** | **+19.0%** |
+| Filo-Priori V1 | 0.6503 | +16.2% |
 | FailureRate | 0.6289 | +12.4% |
 | XGBoost | 0.6171 | +10.3% |
 | GreedyHistorical | 0.6138 | +9.7% |
@@ -700,9 +709,17 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 | Status | Version | Last Updated |
 |--------|---------|--------------|
-| Publication Ready | V10.0 | November 2025 |
+| Publication Ready | V10.1 | December 2025 |
 
 ### Changelog
+
+**V10.1 (December 2025)**
+- **New Industrial Dataset Baseline**: APFD **0.6661** (+3.8% improvement)
+- Fixed critical bug in `losses.py`: `use_class_weights` config was being ignored
+- **Single Balancing Mechanism**: Solved mode collapse by using only `balanced_sampling`
+- Improved Recall (Fail) from 3% to **30.2%**
+- New baseline config: `configs/experiment_industry_optimized_v3.yaml`
+- Added baseline documentation: `docs/BASELINE_RESULTS.md`
 
 **V10.0 (November 2025)**
 - **Complete RTPTorrent Evaluation**: Full experiment across all 20 projects

@@ -1,6 +1,6 @@
 # Configurations - configs/
 
-**Last Updated:** 2025-11-28
+**Last Updated:** 2025-12-02
 
 ---
 
@@ -32,31 +32,49 @@ data:
 
 ## Current Best Configuration
 
-**File:** `experiment_07_ranking_optimized.yaml`
+**File:** `experiment_industry_optimized_v3.yaml`
 
-This configuration achieves the best results (APFD = 0.6413) on the Industrial dataset.
+This configuration achieves the best results (**APFD = 0.6661**) on the Industrial dataset.
 
 ### Key Settings:
 
 | Category | Setting | Value |
 |----------|---------|-------|
-| **Model** | Type | `dual_stream_v8` |
+| **Model** | Type | `dual_stream` |
 | **Semantic** | SBERT model | `all-mpnet-base-v2` |
 | **Structural** | Layer type | GATConv |
 | **Structural** | Layers | 1 |
 | **Structural** | Heads | 2 |
 | **Loss** | Type | `weighted_focal` |
-| **Loss** | Alpha | 0.75 |
-| **Loss** | Gamma | 2.5 |
+| **Loss** | Alpha | **0.5** (neutral) |
+| **Loss** | Gamma | 2.0 |
+| **Loss** | `use_class_weights` | **false** |
+| **Sampling** | `use_balanced_sampling` | **true** |
+| **Sampling** | Minority:Majority ratio | 1.0 : 0.1 (10:1) |
 | **Training** | Learning rate | 3e-5 |
 | **Training** | Weight decay | 1e-4 |
-| **Training** | Batch size | 32 |
+| **Training** | Batch size | 16 |
 | **Training** | Epochs | 50 |
 | **Training** | Early stopping | patience=15 |
+
+### Critical Insight: Single Balancing Mechanism
+
+**Problem**: Using both `class_weights` AND `balanced_sampling` causes mode collapse.
+
+**Solution**: Use **ONLY ONE** balancing mechanism:
+- ✅ `balanced_sampling` (10:1 ratio)
+- ❌ `use_class_weights: false`
+- ❌ `focal_alpha: 0.5` (neutral)
 
 ---
 
 ## Usage
+
+### Run BEST Configuration on Industrial Dataset:
+
+```bash
+python main.py --config configs/experiment_industry_optimized_v3.yaml
+```
 
 ### Run on Industrial Dataset (default):
 
@@ -85,14 +103,17 @@ python main.py --config configs/experiment_cross_dataset.yaml
 
 ## Configuration Files
 
-| File | Purpose | Dataset |
-|------|---------|---------|
-| `experiment_industry.yaml` | Industrial evaluation | 01_industry |
-| `experiment_rtptorrent.yaml` | RTPTorrent evaluation | 02_rtptorrent |
-| `experiment_cross_dataset.yaml` | Cross-domain evaluation | Industry -> RTPTorrent |
-| `experiment_improved.yaml` | General improved settings | 01_industry |
-| `experiment_07_ranking_optimized.yaml` | Best performing config | 01_industry |
-| `experiment_phylogenetic.yaml` | Phylogenetic variant (experimental) | 01_industry |
+| File | Purpose | Dataset | APFD |
+|------|---------|---------|------|
+| **`experiment_industry_optimized_v3.yaml`** | **BEST** - Single balancing | 01_industry | **0.6661** |
+| `experiment_industry_optimized_v2.yaml` | Triple balancing (broken) | 01_industry | ~0.55 |
+| `experiment_industry_optimized.yaml` | V1 baseline | 01_industry | 0.6503 |
+| `experiment_industry.yaml` | Industrial evaluation | 01_industry | - |
+| `experiment_rtptorrent.yaml` | RTPTorrent evaluation | 02_rtptorrent | - |
+| `experiment_cross_dataset.yaml` | Cross-domain evaluation | Industry -> RTPTorrent | - |
+| `experiment_improved.yaml` | General improved settings | 01_industry | - |
+| `experiment_07_ranking_optimized.yaml` | Previous best | 01_industry | 0.6413 |
+| `experiment_phylogenetic.yaml` | Phylogenetic variant | 01_industry | - |
 
 ---
 

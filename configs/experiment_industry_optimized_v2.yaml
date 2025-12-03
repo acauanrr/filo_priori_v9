@@ -1,0 +1,253 @@
+# =============================================================================
+# Experimento Industry - OTIMIZADO V2
+# =============================================================================
+# CORREÇÕES BASEADAS NA ANÁLISE DO LOG:
+# 1. Balanced sampling ATIVADO (crítico para desbalanceamento 37:1)
+# 2. focal_gamma aumentado (3.0 -> down-weight easy examples mais)
+# 3. Learning rate reduzido (1e-5 -> evitar collapse rápido)
+# 4. Patience aumentado (20 -> mais exploração)
+# 5. Epochs aumentados (80 -> mais tempo para aprender)
+# =============================================================================
+
+experiment:
+  name: "experiment_industry_optimized_v2"
+  version: "2.2"
+  description: "Industry - CORREÇÃO mode collapse + balanced sampling"
+  seed: 42
+
+# Data Configuration
+data:
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text and Embedding
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Embedding
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache/01_industry"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16
+
+# Structural Features
+structural:
+  input_dim: 19
+  extractor:
+    use_v2_5: true
+    recent_window: 5
+    very_recent_window: 2
+    medium_term_window: 10
+    min_history: 2
+    cache_path: "cache/01_industry/structural_features_v2_5.pkl"
+
+# Cold-Start
+coldstart:
+  enabled: true
+  cache_path: "cache/01_industry/coldstart_regressor.pkl"
+  hidden_dims: [512, 256, 128]
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_epochs: 100
+  patience: 10
+
+# Priority Score
+priority_score:
+  enabled: true
+  num_cycles: 10
+  decay_type: 'exponential'
+  decay_factor: 0.8
+  normalize: true
+
+# Graph
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/01_industry/multi_edge_graph.pkl"
+  type: "co_failure"
+
+# =============================================================================
+# MODEL
+# =============================================================================
+model:
+  type: "dual_stream"
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.2  # AUMENTADO de 0.1 -> regularização
+    activation: "gelu"
+
+  structural:
+    input_dim: 19
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.2  # AUMENTADO
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 1
+    num_heads: 2
+    dropout: 0.2  # AUMENTADO
+    activation: "elu"
+
+  fusion:
+    input_dim: 320
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.2  # AUMENTADO
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dim: 128
+    num_classes: 2
+    dropout: 0.3  # AUMENTADO de 0.2
+
+# =============================================================================
+# TRAINING - CORREÇÕES PARA EVITAR MODE COLLAPSE
+# =============================================================================
+training:
+  num_epochs: 80  # AUMENTADO de 50
+  epochs: 80
+  batch_size: 16
+  learning_rate: 0.00001  # REDUZIDO de 3e-5 para 1e-5 (mais estável)
+  weight_decay: 0.001  # AUMENTADO de 0.0001 (mais regularização)
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.0000001  # Mais baixo
+  warmup_epochs: 10  # AUMENTADO de 5 (aquecimento mais longo)
+
+  gradient_clip: 0.5  # REDUZIDO de 1.0 (mais conservador)
+  accumulation_steps: 2  # NOVO: acumular gradientes para batch efetivo de 32
+
+  early_stopping:
+    patience: 20  # AUMENTADO de 15
+    min_delta: 0.0005  # REDUZIDO de 0.001 (mais sensível)
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # Loss - FOCAL com gamma mais alto
+  loss:
+    type: "weighted_focal"
+    use_class_weights: true
+    focal_alpha: 0.85  # AUMENTADO de 0.75 (mais peso para minoria)
+    focal_gamma: 3.0  # AUMENTADO de 2.5 (down-weight easy examples mais)
+    label_smoothing: 0.05  # NOVO: suavização de labels
+
+  # =============================================================================
+  # CRÍTICO: BALANCED SAMPLING ATIVADO
+  # =============================================================================
+  sampling:
+    use_balanced_sampling: true  # ATIVADO! Crítico para desbalanceamento 37:1
+    minority_weight: 1.0
+    majority_weight: 0.05  # Ratio 20:1 efetivo
+
+# Ranking
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+  orphan_strategy:
+    enabled: true
+    method: "knn_pfail"
+    k_neighbors: 10
+    alpha_blend: 0.5
+
+# Evaluation
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+# System
+system:
+  device: "cuda"
+  num_workers: 2
+  pin_memory: true
+  use_amp: true
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  num_workers: 2
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_industry_optimized_v2"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true

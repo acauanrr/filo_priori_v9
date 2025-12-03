@@ -1,0 +1,254 @@
+# =============================================================================
+# Experimento Industry - DUAL HEAD (FASE 2 DeepOrder)
+# =============================================================================
+# Dual-Head Model: Classification + Regression
+# - Classification: Focal Loss for Fail/Pass
+# - Regression: MSE Loss for priority score prediction
+# - Combined Loss: α × Focal + β × MSE
+# =============================================================================
+
+experiment:
+  name: "experiment_industry_dual_head"
+  version: "2.0"
+  description: "Industry dataset with Dual-Head Model (DeepOrder FASE 2)"
+  seed: 42
+
+# Data Configuration (identical to exp 07)
+data:
+  train_path: "datasets/01_industry/train.csv"
+  test_path: "datasets/01_industry/test.csv"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  random_seed: 42
+  binary_classification: true
+  binary_strategy: "pass_vs_fail"
+  binary_positive_class: "Pass"
+  binary_negative_class: "Fail"
+  smote:
+    enabled: false
+
+# Text and Embedding (identical to exp 07)
+text:
+  num_commits_to_keep: 5
+  max_commit_length: 2000
+  max_summary_length: 500
+  max_steps_length: 1000
+
+commit:
+  max_commits_per_tc: 10
+  include_commit_metadata: true
+
+# Embedding - AJUSTADO PARA RTX 4060 (6GB VRAM LIMIT)
+embedding:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16  # REDUZIDO para limite 6GB VRAM
+  normalize_embeddings: true
+  device: "cuda"
+  use_cache: true
+  cache_dir: "cache/01_industry"
+
+semantic:
+  model_name: "sentence-transformers/all-mpnet-base-v2"
+  embedding_dim: 768
+  combined_embedding_dim: 1536
+  max_length: 384
+  batch_size: 16  # REDUZIDO para limite 6GB VRAM
+
+# Structural Features - V2.5 with 10 features + 9 DeepOrder features = 19 (CRÍTICO!)
+structural:
+  input_dim: 19  # V2.5 (10) + DeepOrder (9)
+  extractor:
+    use_v2_5: true  # CRÍTICO: Usar v2.5!
+    recent_window: 5
+    very_recent_window: 2
+    medium_term_window: 10
+    min_history: 2
+    cache_path: "cache/01_industry/structural_features_v2_5.pkl"
+
+# Cold-Start Regressor Configuration
+# Uses MLP to predict structural features for TCs without history
+coldstart:
+  enabled: true
+  cache_path: "cache/01_industry/coldstart_regressor.pkl"
+  hidden_dims: [512, 256, 128]
+  dropout: 0.2
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_epochs: 100
+  patience: 10
+
+# DeepOrder-style Priority Score Configuration (NEW in V9!)
+# Based on the DeepOrder paper: "Deep Learning for Test Case Prioritization"
+priority_score:
+  enabled: true
+  num_cycles: 10              # Number of historical cycles to consider
+  decay_type: 'exponential'   # Weight decay type: exponential, linear, inverse, uniform
+  decay_factor: 0.8           # Decay factor for exponential decay
+  normalize: true             # Normalize weights to sum to 1
+
+# Graph Configuration (identical to exp 07)
+graph:
+  build_graph: true
+  use_multi_edge: true
+  edge_types: [co_failure, co_success, semantic]
+  edge_weights:
+    co_failure: 1.0
+    co_success: 0.5
+    semantic: 0.3
+  min_co_occurrences: 1
+  weight_threshold: 0.05
+  semantic_top_k: 5
+  semantic_threshold: 0.75
+  cache_path: "cache/01_industry/multi_edge_graph.pkl"
+  type: "co_failure"
+  # Inductive mode: only train TCs in graph
+
+# Model Architecture - DUAL HEAD (FASE 2)
+model:
+  type: "dual_head"  # NEW: DualHeadModel with Classification + Regression
+  num_classes: 2
+
+  semantic:
+    input_dim: 1536
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  structural:
+    input_dim: 19  # V2.5 (10) + DeepOrder features (9) = 19
+    hidden_dim: 64
+    num_layers: 2
+    dropout: 0.1
+    activation: "gelu"
+
+  gnn:
+    type: "GAT"
+    hidden_dim: 128
+    num_layers: 1  # Simple works best
+    num_heads: 2
+    dropout: 0.1
+    activation: "elu"
+
+  fusion:
+    input_dim: 320
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.15
+    activation: "gelu"
+
+  classifier:
+    input_dim: 256
+    hidden_dims: [128, 64]
+    num_classes: 2
+    dropout: 0.2
+
+  # NEW: Regression head for priority score prediction
+  regressor:
+    hidden_dims: [128, 64]
+    dropout: 0.3
+
+# =============================================================================
+# TRAINING - CONFIGURAÇÃO IDÊNTICA AO EXP07 (que funcionou!)
+# =============================================================================
+training:
+  num_epochs: 50
+  epochs: 50
+  batch_size: 16  # REDUZIDO para limite 6GB VRAM
+  learning_rate: 0.00003  # 3e-5 (proven optimal)
+  weight_decay: 0.0001
+
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine"
+    eta_min: 0.000001
+  warmup_epochs: 5
+
+  gradient_clip: 1.0
+  accumulation_steps: 1
+
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_f1_macro"
+    mode: "max"
+
+  # Loss configuration - DUAL HEAD
+  loss:
+    type: "dual_head"  # NEW: Combined Focal + MSE loss
+    use_class_weights: true
+    focal_alpha: 0.75
+    focal_gamma: 2.5
+    label_smoothing: 0.0
+    # Dual-head loss weights
+    dual_head:
+      alpha: 1.0    # Classification (Focal) weight
+      beta: 1.0     # Regression (MSE) weight - INCREASED to balance with focal
+      mse_nonzero_weight: 20.0  # Weight for samples with priority_score > 0 (INCREASED)
+
+  # Sampling configuration
+  sampling:
+    use_balanced_sampling: false
+
+# Threshold Optimization (exp07)
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_macro"
+    - "f1_weighted"
+    - "auprc_macro"
+    - "auroc"
+
+  threshold_search:
+    enabled: true
+    range: [0.1, 0.9]
+    step: 0.02
+    optimize_for: "f1_macro"
+
+# Ranking
+ranking:
+  method: "probability"
+  reverse: true
+  apfd_calculation:
+    enabled: true
+    fault_column: "verdict"
+    fault_value: "Fail"
+
+# System - AJUSTADO PARA RTX 4060 (6GB VRAM LIMIT)
+system:
+  device: "cuda"
+  num_workers: 2  # REDUZIDO de 4
+  pin_memory: true
+  use_amp: true  # HABILITADO - reduz VRAM ~40%
+  deterministic: true
+  benchmark: false
+
+hardware:
+  device: "cuda"
+  num_workers: 2  # REDUZIDO de 4
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: false
+
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_f1_macro"
+  mode: "max"
+
+output:
+  results_dir: "results/experiment_industry_dual_head"
+  save_predictions: true
+  save_rankings: true
+  save_apfd: true
+  save_plots: true
+

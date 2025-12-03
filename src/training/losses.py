@@ -230,8 +230,13 @@ def create_loss_function(config: dict, class_weights: Optional[torch.Tensor] = N
     if loss_type == 'weighted_focal':
         # STRONGEST LOSS - Combines class weights + focal loss + alpha
         # Recommended for extreme imbalance (>20:1)
-        if class_weights is not None:
+        # BUT: if use_class_weights=False, don't apply class weights
+        use_class_weights = loss_config.get('use_class_weights', True)
+
+        if use_class_weights and class_weights is not None:
             class_weights = class_weights.to(config['hardware']['device'])
+        else:
+            class_weights = None  # Disable class weights if use_class_weights=False
 
         return WeightedFocalLoss(
             alpha=loss_config.get('focal_alpha', 0.75),

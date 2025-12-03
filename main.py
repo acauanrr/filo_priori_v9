@@ -46,6 +46,7 @@ from preprocessing.structural_feature_extractor_v2_5 import StructuralFeatureExt
 from preprocessing.structural_feature_extractor_v3 import StructuralFeatureExtractorV3
 from preprocessing.structural_feature_imputation import impute_structural_features
 from preprocessing.structural_coldstart_regressor import ColdStartRegressor, create_coldstart_regressor
+from preprocessing.priority_score_generator import PriorityScoreGenerator, create_priority_score_generator
 from embeddings import EmbeddingManager
 from phylogenetic.phylogenetic_graph_builder import build_phylogenetic_graph
 from phylogenetic.git_dag_builder import GitDAGBuilder, build_git_dag
@@ -159,6 +160,69 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
     class_weights = data_loader.compute_class_weights(df_train)
     logger.info(f"  Class weights: {class_weights}")
     logger.info(f"  Weight ratio (minority/majority): {class_weights.max() / class_weights.min():.2f}:1")
+
+    # Compute DeepOrder-style Priority Scores (NEW in V9!)
+    logger.info("\n1.1.2: Computing DeepOrder-style Priority Scores...")
+    priority_config = config.get('priority_score', {})
+    use_priority_scores = priority_config.get('enabled', True)
+
+    if use_priority_scores:
+        # Create priority score generator
+        priority_generator = create_priority_score_generator(config)
+
+        # Compute priority scores for all splits chronologically
+        # IMPORTANT: Process train first, then val, then test to maintain temporal ordering
+        # and carry over execution history between splits
+        logger.info("  Processing training data...")
+        df_train, tc_history_train = priority_generator.compute_priorities_for_dataframe(
+            df_train,
+            build_col='Build_ID',
+            tc_col='TC_Key',  # Use TC_Key (not TC_Name)
+            result_col='TE_Test_Result',
+            fail_value='Fail',
+            pass_value='Pass',
+            initial_history=None  # Start fresh for training
+        )
+
+        logger.info("  Processing validation data (carrying over train history)...")
+        df_val, tc_history_val = priority_generator.compute_priorities_for_dataframe(
+            df_val,
+            build_col='Build_ID',
+            tc_col='TC_Key',  # Use TC_Key (not TC_Name)
+            result_col='TE_Test_Result',
+            fail_value='Fail',
+            pass_value='Pass',
+            initial_history=tc_history_train  # Carry over history from train
+        )
+
+        logger.info("  Processing test data (carrying over train+val history)...")
+        df_test, tc_history = priority_generator.compute_priorities_for_dataframe(
+            df_test,
+            build_col='Build_ID',
+            tc_col='TC_Key',  # Use TC_Key (not TC_Name)
+            result_col='TE_Test_Result',
+            fail_value='Fail',
+            pass_value='Pass',
+            initial_history=tc_history_val  # Carry over history from train+val
+        )
+
+        # Extract DeepOrder features (9 features per sample)
+        logger.info("  Extracting DeepOrder features...")
+        train_deeporder_features = priority_generator.extract_deeporder_features_batch(df_train, tc_history, tc_col='TC_Key')
+        val_deeporder_features = priority_generator.extract_deeporder_features_batch(df_val, tc_history, tc_col='TC_Key')
+        test_deeporder_features = priority_generator.extract_deeporder_features_batch(df_test, tc_history, tc_col='TC_Key')
+
+        logger.info(f"  Priority scores computed:")
+        logger.info(f"    Train: mean={df_train['priority_score'].mean():.4f}, max={df_train['priority_score'].max():.4f}")
+        logger.info(f"    Val: mean={df_val['priority_score'].mean():.4f}, max={df_val['priority_score'].max():.4f}")
+        logger.info(f"    Test: mean={df_test['priority_score'].mean():.4f}, max={df_test['priority_score'].max():.4f}")
+        logger.info(f"  DeepOrder features shape: {train_deeporder_features.shape}")
+    else:
+        logger.info("  Priority scores disabled in config")
+        train_deeporder_features = None
+        val_deeporder_features = None
+        test_deeporder_features = None
+        priority_generator = None
 
     # Extract semantic embeddings with SBERT (INTELLIGENT CACHING)
     logger.info("\n1.2: Extracting semantic embeddings with SBERT...")
@@ -394,6 +458,20 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
                 verbose=False
             )
 
+    # Concatenate DeepOrder features with structural features (if enabled)
+    if use_priority_scores and train_deeporder_features is not None:
+        logger.info("\n1.4c: Concatenating DeepOrder features with structural features...")
+        logger.info(f"  Original structural features shape: {train_struct.shape}")
+        logger.info(f"  DeepOrder features shape: {train_deeporder_features.shape}")
+
+        # Concatenate: [structural_features, deeporder_features]
+        train_struct = np.concatenate([train_struct, train_deeporder_features], axis=1)
+        val_struct = np.concatenate([val_struct, val_deeporder_features], axis=1)
+        test_struct = np.concatenate([test_struct, test_deeporder_features], axis=1)
+
+        logger.info(f"  Combined structural features shape: {train_struct.shape}")
+        logger.info(f"  ✅ DeepOrder features concatenated!")
+
     # Apply SMOTE if enabled
     if config['data'].get('smote', {}).get('enabled', False):
         logger.info("\n1.5: Applying SMOTE to balance training data...")
@@ -535,21 +613,27 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
         'embeddings': train_embeddings,
         'structural_features': train_struct,
         'labels': df_train['label'].values,
-        'df': df_train
+        'df': df_train,
+        'priority_score': df_train['priority_score'].values if 'priority_score' in df_train.columns else None,
+        'deeporder_features': train_deeporder_features
     }
 
     val_data = {
         'embeddings': val_embeddings,
         'structural_features': val_struct,
         'labels': df_val['label'].values,
-        'df': df_val
+        'df': df_val,
+        'priority_score': df_val['priority_score'].values if 'priority_score' in df_val.columns else None,
+        'deeporder_features': val_deeporder_features
     }
 
     test_data = {
         'embeddings': test_embeddings,
         'structural_features': test_struct,
         'labels': df_test['label'].values,
-        'df': df_test
+        'df': df_test,
+        'priority_score': df_test['priority_score'].values if 'priority_score' in df_test.columns else None,
+        'deeporder_features': test_deeporder_features
     }
 
     # Extract edge_index and edge_weights for the graph
@@ -585,7 +669,7 @@ def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
 
 def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_size: int,
                        use_balanced_sampling: bool = False, minority_weight: float = 1.0,
-                       majority_weight: float = 0.05):
+                       majority_weight: float = 0.05, include_priority_score: bool = False):
     """
     Create PyTorch DataLoaders with global indices for subgraph extraction.
 
@@ -598,6 +682,7 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
         use_balanced_sampling: If True, use WeightedRandomSampler for training
         minority_weight: Weight for minority class (default 1.0)
         majority_weight: Weight for majority class (default 0.05, i.e., 20:1 ratio)
+        include_priority_score: If True, include priority_score in dataloader (for dual-head training)
     """
     from torch.utils.data import TensorDataset, DataLoader, WeightedRandomSampler
 
@@ -607,27 +692,81 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
     logger.info(f"Train labels shape: {train_data['labels'].shape}")
     logger.info(f"Train global indices shape: {train_data['global_indices'].shape}")
 
-    # Convert to tensors (including global indices)
-    train_dataset = TensorDataset(
-        torch.FloatTensor(train_data['embeddings']),
-        torch.FloatTensor(train_data['structural_features']),
-        torch.LongTensor(train_data['labels']),
-        torch.LongTensor(train_data['global_indices'])
-    )
+    # Check if priority_score is available
+    has_priority = (include_priority_score and
+                    train_data.get('priority_score') is not None and
+                    val_data.get('priority_score') is not None and
+                    test_data.get('priority_score') is not None)
 
-    val_dataset = TensorDataset(
-        torch.FloatTensor(val_data['embeddings']),
-        torch.FloatTensor(val_data['structural_features']),
-        torch.LongTensor(val_data['labels']),
-        torch.LongTensor(val_data['global_indices'])
-    )
+    if has_priority:
+        logger.info(f"Including priority_score in dataloaders (for dual-head training)")
+        logger.info(f"Train priority_score shape: {train_data['priority_score'].shape}")
 
-    test_dataset = TensorDataset(
-        torch.FloatTensor(test_data['embeddings']),
-        torch.FloatTensor(test_data['structural_features']),
-        torch.LongTensor(test_data['labels']),
-        torch.LongTensor(test_data['global_indices'])
-    )
+        # DIAGNOSTIC: Priority score distribution analysis
+        train_ps = train_data['priority_score']
+        nonzero_mask = train_ps > 0
+        logger.info("\n" + "="*70)
+        logger.info("PRIORITY SCORE DISTRIBUTION (CRITICAL FOR REGRESSION HEAD)")
+        logger.info("="*70)
+        logger.info(f"  Total samples: {len(train_ps)}")
+        logger.info(f"  Samples with priority_score > 0: {nonzero_mask.sum()} ({100*nonzero_mask.mean():.2f}%)")
+        logger.info(f"  Samples with priority_score = 0: {(~nonzero_mask).sum()} ({100*(~nonzero_mask).mean():.2f}%)")
+        if nonzero_mask.sum() > 0:
+            logger.info(f"  Non-zero priority scores:")
+            logger.info(f"    Mean: {train_ps[nonzero_mask].mean():.4f}")
+            logger.info(f"    Std:  {train_ps[nonzero_mask].std():.4f}")
+            logger.info(f"    Min:  {train_ps[nonzero_mask].min():.4f}")
+            logger.info(f"    Max:  {train_ps[nonzero_mask].max():.4f}")
+            logger.info(f"    Median: {np.median(train_ps[nonzero_mask]):.4f}")
+        logger.info(f"  Overall mean: {train_ps.mean():.4f}")
+        logger.info("="*70)
+
+        # Convert to tensors with priority_score
+        train_dataset = TensorDataset(
+            torch.FloatTensor(train_data['embeddings']),
+            torch.FloatTensor(train_data['structural_features']),
+            torch.LongTensor(train_data['labels']),
+            torch.LongTensor(train_data['global_indices']),
+            torch.FloatTensor(train_data['priority_score'])  # Priority score
+        )
+
+        val_dataset = TensorDataset(
+            torch.FloatTensor(val_data['embeddings']),
+            torch.FloatTensor(val_data['structural_features']),
+            torch.LongTensor(val_data['labels']),
+            torch.LongTensor(val_data['global_indices']),
+            torch.FloatTensor(val_data['priority_score'])
+        )
+
+        test_dataset = TensorDataset(
+            torch.FloatTensor(test_data['embeddings']),
+            torch.FloatTensor(test_data['structural_features']),
+            torch.LongTensor(test_data['labels']),
+            torch.LongTensor(test_data['global_indices']),
+            torch.FloatTensor(test_data['priority_score'])
+        )
+    else:
+        # Convert to tensors (without priority_score)
+        train_dataset = TensorDataset(
+            torch.FloatTensor(train_data['embeddings']),
+            torch.FloatTensor(train_data['structural_features']),
+            torch.LongTensor(train_data['labels']),
+            torch.LongTensor(train_data['global_indices'])
+        )
+
+        val_dataset = TensorDataset(
+            torch.FloatTensor(val_data['embeddings']),
+            torch.FloatTensor(val_data['structural_features']),
+            torch.LongTensor(val_data['labels']),
+            torch.LongTensor(val_data['global_indices'])
+        )
+
+        test_dataset = TensorDataset(
+            torch.FloatTensor(test_data['embeddings']),
+            torch.FloatTensor(test_data['structural_features']),
+            torch.LongTensor(test_data['labels']),
+            torch.LongTensor(test_data['global_indices'])
+        )
 
     # Create train loader with optional balanced sampling
     if use_balanced_sampling:
@@ -701,7 +840,8 @@ def create_dataloaders(train_data: Dict, val_data: Dict, test_data: Dict, batch_
 
 def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_weights,
                 all_structural_features, num_nodes_global,
-                phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None):
+                phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None,
+                is_dual_head=False):
     """
     Train for one epoch using subgraph extraction.
 
@@ -713,9 +853,11 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
         phylo_embeddings: Optional commit embeddings for PhyloEncoder [M, 768]
         phylo_edge_index: Optional Git DAG edges [2, E_dag]
         phylo_path_lengths: Optional path lengths for phylo distance [E_dag]
+        is_dual_head: If True, model returns (logits, priority_scores) and uses DualHeadLoss
     """
     model.train()
     total_loss = 0.0
+    loss_details = {'focal': 0.0, 'mse': 0.0} if is_dual_head else None
 
     # Check if model is phylogenetic
     is_phylogenetic = hasattr(model, 'use_phylo_encoder') and model.use_phylo_encoder
@@ -725,7 +867,15 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
     if edge_weights is not None:
         edge_weights = edge_weights.to(device)
 
-    for embeddings, structural_features, labels, global_indices in loader:
+    for batch_data in loader:
+        # Unpack batch (4 or 5 elements depending on dual-head mode)
+        if is_dual_head and len(batch_data) == 5:
+            embeddings, structural_features, labels, global_indices, priority_scores = batch_data
+            priority_scores = priority_scores.to(device)
+        else:
+            embeddings, structural_features, labels, global_indices = batch_data[:4]
+            priority_scores = None
+
         embeddings = embeddings.to(device)
         structural_features = structural_features.to(device)
         labels = labels.to(device)
@@ -742,6 +892,7 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
         embeddings_valid = embeddings[valid_mask]
         labels_valid = labels[valid_mask]
         global_indices_valid = global_indices[valid_mask]
+        priority_scores_valid = priority_scores[valid_mask] if priority_scores is not None else None
 
         # Extract subgraph for this batch
         sub_edge_index, sub_edge_weights = subgraph(
@@ -767,6 +918,20 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
                 phylo_edge_index=phylo_edge_index,
                 phylo_path_lengths=phylo_path_lengths
             )
+            priority_pred = None
+        elif is_dual_head:
+            # DualHeadModel: process and get both outputs
+            structural_embeddings = model.structural_stream(
+                batch_structural_features,
+                sub_edge_index,
+                sub_edge_weights
+            )
+            semantic_features = model.semantic_stream(embeddings_valid)
+            fused_features = model.fusion(semantic_features, structural_embeddings)
+
+            # Dual heads
+            logits = model.classifier(fused_features)
+            priority_pred = model.regressor(fused_features)
         else:
             # DualStreamModelV8 uses component-by-component forward
             # Process structural stream with GAT on SUBGRAPH
@@ -782,9 +947,22 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
             # Fuse and classify
             fused_features = model.fusion(semantic_features, structural_embeddings)
             logits = model.classifier(fused_features)
+            priority_pred = None
 
         # Compute loss
-        loss = criterion(logits, labels_valid)
+        if is_dual_head and priority_pred is not None and priority_scores_valid is not None:
+            # DualHeadLoss: combined focal + MSE
+            loss, loss_dict = criterion(logits, priority_pred, labels_valid, priority_scores_valid)
+            loss_details['focal'] += loss_dict['focal']
+            loss_details['mse'] += loss_dict['mse']
+        else:
+            # Standard loss (or fallback for DualHeadLoss without priority_scores)
+            from models.dual_head_model import DualHeadLoss
+            if isinstance(criterion, DualHeadLoss):
+                # Use focal loss only (skip regression component)
+                loss = criterion.focal_loss(logits, labels_valid)
+            else:
+                loss = criterion(logits, labels_valid)
 
         # Backward pass
         optimizer.zero_grad()
@@ -794,13 +972,21 @@ def train_epoch(model, loader, criterion, optimizer, device, edge_index, edge_we
 
         total_loss += loss.item()
 
-    return total_loss / len(loader)
+    avg_loss = total_loss / len(loader)
+
+    if is_dual_head and loss_details:
+        loss_details['focal'] /= len(loader)
+        loss_details['mse'] /= len(loader)
+        return avg_loss, loss_details
+
+    return avg_loss
 
 
 @torch.no_grad()
 def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_structural_features, num_nodes_global,
              return_full_probs=False, dataset_size=None,
-             phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None):
+             phylo_embeddings=None, phylo_edge_index=None, phylo_path_lengths=None,
+             is_dual_head=False):
     """
     Evaluate model using subgraph extraction
 
@@ -814,12 +1000,14 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         phylo_embeddings: Optional commit embeddings for PhyloEncoder [M, 768]
         phylo_edge_index: Optional Git DAG edges [2, E_dag]
         phylo_path_lengths: Optional path lengths for phylo distance [E_dag]
+        is_dual_head: If True, model is DualHeadModel with regression head
     """
     model.eval()
     total_loss = 0.0
     all_preds = []
     all_labels = []
     all_probs = []
+    all_priority_preds = []  # For dual-head: predicted priority scores
     all_batch_indices = []  # Track original batch indices
 
     # Check if model is phylogenetic
@@ -830,7 +1018,16 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     if edge_weights is not None:
         edge_weights = edge_weights.to(device)
     batch_start_idx = 0
-    for embeddings, structural_features, labels, global_indices in loader:
+
+    for batch_data in loader:
+        # Unpack batch (4 or 5 elements depending on dual-head mode)
+        if is_dual_head and len(batch_data) == 5:
+            embeddings, structural_features, labels, global_indices, priority_scores = batch_data
+            priority_scores = priority_scores.to(device)
+        else:
+            embeddings, structural_features, labels, global_indices = batch_data[:4]
+            priority_scores = None
+
         batch_size = embeddings.size(0)
         embeddings = embeddings.to(device)
         structural_features = structural_features.to(device)
@@ -852,6 +1049,7 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         embeddings_valid = embeddings[valid_mask]
         labels_valid = labels[valid_mask]
         global_indices_valid = global_indices[valid_mask]
+        priority_scores_valid = priority_scores[valid_mask] if priority_scores is not None else None
 
         # Extract subgraph for this batch
         sub_edge_index, sub_edge_weights = subgraph(
@@ -877,6 +1075,20 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
                 phylo_edge_index=phylo_edge_index,
                 phylo_path_lengths=phylo_path_lengths
             )
+            priority_pred = None
+        elif is_dual_head:
+            # DualHeadModel: process and get both outputs
+            structural_embeddings = model.structural_stream(
+                batch_structural_features,
+                sub_edge_index,
+                sub_edge_weights
+            )
+            semantic_features = model.semantic_stream(embeddings_valid)
+            fused_features = model.fusion(semantic_features, structural_embeddings)
+
+            # Dual heads
+            logits = model.classifier(fused_features)
+            priority_pred = model.regressor(fused_features)
         else:
             # DualStreamModelV8 uses component-by-component forward
             # Process structural stream with GAT on SUBGRAPH
@@ -892,9 +1104,20 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
             # Fuse and classify
             fused_features = model.fusion(semantic_features, structural_embeddings)
             logits = model.classifier(fused_features)
+            priority_pred = None
 
         # Compute loss
-        loss = criterion(logits, labels_valid)
+        if is_dual_head and priority_pred is not None and priority_scores_valid is not None:
+            loss, _ = criterion(logits, priority_pred, labels_valid, priority_scores_valid)
+        else:
+            # Check if criterion is DualHeadLoss (requires 4 args) but we don't have priority_scores
+            # This can happen in STEP 6 inference on full test.csv
+            from models.dual_head_model import DualHeadLoss
+            if isinstance(criterion, DualHeadLoss):
+                # Use focal loss only (skip regression component)
+                loss = criterion.focal_loss(logits, labels_valid)
+            else:
+                loss = criterion(logits, labels_valid)
         total_loss += loss.item()
 
         # Predictions
@@ -906,6 +1129,10 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         all_probs.extend(probs.cpu().numpy())
         all_batch_indices.extend(valid_batch_indices.cpu().numpy())
 
+        # Collect priority predictions for dual-head
+        if priority_pred is not None:
+            all_priority_preds.extend(priority_pred.squeeze(-1).cpu().numpy())
+
         batch_start_idx += batch_size
 
     avg_loss = total_loss / max(len(loader), 1)
@@ -913,6 +1140,7 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
     all_labels = np.array(all_labels)
     all_probs = np.array(all_probs) if len(all_probs) > 0 else np.empty((0, 2))
     all_batch_indices = np.array(all_batch_indices, dtype=np.int64)  # Ensure int type for indexing
+    all_priority_preds = np.array(all_priority_preds) if all_priority_preds else None
 
     # Compute metrics on valid samples only
     if len(all_preds) > 0:
@@ -937,9 +1165,18 @@ def evaluate(model, loader, criterion, device, edge_index, edge_weights, all_str
         full_probs = np.full((dataset_size, 2), 0.5)  # Default: [0.5, 0.5] (maximum uncertainty)
         if len(all_batch_indices) > 0 and len(all_probs) > 0:
             full_probs[all_batch_indices] = all_probs  # Fill in actual predictions
-        return avg_loss, metrics, full_probs
+
+        # Also create full priority predictions array for dual-head ranking
+        full_priority_preds = None
+        if all_priority_preds is not None and len(all_priority_preds) > 0:
+            # Default priority = 0.5 (neutral) for orphans
+            # This ensures orphans don't dominate ranking
+            full_priority_preds = np.full(dataset_size, 0.5)
+            full_priority_preds[all_batch_indices] = all_priority_preds
+
+        return avg_loss, metrics, full_probs, full_priority_preds
     else:
-        return avg_loss, metrics, all_probs
+        return avg_loss, metrics, all_probs, all_priority_preds
 
 
 def main():
@@ -1014,11 +1251,16 @@ def main():
     minority_weight = sampling_config.get('minority_weight', 1.0)
     majority_weight = sampling_config.get('majority_weight', 0.05)
 
+    # Check if using dual-head model (needs priority_score in dataloaders)
+    model_type = config['model'].get('type', 'dual_stream')
+    is_dual_head = (model_type == 'dual_head')
+
     train_loader, val_loader, test_loader = create_dataloaders(
         train_data, val_data, test_data, batch_size,
         use_balanced_sampling=use_balanced_sampling,
         minority_weight=minority_weight,
-        majority_weight=majority_weight
+        majority_weight=majority_weight,
+        include_priority_score=is_dual_head  # Include priority_score for dual-head training
     )
 
     # Create model
@@ -1034,33 +1276,50 @@ def main():
     # Convert class_weights to torch tensor
     class_weights_tensor = torch.FloatTensor(class_weights).to(device) if class_weights is not None else None
 
-    # Create loss function using unified factory
-    # This supports: 'ce', 'weighted_ce', 'focal', 'weighted_focal'
-    criterion = create_loss_function(config, class_weights_tensor)
-    criterion = criterion.to(device)
-
     # Log loss configuration
     loss_type = config['training']['loss']['type']
     logger.info(f"  Loss type: {loss_type}")
 
-    if loss_type == 'weighted_focal':
-        logger.info(f"  Using WeightedFocalLoss (STRONGEST for imbalanced data)")
+    # Handle dual-head loss
+    if is_dual_head or loss_type == 'dual_head':
+        from models.dual_head_model import create_dual_head_loss
+        criterion = create_dual_head_loss(config, class_weights_tensor)
+        criterion = criterion.to(device)
+        logger.info(f"  Using DualHeadLoss (Classification + Regression)")
+        dual_head_cfg = config['training']['loss'].get('dual_head', {})
+        logger.info(f"    α (classification): {dual_head_cfg.get('alpha', 1.0)}")
+        logger.info(f"    β (regression): {dual_head_cfg.get('beta', 0.5)}")
         logger.info(f"    Focal alpha: {config['training']['loss'].get('focal_alpha', 0.75)}")
-        logger.info(f"    Focal gamma: {config['training']['loss'].get('focal_gamma', 3.0)}")
-        logger.info(f"    Class weights: {class_weights}")
-        logger.info(f"    Label smoothing: {config['training']['loss'].get('label_smoothing', 0.0)}")
-    elif loss_type == 'focal':
-        logger.info(f"  Using Focal Loss")
-        focal_alpha = config['training']['loss'].get('focal_alpha', 0.25)
-        logger.info(f"    Focal alpha: {focal_alpha}")
         logger.info(f"    Focal gamma: {config['training']['loss'].get('focal_gamma', 2.0)}")
-        logger.info(f"    Use class weights: {config['training']['loss'].get('use_class_weights', False)}")
-    elif loss_type == 'weighted_ce':
-        logger.info(f"  Using Weighted Cross-Entropy")
-        logger.info(f"    Class weights: {class_weights}")
-        logger.info(f"    Weight ratio: {class_weights.max() / class_weights.min():.2f}:1")
     else:
-        logger.info(f"  Using standard Cross-Entropy")
+        # Create loss function using unified factory
+        # This supports: 'ce', 'weighted_ce', 'focal', 'weighted_focal'
+        criterion = create_loss_function(config, class_weights_tensor)
+        criterion = criterion.to(device)
+
+        if loss_type == 'weighted_focal':
+            use_cw = config['training']['loss'].get('use_class_weights', True)
+            logger.info(f"  Using WeightedFocalLoss (STRONGEST for imbalanced data)")
+            logger.info(f"    Focal alpha: {config['training']['loss'].get('focal_alpha', 0.75)}")
+            logger.info(f"    Focal gamma: {config['training']['loss'].get('focal_gamma', 3.0)}")
+            logger.info(f"    Use class weights: {use_cw}")
+            if use_cw:
+                logger.info(f"    Class weights: {class_weights}")
+            else:
+                logger.info(f"    Class weights: DISABLED (balanced sampling handles imbalance)")
+            logger.info(f"    Label smoothing: {config['training']['loss'].get('label_smoothing', 0.0)}")
+        elif loss_type == 'focal':
+            logger.info(f"  Using Focal Loss")
+            focal_alpha = config['training']['loss'].get('focal_alpha', 0.25)
+            logger.info(f"    Focal alpha: {focal_alpha}")
+            logger.info(f"    Focal gamma: {config['training']['loss'].get('focal_gamma', 2.0)}")
+            logger.info(f"    Use class weights: {config['training']['loss'].get('use_class_weights', False)}")
+        elif loss_type == 'weighted_ce':
+            logger.info(f"  Using Weighted Cross-Entropy")
+            logger.info(f"    Class weights: {class_weights}")
+            logger.info(f"    Weight ratio: {class_weights.max() / class_weights.min():.2f}:1")
+        else:
+            logger.info(f"  Using standard Cross-Entropy")
 
     # Optimizer
     logger.info("Initializing optimizer...")
@@ -1095,26 +1354,44 @@ def main():
 
     for epoch in range(config['training']['num_epochs']):
         # Train
-        train_loss = train_epoch(
+        train_result = train_epoch(
             model, train_loader, criterion, optimizer, device,
             edge_index, edge_weights, train_structural_features, num_nodes_global,
             phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-            phylo_path_lengths=phylo_path_lengths
+            phylo_path_lengths=phylo_path_lengths,
+            is_dual_head=is_dual_head
         )
 
+        # Handle dual-head return value (train_loss, loss_details) or single loss
+        if is_dual_head and isinstance(train_result, tuple):
+            train_loss, train_loss_details = train_result
+        else:
+            train_loss = train_result
+            train_loss_details = None
+
         # Validate (use TRAIN structural features for graph structure)
-        val_loss, val_metrics, _ = evaluate(
+        val_loss, val_metrics, _, _ = evaluate(
             model, val_loader, criterion, device,
             edge_index, edge_weights, train_structural_features, num_nodes_global,
             phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-            phylo_path_lengths=phylo_path_lengths
+            phylo_path_lengths=phylo_path_lengths,
+            is_dual_head=is_dual_head
         )
 
         # Update scheduler
         scheduler.step()
 
         # Log
-        logger.info(
+        if is_dual_head and train_loss_details:
+            logger.info(
+                f"Epoch {epoch+1}/{config['training']['num_epochs']}: "
+                f"Train Loss={train_loss:.4f} (focal={train_loss_details['focal']:.4f}, mse={train_loss_details['mse']:.4f}), "
+                f"Val Loss={val_loss:.4f}, "
+                f"Val F1={val_metrics['f1_macro']:.4f}, "
+                f"Val Acc={val_metrics['accuracy']:.4f}"
+            )
+        else:
+            logger.info(
                 f"Epoch {epoch+1}/{config['training']['num_epochs']}: "
                 f"Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}, "
                 f"Val F1={val_metrics['f1_macro']:.4f}, "
@@ -1167,12 +1444,13 @@ def main():
         # Get validation probabilities from best model
         model.eval()
         with torch.no_grad():
-            _, _, val_probs = evaluate(
+            _, _, val_probs, _ = evaluate(
                 model, val_loader, criterion, device, edge_index, edge_weights,
                 train_structural_features, num_nodes_global,
                 return_full_probs=True, dataset_size=len(val_data['df']),
                 phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-                phylo_path_lengths=phylo_path_lengths
+                phylo_path_lengths=phylo_path_lengths,
+                is_dual_head=is_dual_head
             )
 
         val_labels = val_data['labels']
@@ -1233,12 +1511,13 @@ def main():
 
     # Test evaluation (use TRAIN structural features for graph structure)
     # Request full probabilities for ALL test samples (including orphans)
-    test_loss, test_metrics, test_probs = evaluate(
+    test_loss, test_metrics, test_probs, test_priority_preds = evaluate(
         model, test_loader, criterion, device, edge_index, edge_weights,
         train_structural_features, num_nodes_global,
         return_full_probs=True, dataset_size=len(test_data['df']),
         phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-        phylo_path_lengths=phylo_path_lengths
+        phylo_path_lengths=phylo_path_lengths,
+        is_dual_head=is_dual_head
     )
 
     logger.info("\nTest Results with default threshold (0.5):")
@@ -1360,6 +1639,64 @@ def main():
     logger.info(f"  Samples with predictions: {len(test_df) - orphan_count}/{len(test_df)}")
     logger.info(f"  Orphan samples (not in graph): {orphan_count}/{len(test_df)}")
 
+    # FASE 4: Add priority predictions for hybrid ranking with KNN for orphans
+    if is_dual_head and test_priority_preds is not None:
+        test_df['priority_pred'] = test_priority_preds
+
+        # Create hybrid score
+        hybrid_score = np.copy(test_priority_preds)
+        orphan_mask = np.abs(test_priority_preds - 0.5) < 0.001
+        orphan_indices = np.where(orphan_mask)[0]
+        in_graph_indices = np.where(~orphan_mask)[0]
+
+        logger.info(f"  FASE 4: Priority pred available for ranking")
+        logger.info(f"    In-graph samples: {len(in_graph_indices)}, Orphans: {len(orphan_indices)}")
+
+        # KNN-based orphan priority estimation (same as STEP 6)
+        if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
+            from sklearn.metrics.pairwise import cosine_similarity
+
+            # Get embeddings from test_data
+            test_embeddings = test_data['embeddings']
+            orphan_embeddings = test_embeddings[orphan_indices]
+            in_graph_embeddings = test_embeddings[in_graph_indices]
+            in_graph_priorities = test_priority_preds[in_graph_indices]
+
+            k_neighbors = min(10, len(in_graph_indices))
+            alpha_blend = 0.7
+
+            orphan_priorities = np.zeros(len(orphan_indices))
+            batch_size_knn = 1000
+
+            for batch_start in range(0, len(orphan_indices), batch_size_knn):
+                batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
+                batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
+                similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
+
+                for i, sim_row in enumerate(similarities):
+                    top_k_idx = np.argsort(sim_row)[-k_neighbors:]
+                    top_k_sims = sim_row[top_k_idx]
+
+                    if top_k_sims.sum() > 0:
+                        weights = top_k_sims / top_k_sims.sum()
+                        knn_priority = np.dot(weights, in_graph_priorities[top_k_idx])
+                        orphan_idx_global = orphan_indices[batch_start + i]
+                        orphan_pfail = test_probs[orphan_idx_global, 0]
+                        orphan_priorities[batch_start + i] = alpha_blend * knn_priority + (1 - alpha_blend) * orphan_pfail * 0.5
+                    else:
+                        orphan_idx_global = orphan_indices[batch_start + i]
+                        orphan_priorities[batch_start + i] = test_probs[orphan_idx_global, 0] * 0.5
+
+            hybrid_score[orphan_indices] = orphan_priorities
+            logger.info(f"    KNN orphan priority: mean={orphan_priorities.mean():.4f}, k={k_neighbors}")
+        elif len(orphan_indices) > 0:
+            hybrid_score[orphan_mask] = test_probs[orphan_mask, 0] * 0.5
+
+        test_df['hybrid_score'] = hybrid_score
+        logger.info(f"    Priority pred stats: mean={test_priority_preds.mean():.4f}, max={test_priority_preds.max():.4f}")
+    else:
+        test_df['hybrid_score'] = test_probs[:, 0]  # Fallback to P(Fail)
+
     # CRITICAL: Use TE_Test_Result from original CSV for correct APFD
     if 'TE_Test_Result' not in test_df.columns:
         logger.error("❌ CRITICAL: TE_Test_Result column not found in test DataFrame!")
@@ -1389,11 +1726,12 @@ def main():
     os.makedirs(results_dir, exist_ok=True)
 
     # Generate prioritized CSV with ranks per build
+    # FASE 4: Use hybrid_score for ranking (priority_pred + P(Fail) fallback)
     prioritized_path = os.path.join(results_dir, 'prioritized_test_cases.csv')
     test_df_with_ranks = generate_prioritized_csv(
         test_df,
         output_path=prioritized_path,
-        probability_col='probability',
+        probability_col='hybrid_score',  # FASE 4: Use hybrid score for ranking
         label_col='label_binary',
         build_col='Build_ID'
     )
@@ -1482,22 +1820,54 @@ def main():
             test_struct_full = extractor.transform(test_df_full, is_test=True)
             logger.info(f"✅ Extracted structural features: {test_struct_full.shape}")
 
-            # Impute if needed
+            # Impute structural features BEFORE adding DeepOrder features
             tc_keys_test_full = test_df_full['TC_Key'].tolist()
             needs_imputation_full = extractor.get_imputation_mask(tc_keys_test_full)
 
             logger.info(f"   Samples needing imputation: {needs_imputation_full.sum()}/{len(tc_keys_test_full)}")
 
             if needs_imputation_full.sum() > 0:
-                logger.info("   Imputing features...")
+                logger.info("   Imputing structural features...")
+                # Get training structural features WITHOUT DeepOrder (first 10 features only)
+                train_struct_base = train_struct[:, :10] if train_struct.shape[1] > 10 else train_struct
                 test_struct_full, _ = impute_structural_features(
-                    train_embeddings, train_struct, tc_keys_train,
+                    train_embeddings, train_struct_base, tc_keys_train,
                     test_embeddings_full, test_struct_full, tc_keys_test_full,
                     extractor.tc_history,
                     k_neighbors=10,
                     similarity_threshold=0.5,
                     verbose=False
                 )
+
+            # Add DeepOrder features for full test set AFTER imputation (if enabled)
+            priority_config = config.get('priority_score', {})
+            use_priority_scores = priority_config.get('enabled', True)
+
+            if use_priority_scores:
+                logger.info("\n6.3a: Computing DeepOrder features for full test set...")
+                priority_generator = create_priority_score_generator(config)
+
+                # Compute priority scores (using history from train+val+test splits)
+                test_df_full, tc_history_full = priority_generator.compute_priorities_for_dataframe(
+                    test_df_full,
+                    build_col='Build_ID',
+                    tc_col='TC_Key',
+                    result_col='TE_Test_Result',
+                    fail_value='Fail',
+                    pass_value='Pass',
+                    initial_history=None  # Start fresh since this is independent full test processing
+                )
+
+                # Extract DeepOrder features
+                test_deeporder_features_full = priority_generator.extract_deeporder_features_batch(
+                    test_df_full, tc_history_full, tc_col='TC_Key'
+                )
+
+                # Concatenate with structural features
+                logger.info(f"   Original structural features: {test_struct_full.shape}")
+                logger.info(f"   DeepOrder features: {test_deeporder_features_full.shape}")
+                test_struct_full = np.concatenate([test_struct_full, test_deeporder_features_full], axis=1)
+                logger.info(f"   Combined features: {test_struct_full.shape}")
 
             # Map TC_Keys to global indices for subgraph extraction
             logger.info("\n6.3b: Mapping TC_Keys to global indices...")
@@ -1527,19 +1897,42 @@ def main():
             )
 
             # Use evaluate() function with subgraph extraction
-            # We don't care about loss/metrics here, just need probabilities
-            _, _, all_probs_full = evaluate(
+            # For dual-head model, we get both probabilities AND priority predictions
+            # is_dual_head=True to get priority predictions for ranking
+            _, _, all_probs_full, all_priority_preds_full = evaluate(
                 model, test_loader_full, criterion, device, edge_index, edge_weights,
                 train_structural_features, num_nodes_global,
                 return_full_probs=True, dataset_size=len(test_df_full),
                 phylo_embeddings=phylo_embeddings, phylo_edge_index=phylo_edge_index,
-                phylo_path_lengths=phylo_path_lengths
+                phylo_path_lengths=phylo_path_lengths,
+                is_dual_head=is_dual_head  # Use dual-head mode if model is dual-head
             )
 
             logger.info(f"✅ Predictions generated: {all_probs_full.shape}")
             orphan_count_full = np.sum(np.abs(all_probs_full[:, 0] - 0.5) < 0.001)
             logger.info(f"   Samples with actual predictions: {len(all_probs_full) - orphan_count_full}")
             logger.info(f"   Orphan samples (default prob 0.5): {orphan_count_full}")
+
+            # DIAGNOSTIC: Priority prediction distribution
+            if all_priority_preds_full is not None:
+                logger.info("\n" + "="*70)
+                logger.info("PRIORITY PREDICTION DIAGNOSTIC")
+                logger.info("="*70)
+                in_graph_mask = np.abs(all_priority_preds_full - 0.5) >= 0.001
+                logger.info(f"   In-graph samples (priority_pred != 0.5): {in_graph_mask.sum()}")
+                logger.info(f"   Orphan samples (priority_pred = 0.5): {(~in_graph_mask).sum()}")
+                if in_graph_mask.sum() > 0:
+                    in_graph_preds = all_priority_preds_full[in_graph_mask]
+                    logger.info(f"   In-graph predictions:")
+                    logger.info(f"     Mean: {in_graph_preds.mean():.6f}")
+                    logger.info(f"     Std:  {in_graph_preds.std():.6f}")
+                    logger.info(f"     Min:  {in_graph_preds.min():.6f}")
+                    logger.info(f"     Max:  {in_graph_preds.max():.6f}")
+                    # Check if predictions have meaningful variance
+                    if in_graph_preds.std() < 0.01:
+                        logger.warning("   ⚠️  WARNING: Priority predictions have very low variance!")
+                        logger.warning("   ⚠️  This indicates the regression head is not learning properly.")
+                logger.info("="*70)
 
             # Prepare DataFrame for APFD
             logger.info("\n6.5: Preparing data for APFD calculation...")
@@ -1548,24 +1941,203 @@ def main():
             failure_probs_full = all_probs_full[:, 0]
             test_df_full['probability'] = failure_probs_full
 
+            # FASE 4: Hybrid ranking strategy
+            # P(Fail) as PRIMARY signal, priority_pred as SECONDARY boost
+            # This ensures good ranking even if regression head underperforms
+            if is_dual_head and all_priority_preds_full is not None:
+                logger.info("\n📊 FASE 4: Using HYBRID ranking strategy")
+                logger.info("   - P(Fail) as PRIMARY signal (ensures good base ranking)")
+                logger.info("   - priority_pred as SECONDARY boost (adds regression insight)")
+                logger.info("   - KNN for orphan samples")
+
+                # Parameters for hybrid scoring
+                # λ controls blend: 0.7 = 70% P(Fail) + 30% priority_pred
+                lambda_pfail = 0.7  # Weight for P(Fail) - higher = safer ranking
+
+                # Identify orphans (priority_pred = 0.5 default)
+                orphan_mask = np.abs(all_priority_preds_full - 0.5) < 0.001
+                orphan_indices = np.where(orphan_mask)[0]
+                in_graph_indices = np.where(~orphan_mask)[0]
+
+                logger.info(f"   In-graph samples: {len(in_graph_indices)}")
+                logger.info(f"   Orphan samples: {len(orphan_indices)}")
+                logger.info(f"   Lambda (P(Fail) weight): {lambda_pfail}")
+
+                # Initialize hybrid score with P(Fail) as base
+                hybrid_score = np.copy(failure_probs_full)
+
+                # For in-graph samples: blend P(Fail) with priority_pred
+                if len(in_graph_indices) > 0:
+                    in_graph_pfail = failure_probs_full[in_graph_indices]
+                    in_graph_priority = all_priority_preds_full[in_graph_indices]
+
+                    # Check if priority_pred has meaningful variance
+                    priority_std = in_graph_priority.std()
+                    if priority_std > 0.01:
+                        # Normalize priority_pred to same scale as P(Fail)
+                        priority_min = in_graph_priority.min()
+                        priority_max = in_graph_priority.max()
+                        if priority_max > priority_min:
+                            normalized_priority = (in_graph_priority - priority_min) / (priority_max - priority_min)
+                        else:
+                            normalized_priority = in_graph_priority
+
+                        # Blend P(Fail) with normalized priority_pred
+                        hybrid_score[in_graph_indices] = (
+                            lambda_pfail * in_graph_pfail +
+                            (1 - lambda_pfail) * normalized_priority
+                        )
+                        logger.info(f"   ✅ Using blended ranking (priority_pred has variance: std={priority_std:.4f})")
+                    else:
+                        # Priority_pred has no useful information - use P(Fail) only
+                        logger.warning(f"   ⚠️ Priority_pred has low variance (std={priority_std:.6f}) - using P(Fail) only for in-graph")
+                        hybrid_score[in_graph_indices] = in_graph_pfail
+
+                # For orphan samples: use KNN with P(Fail) blending
+                if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
+                    logger.info("   Computing KNN-based score for orphans...")
+
+                    from sklearn.metrics.pairwise import cosine_similarity
+
+                    orphan_embeddings = test_embeddings_full[orphan_indices]
+                    in_graph_embeddings = test_embeddings_full[in_graph_indices]
+                    in_graph_hybrid = hybrid_score[in_graph_indices]  # Use final hybrid scores of in-graph
+
+                    k_neighbors = min(10, len(in_graph_indices))
+                    alpha_knn = 0.5  # 50% KNN, 50% own P(Fail)
+
+                    batch_size_knn = 1000
+                    orphan_scores = np.zeros(len(orphan_indices))
+
+                    for batch_start in range(0, len(orphan_indices), batch_size_knn):
+                        batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
+                        batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
+
+                        similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
+
+                        for i, sim_row in enumerate(similarities):
+                            top_k_idx = np.argsort(sim_row)[-k_neighbors:]
+                            top_k_sims = sim_row[top_k_idx]
+
+                            orphan_idx_global = orphan_indices[batch_start + i]
+                            orphan_pfail = failure_probs_full[orphan_idx_global]
+
+                            if top_k_sims.sum() > 0:
+                                weights = top_k_sims / top_k_sims.sum()
+                                knn_score = np.dot(weights, in_graph_hybrid[top_k_idx])
+                                # Blend KNN score with orphan's own P(Fail)
+                                orphan_scores[batch_start + i] = alpha_knn * knn_score + (1 - alpha_knn) * orphan_pfail
+                            else:
+                                orphan_scores[batch_start + i] = orphan_pfail
+
+                    # Update hybrid scores for orphans
+                    hybrid_score[orphan_indices] = orphan_scores
+
+                    logger.info(f"   KNN orphan score stats: mean={orphan_scores.mean():.4f}, "
+                               f"max={orphan_scores.max():.4f}, min={orphan_scores.min():.4f}")
+                    logger.info(f"   KNN parameters: k={k_neighbors}, alpha_knn={alpha_knn}")
+
+                elif len(orphan_indices) > 0:
+                    # No in-graph samples - use P(Fail) directly for orphans
+                    hybrid_score[orphan_indices] = failure_probs_full[orphan_indices]
+                    logger.info("   No in-graph samples available - using P(Fail) directly for orphans")
+
+                test_df_full['priority_pred'] = all_priority_preds_full
+                test_df_full['hybrid_score'] = hybrid_score
+
+                logger.info(f"   Final priority pred stats: mean={all_priority_preds_full.mean():.4f}, "
+                           f"max={all_priority_preds_full.max():.4f}")
+                logger.info(f"   Final hybrid score stats: mean={hybrid_score.mean():.4f}, "
+                           f"max={hybrid_score.max():.4f}")
+            else:
+                # Non-dual-head model: use P(Fail) with optional KNN for orphans
+                ranking_config = config.get('ranking', {})
+                orphan_config = ranking_config.get('orphan_strategy', {})
+                use_knn_orphans = orphan_config.get('enabled', False)
+
+                if use_knn_orphans:
+                    logger.info("\n📊 KNN-ENHANCED RANKING (for orphan samples)")
+                    logger.info("   - In-graph samples: use P(Fail) directly")
+                    logger.info("   - Orphan samples: use KNN with P(Fail) of neighbors")
+
+                    # Identify orphans (P(Fail) = 0.5 is the default for samples not in graph)
+                    orphan_mask = np.abs(failure_probs_full - 0.5) < 0.001
+                    orphan_indices = np.where(orphan_mask)[0]
+                    in_graph_indices = np.where(~orphan_mask)[0]
+
+                    logger.info(f"   In-graph samples: {len(in_graph_indices)}")
+                    logger.info(f"   Orphan samples: {len(orphan_indices)}")
+
+                    # Initialize with P(Fail)
+                    hybrid_score = np.copy(failure_probs_full)
+
+                    # Apply KNN for orphans if there are both orphans and in-graph samples
+                    if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
+                        logger.info("   Computing KNN-based P(Fail) for orphans...")
+
+                        from sklearn.metrics.pairwise import cosine_similarity
+
+                        orphan_embeddings = test_embeddings_full[orphan_indices]
+                        in_graph_embeddings = test_embeddings_full[in_graph_indices]
+                        in_graph_pfail = failure_probs_full[in_graph_indices]
+
+                        k_neighbors = min(orphan_config.get('k_neighbors', 10), len(in_graph_indices))
+                        alpha_knn = orphan_config.get('alpha_blend', 0.5)
+
+                        batch_size_knn = 1000
+                        orphan_scores = np.zeros(len(orphan_indices))
+
+                        for batch_start in range(0, len(orphan_indices), batch_size_knn):
+                            batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
+                            batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
+
+                            similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
+
+                            for i, sim_row in enumerate(similarities):
+                                top_k_idx = np.argsort(sim_row)[-k_neighbors:]
+                                top_k_sims = sim_row[top_k_idx]
+
+                                if top_k_sims.sum() > 0:
+                                    weights = top_k_sims / top_k_sims.sum()
+                                    knn_pfail = np.dot(weights, in_graph_pfail[top_k_idx])
+                                    # Use KNN P(Fail) for orphans (no blending since orphan's own P(Fail) is just 0.5 default)
+                                    orphan_scores[batch_start + i] = knn_pfail
+                                else:
+                                    orphan_scores[batch_start + i] = 0.5  # Neutral if no similarity
+
+                        hybrid_score[orphan_indices] = orphan_scores
+
+                        logger.info(f"   KNN orphan P(Fail) stats: mean={orphan_scores.mean():.4f}, "
+                                   f"max={orphan_scores.max():.4f}, min={orphan_scores.min():.4f}")
+                        logger.info(f"   KNN parameters: k={k_neighbors}")
+                    else:
+                        logger.info("   No orphans to process or no in-graph samples available")
+
+                    test_df_full['hybrid_score'] = hybrid_score
+                else:
+                    # No KNN - just use P(Fail) directly
+                    test_df_full['hybrid_score'] = failure_probs_full
+                    logger.info("   Using P(Fail) for ranking (KNN orphan strategy disabled)")
+
             logger.info(f"   Failures (TE_Test_Result=='Fail'): {test_df_full['label_binary'].sum()}")
             logger.info(f"   Passes: {(test_df_full['label_binary'] == 0).sum()}")
 
             # Generate prioritized CSV with ranks per build
             logger.info("\n6.6: Generating prioritized test cases CSV...")
 
+            # FASE 4: Use hybrid_score for ranking (priority_pred + P(Fail) fallback)
             prioritized_path_full = os.path.join(results_dir, 'prioritized_test_cases_FULL_testcsv.csv')
             test_df_full_with_ranks = generate_prioritized_csv(
                 test_df_full,
                 output_path=prioritized_path_full,
-                probability_col='probability',
+                probability_col='hybrid_score',  # FASE 4: Use hybrid score for ranking
                 label_col='label_binary',
                 build_col='Build_ID'
             )
             logger.info(f"✅ Prioritized test cases (FULL) saved to: {prioritized_path_full}")
 
-            # Calculate APFD per build
-            logger.info("\n6.7: Calculating APFD per build on FULL test.csv...")
+            # Calculate APFD per build using hybrid ranking
+            logger.info("\n6.7: Calculating APFD per build on FULL test.csv (HYBRID ranking)...")
 
             apfd_path_full = os.path.join(results_dir, 'apfd_per_build_FULL_testcsv.csv')
             method_name_full = f"{config['experiment']['name']}_FULL_testcsv"
@@ -1573,9 +2145,53 @@ def main():
             apfd_results_df_full, apfd_summary_full = generate_apfd_report(
                 test_df_full_with_ranks,
                 method_name=method_name_full,
-                test_scenario="full_test_csv_277_builds",
+                test_scenario="full_test_csv_277_builds_HYBRID",
                 output_path=apfd_path_full
             )
+
+            # Also calculate APFD using only P(Fail) for comparison
+            if is_dual_head and 'priority_pred' in test_df_full.columns:
+                logger.info("\n📊 COMPARISON: APFD with P(Fail) only vs Hybrid ranking")
+
+                # Generate ranks using P(Fail) only
+                test_df_pfail = test_df_full.copy()
+                test_df_pfail_with_ranks = generate_prioritized_csv(
+                    test_df_pfail,
+                    output_path=None,  # Don't save
+                    probability_col='probability',  # P(Fail)
+                    label_col='label_binary',
+                    build_col='Build_ID'
+                )
+                _, apfd_summary_pfail = generate_apfd_report(
+                    test_df_pfail_with_ranks,
+                    method_name=f"{config['experiment']['name']}_PFail",
+                    test_scenario="full_test_csv_277_builds_PFail",
+                    output_path=None
+                )
+
+                # Generate ranks using pure priority_pred (no fallback)
+                test_df_priority = test_df_full.copy()
+                test_df_priority_with_ranks = generate_prioritized_csv(
+                    test_df_priority,
+                    output_path=None,
+                    probability_col='priority_pred',  # Pure priority_pred
+                    label_col='label_binary',
+                    build_col='Build_ID'
+                )
+                _, apfd_summary_priority = generate_apfd_report(
+                    test_df_priority_with_ranks,
+                    method_name=f"{config['experiment']['name']}_PriorityPred",
+                    test_scenario="full_test_csv_277_builds_PriorityPred",
+                    output_path=None
+                )
+
+                logger.info("\n" + "="*70)
+                logger.info("RANKING STRATEGY COMPARISON")
+                logger.info("="*70)
+                logger.info(f"  P(Fail) only:      APFD = {apfd_summary_pfail['mean_apfd']:.4f}")
+                logger.info(f"  Priority Pred:     APFD = {apfd_summary_priority['mean_apfd']:.4f}")
+                logger.info(f"  Hybrid (FASE 4):   APFD = {apfd_summary_full['mean_apfd']:.4f}")
+                logger.info("="*70)
 
             # Print APFD summary
             logger.info("\n" + "="*70)

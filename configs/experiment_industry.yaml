@@ -56,9 +56,9 @@ semantic:
   max_length: 384
   batch_size: 16  # REDUZIDO para limite 6GB VRAM
 
-# Structural Features - V2.5 with 10 features (CRÍTICO!)
+# Structural Features - V2.5 with 10 features + 9 DeepOrder features = 19 (CRÍTICO!)
 structural:
-  input_dim: 10
+  input_dim: 19  # V2.5 (10) + DeepOrder (9)
   extractor:
     use_v2_5: true  # CRÍTICO: Usar v2.5!
     recent_window: 5
@@ -79,6 +79,15 @@ coldstart:
   batch_size: 64
   num_epochs: 100
   patience: 10
+
+# DeepOrder-style Priority Score Configuration (NEW in V9!)
+# Based on the DeepOrder paper: "Deep Learning for Test Case Prioritization"
+priority_score:
+  enabled: true
+  num_cycles: 10              # Number of historical cycles to consider
+  decay_type: 'exponential'   # Weight decay type: exponential, linear, inverse, uniform
+  decay_factor: 0.8           # Decay factor for exponential decay
+  normalize: true             # Normalize weights to sum to 1
 
 # Graph Configuration (identical to exp 07)
 graph:
@@ -110,7 +119,7 @@ model:
     activation: "gelu"
 
   structural:
-    input_dim: 10  # V2.5 has 10 features
+    input_dim: 19  # V2.5 (10) + DeepOrder features (9) = 19
     hidden_dim: 64
     num_layers: 2
     dropout: 0.1
