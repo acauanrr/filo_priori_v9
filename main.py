@@ -54,6 +54,7 @@ from models.model_factory import create_model
 from training.losses import FocalLoss, create_loss_function
 from evaluation.metrics import compute_metrics
 from evaluation.apfd import generate_apfd_report, print_apfd_summary, generate_prioritized_csv
+from evaluation.orphan_ranker import compute_orphan_scores
 
 # Import validation utilities
 try:
@@ -124,6 +125,44 @@ def set_seed(seed: int):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+def harmonize_model_dimensions(config: Dict) -> None:
+    """
+    Align model dimensions to avoid hidden_dim / fusion mismatches.
+    Adjusts config in-place.
+    """
+    model_cfg = config.get('model', {})
+    semantic_hidden = model_cfg.get('semantic', {}).get('hidden_dim')
+    structural_hidden = model_cfg.get('structural', {}).get('hidden_dim')
+    gnn_cfg = model_cfg.get('gnn', {})
+    gnn_hidden = gnn_cfg.get('hidden_dim', structural_hidden or semantic_hidden)
+    gnn_heads = gnn_cfg.get('num_heads', 1)
+
+    expected_fusion_input = None
+    if semantic_hidden is not None and gnn_hidden is not None:
+        expected_fusion_input = gnn_hidden * gnn_heads + semantic_hidden
+
+    fusion_cfg = model_cfg.get('fusion', {})
+    fusion_input = fusion_cfg.get('input_dim')
+
+    if expected_fusion_input is not None and fusion_input != expected_fusion_input:
+        logger.warning(
+            f"Aligning fusion.input_dim (was {fusion_input}) to "
+            f"{expected_fusion_input} = gnn_hidden_dim * num_heads + semantic_hidden_dim"
+        )
+        fusion_cfg['input_dim'] = expected_fusion_input
+        model_cfg['fusion'] = fusion_cfg
+
+    # Keep structural hidden_dim aligned with semantic for fusion stability
+    if semantic_hidden is not None and structural_hidden is not None and semantic_hidden != structural_hidden:
+        logger.warning(
+            f"Aligning structural hidden_dim ({structural_hidden}) to semantic hidden_dim ({semantic_hidden}) "
+            f"to avoid fusion mismatch"
+        )
+        model_cfg.setdefault('structural', {})['hidden_dim'] = semantic_hidden
+
+    config['model'] = model_cfg
 
 
 def prepare_data(config: Dict, sample_size: int = None) -> Tuple:
@@ -1191,6 +1230,7 @@ def main():
     # Load config
     logger.info("Loading configuration...")
     config = load_config(args.config)
+    harmonize_model_dimensions(config)
 
     # Add force_regen flag to config for prepare_data to access
     config['_force_regen_embeddings'] = args.force_regen_embeddings
@@ -1464,7 +1504,15 @@ def main():
         min_threshold = threshold_config.get('range', [0.01, 0.99])[0]
         max_threshold = threshold_config.get('range', [0.01, 0.99])[1]
         step = threshold_config.get('step', 0.01)
-        num_thresholds = int((max_threshold - min_threshold) / step) + 1
+        coarse_step = threshold_config.get('coarse_step', step)
+        fine_step = threshold_config.get('fine_step', max(step / 4, 0.001))
+        fine_window = threshold_config.get('fine_window', 0.05)
+        two_phase = threshold_config.get('two_phase', False)
+        beta = threshold_config.get('beta', 1.0)
+
+        num_thresholds = threshold_config.get('num_thresholds')
+        if num_thresholds is None and not two_phase:
+            num_thresholds = int((max_threshold - min_threshold) / step) + 1
 
         try:
             optimal_threshold, threshold_metrics_info = find_optimal_threshold(
@@ -1473,11 +1521,18 @@ def main():
                 strategy=optimize_for,
                 min_threshold=min_threshold,
                 max_threshold=max_threshold,
-                num_thresholds=num_thresholds
+                num_thresholds=num_thresholds,
+                two_phase=two_phase,
+                coarse_step=coarse_step,
+                fine_step=fine_step,
+                fine_window=fine_window,
+                beta=beta
             )
 
             logger.info(f"\n✅ Threshold Optimization Results:")
             logger.info(f"   Strategy: {optimize_for}")
+            if two_phase:
+                logger.info(f"   Two-phase search: coarse_step={coarse_step}, fine_step={fine_step}, window={fine_window}")
             logger.info(f"   Optimal threshold: {optimal_threshold:.4f} (default: 0.5)")
             logger.info(f"   Expected validation F1 Macro: {threshold_metrics_info.get('f1_macro', 0):.4f}")
             logger.info(f"   Expected validation Recall (minority): {threshold_metrics_info.get('recall_per_class', [0, 0])[0]:.4f}")
@@ -1652,43 +1707,40 @@ def main():
         logger.info(f"  FASE 4: Priority pred available for ranking")
         logger.info(f"    In-graph samples: {len(in_graph_indices)}, Orphans: {len(orphan_indices)}")
 
-        # KNN-based orphan priority estimation (same as STEP 6)
-        if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
-            from sklearn.metrics.pairwise import cosine_similarity
+        orphan_strategy = config.get('ranking', {}).get('orphan_strategy', {})
+        use_orphan_strategy = orphan_strategy.get('enabled', True)
 
-            # Get embeddings from test_data
+        if len(orphan_indices) > 0 and use_orphan_strategy:
+            # Get embeddings and optional structural features from test_data
             test_embeddings = test_data['embeddings']
+            test_struct_features = test_data.get('structural_features')
+
             orphan_embeddings = test_embeddings[orphan_indices]
             in_graph_embeddings = test_embeddings[in_graph_indices]
             in_graph_priorities = test_priority_preds[in_graph_indices]
+            orphan_base_scores = test_probs[orphan_indices, 0]
 
-            k_neighbors = min(10, len(in_graph_indices))
-            alpha_blend = 0.7
+            priority_fallback = test_df['priority_score'].values if 'priority_score' in test_df.columns else None
 
-            orphan_priorities = np.zeros(len(orphan_indices))
-            batch_size_knn = 1000
-
-            for batch_start in range(0, len(orphan_indices), batch_size_knn):
-                batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
-                batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
-                similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
-
-                for i, sim_row in enumerate(similarities):
-                    top_k_idx = np.argsort(sim_row)[-k_neighbors:]
-                    top_k_sims = sim_row[top_k_idx]
-
-                    if top_k_sims.sum() > 0:
-                        weights = top_k_sims / top_k_sims.sum()
-                        knn_priority = np.dot(weights, in_graph_priorities[top_k_idx])
-                        orphan_idx_global = orphan_indices[batch_start + i]
-                        orphan_pfail = test_probs[orphan_idx_global, 0]
-                        orphan_priorities[batch_start + i] = alpha_blend * knn_priority + (1 - alpha_blend) * orphan_pfail * 0.5
-                    else:
-                        orphan_idx_global = orphan_indices[batch_start + i]
-                        orphan_priorities[batch_start + i] = test_probs[orphan_idx_global, 0] * 0.5
+            orphan_priorities, orphan_stats = compute_orphan_scores(
+                orphan_embeddings=orphan_embeddings,
+                in_graph_embeddings=in_graph_embeddings,
+                in_graph_scores=in_graph_priorities,
+                orphan_base_scores=orphan_base_scores,
+                strategy_config=orphan_strategy,
+                orphan_structural_features=test_struct_features[orphan_indices] if test_struct_features is not None else None,
+                in_graph_structural_features=test_struct_features[in_graph_indices] if test_struct_features is not None else None,
+                orphan_priority_fallback=priority_fallback[orphan_indices] if priority_fallback is not None else None
+            )
 
             hybrid_score[orphan_indices] = orphan_priorities
-            logger.info(f"    KNN orphan priority: mean={orphan_priorities.mean():.4f}, k={k_neighbors}")
+            logger.info(
+                "    Enhanced orphan priority (KNN): "
+                f"mean={orphan_stats['mean']:.4f}, std={orphan_stats['std']:.4f}, "
+                f"min={orphan_stats['min']:.4f}, max={orphan_stats['max']:.4f}, "
+                f"k={orphan_stats['k_neighbors']}, "
+                f"fallbacks={orphan_stats['fallback_count']}"
+            )
         elif len(orphan_indices) > 0:
             hybrid_score[orphan_mask] = test_probs[orphan_mask, 0] * 0.5
 
@@ -1966,6 +2018,9 @@ def main():
                 # Initialize hybrid score with P(Fail) as base
                 hybrid_score = np.copy(failure_probs_full)
 
+                orphan_strategy = config.get('ranking', {}).get('orphan_strategy', {})
+                use_orphan_strategy = orphan_strategy.get('enabled', True)
+
                 # For in-graph samples: blend P(Fail) with priority_pred
                 if len(in_graph_indices) > 0:
                     in_graph_pfail = failure_probs_full[in_graph_indices]
@@ -1994,53 +2049,35 @@ def main():
                         hybrid_score[in_graph_indices] = in_graph_pfail
 
                 # For orphan samples: use KNN with P(Fail) blending
-                if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
-                    logger.info("   Computing KNN-based score for orphans...")
+                if len(orphan_indices) > 0 and use_orphan_strategy:
+                    logger.info("   Computing enhanced KNN-based score for orphans...")
 
-                    from sklearn.metrics.pairwise import cosine_similarity
+                    priority_fallback = test_df_full['priority_score'].values if 'priority_score' in test_df_full.columns else None
 
-                    orphan_embeddings = test_embeddings_full[orphan_indices]
-                    in_graph_embeddings = test_embeddings_full[in_graph_indices]
-                    in_graph_hybrid = hybrid_score[in_graph_indices]  # Use final hybrid scores of in-graph
+                    orphan_scores, orphan_stats = compute_orphan_scores(
+                        orphan_embeddings=test_embeddings_full[orphan_indices],
+                        in_graph_embeddings=test_embeddings_full[in_graph_indices],
+                        in_graph_scores=hybrid_score[in_graph_indices],
+                        orphan_base_scores=failure_probs_full[orphan_indices],
+                        strategy_config=orphan_strategy,
+                        orphan_structural_features=test_struct_full[orphan_indices] if test_struct_full is not None else None,
+                        in_graph_structural_features=test_struct_full[in_graph_indices] if test_struct_full is not None else None,
+                        orphan_priority_fallback=priority_fallback[orphan_indices] if priority_fallback is not None else None
+                    )
 
-                    k_neighbors = min(10, len(in_graph_indices))
-                    alpha_knn = 0.5  # 50% KNN, 50% own P(Fail)
-
-                    batch_size_knn = 1000
-                    orphan_scores = np.zeros(len(orphan_indices))
-
-                    for batch_start in range(0, len(orphan_indices), batch_size_knn):
-                        batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
-                        batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
-
-                        similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
-
-                        for i, sim_row in enumerate(similarities):
-                            top_k_idx = np.argsort(sim_row)[-k_neighbors:]
-                            top_k_sims = sim_row[top_k_idx]
-
-                            orphan_idx_global = orphan_indices[batch_start + i]
-                            orphan_pfail = failure_probs_full[orphan_idx_global]
-
-                            if top_k_sims.sum() > 0:
-                                weights = top_k_sims / top_k_sims.sum()
-                                knn_score = np.dot(weights, in_graph_hybrid[top_k_idx])
-                                # Blend KNN score with orphan's own P(Fail)
-                                orphan_scores[batch_start + i] = alpha_knn * knn_score + (1 - alpha_knn) * orphan_pfail
-                            else:
-                                orphan_scores[batch_start + i] = orphan_pfail
-
-                    # Update hybrid scores for orphans
                     hybrid_score[orphan_indices] = orphan_scores
 
-                    logger.info(f"   KNN orphan score stats: mean={orphan_scores.mean():.4f}, "
-                               f"max={orphan_scores.max():.4f}, min={orphan_scores.min():.4f}")
-                    logger.info(f"   KNN parameters: k={k_neighbors}, alpha_knn={alpha_knn}")
+                    logger.info(
+                        f"   Orphan score stats: mean={orphan_stats['mean']:.4f}, "
+                        f"max={orphan_stats['max']:.4f}, min={orphan_stats['min']:.4f}, "
+                        f"std={orphan_stats['std']:.4f}, k={orphan_stats['k_neighbors']}, "
+                        f"fallbacks={orphan_stats['fallback_count']}"
+                    )
 
                 elif len(orphan_indices) > 0:
-                    # No in-graph samples - use P(Fail) directly for orphans
+                    # No KNN or strategy disabled - use P(Fail) directly for orphans
                     hybrid_score[orphan_indices] = failure_probs_full[orphan_indices]
-                    logger.info("   No in-graph samples available - using P(Fail) directly for orphans")
+                    logger.info("   No in-graph samples available or orphan strategy disabled - using P(Fail) directly for orphans")
 
                 test_df_full['priority_pred'] = all_priority_preds_full
                 test_df_full['hybrid_score'] = hybrid_score
@@ -2073,43 +2110,29 @@ def main():
 
                     # Apply KNN for orphans if there are both orphans and in-graph samples
                     if len(orphan_indices) > 0 and len(in_graph_indices) > 0:
-                        logger.info("   Computing KNN-based P(Fail) for orphans...")
+                        logger.info("   Computing enhanced KNN-based P(Fail) for orphans...")
 
-                        from sklearn.metrics.pairwise import cosine_similarity
+                        priority_fallback = test_df_full['priority_score'].values if 'priority_score' in test_df_full.columns else None
 
-                        orphan_embeddings = test_embeddings_full[orphan_indices]
-                        in_graph_embeddings = test_embeddings_full[in_graph_indices]
-                        in_graph_pfail = failure_probs_full[in_graph_indices]
-
-                        k_neighbors = min(orphan_config.get('k_neighbors', 10), len(in_graph_indices))
-                        alpha_knn = orphan_config.get('alpha_blend', 0.5)
-
-                        batch_size_knn = 1000
-                        orphan_scores = np.zeros(len(orphan_indices))
-
-                        for batch_start in range(0, len(orphan_indices), batch_size_knn):
-                            batch_end = min(batch_start + batch_size_knn, len(orphan_indices))
-                            batch_orphan_emb = orphan_embeddings[batch_start:batch_end]
-
-                            similarities = cosine_similarity(batch_orphan_emb, in_graph_embeddings)
-
-                            for i, sim_row in enumerate(similarities):
-                                top_k_idx = np.argsort(sim_row)[-k_neighbors:]
-                                top_k_sims = sim_row[top_k_idx]
-
-                                if top_k_sims.sum() > 0:
-                                    weights = top_k_sims / top_k_sims.sum()
-                                    knn_pfail = np.dot(weights, in_graph_pfail[top_k_idx])
-                                    # Use KNN P(Fail) for orphans (no blending since orphan's own P(Fail) is just 0.5 default)
-                                    orphan_scores[batch_start + i] = knn_pfail
-                                else:
-                                    orphan_scores[batch_start + i] = 0.5  # Neutral if no similarity
+                        orphan_scores, orphan_stats = compute_orphan_scores(
+                            orphan_embeddings=test_embeddings_full[orphan_indices],
+                            in_graph_embeddings=test_embeddings_full[in_graph_indices],
+                            in_graph_scores=failure_probs_full[in_graph_indices],
+                            orphan_base_scores=failure_probs_full[orphan_indices],
+                            strategy_config=orphan_config,
+                            orphan_structural_features=test_struct_full[orphan_indices] if test_struct_full is not None else None,
+                            in_graph_structural_features=test_struct_full[in_graph_indices] if test_struct_full is not None else None,
+                            orphan_priority_fallback=priority_fallback[orphan_indices] if priority_fallback is not None else None
+                        )
 
                         hybrid_score[orphan_indices] = orphan_scores
 
-                        logger.info(f"   KNN orphan P(Fail) stats: mean={orphan_scores.mean():.4f}, "
-                                   f"max={orphan_scores.max():.4f}, min={orphan_scores.min():.4f}")
-                        logger.info(f"   KNN parameters: k={k_neighbors}")
+                        logger.info(
+                            f"   KNN orphan P(Fail) stats: mean={orphan_stats['mean']:.4f}, "
+                            f"max={orphan_stats['max']:.4f}, min={orphan_stats['min']:.4f}, "
+                            f"std={orphan_stats['std']:.4f}, k={orphan_stats['k_neighbors']}, "
+                            f"fallbacks={orphan_stats['fallback_count']}"
+                        )
                     else:
                         logger.info("   No orphans to process or no in-graph samples available")
 

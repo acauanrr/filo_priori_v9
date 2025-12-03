@@ -22,6 +22,7 @@ tensorboard>=2.13.0
 # Optimization
 accelerate>=0.20.0
 datasets
+plotly>=5.18.0
 
 # Embedding Models (Qodo-Embed-1-1.5B)
 sentence-transformers>=2.2.2

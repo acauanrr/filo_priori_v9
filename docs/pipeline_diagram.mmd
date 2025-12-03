@@ -1,0 +1,322 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#4A90D9',
+    'primaryTextColor': '#fff',
+    'primaryBorderColor': '#2E6BA6',
+    'lineColor': '#5C6BC0',
+    'secondaryColor': '#81C784',
+    'tertiaryColor': '#FFB74D',
+    'background': '#FAFAFA',
+    'mainBkg': '#E3F2FD',
+    'nodeBorder': '#1976D2',
+    'clusterBkg': '#F5F5F5',
+    'clusterBorder': '#BDBDBD',
+    'titleColor': '#333',
+    'edgeLabelBackground': '#ffffff'
+  }
+}}%%
+
+flowchart TB
+    %% ==================== STYLING ====================
+    classDef inputData fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20
+    classDef embedding fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#0D47A1
+    classDef feature fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#BF360C
+    classDef graphStyle fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef model fill:#FFEBEE,stroke:#C62828,stroke-width:2px,color:#B71C1C
+    classDef fusion fill:#FCE4EC,stroke:#AD1457,stroke-width:2px,color:#880E4F
+    classDef output fill:#E0F7FA,stroke:#00838F,stroke-width:2px,color:#006064
+    classDef evaluation fill:#FFF8E1,stroke:#FF8F00,stroke-width:2px,color:#E65100
+    classDef orphan fill:#EFEBE9,stroke:#5D4037,stroke-width:2px,color:#3E2723
+
+    %% ==================== DATA INPUT ====================
+    subgraph INPUT["📁 DATA INPUT"]
+        direction TB
+        TRAIN["train.csv<br/>━━━━━━━━━━<br/>Historical executions"]
+        TEST["test.csv<br/>━━━━━━━━━━<br/>31,333 rows<br/>1,365 builds"]
+    end
+
+    %% ==================== DATA SPLITTING ====================
+    subgraph SPLIT["🔀 DATA SPLITTING"]
+        direction TB
+        LOADER["DataLoader<br/>━━━━━━━━━━<br/>Group by Build_ID<br/>No leakage"]
+        TRAIN_SET["Train Set<br/>80%"]
+        VAL_SET["Val Set<br/>10%"]
+        TEST_SET["Test Set<br/>10%"]
+    end
+
+    %% ==================== SEMANTIC STREAM ====================
+    subgraph SEMANTIC["🔤 SEMANTIC STREAM"]
+        direction TB
+
+        subgraph TEXT_INPUT["Text Input"]
+            TC_SUMMARY["TC_Summary"]
+            TC_STEPS["TC_Steps"]
+            COMMIT_MSG["Commit Messages"]
+        end
+
+        subgraph SBERT["SBERT Encoder"]
+            SBERT_MODEL["all-mpnet-base-v2<br/>━━━━━━━━━━<br/>Transformer"]
+            TC_EMB["TC Embedding<br/>768-dim"]
+            COMMIT_EMB["Commit Embedding<br/>768-dim"]
+        end
+
+        CONCAT_EMB["Concatenation<br/>━━━━━━━━━━<br/>1536-dim"]
+
+        subgraph SEM_FFN["Semantic FFN"]
+            SEM_L1["Linear + LayerNorm<br/>1536 → 256"]
+            SEM_GELU1["GELU + Dropout"]
+            SEM_L2["Linear + LayerNorm<br/>256 → 256"]
+            SEM_RES["Residual Connection"]
+        end
+
+        SEM_OUT["Semantic Features<br/>━━━━━━━━━━<br/>256-dim"]
+    end
+
+    %% ==================== STRUCTURAL STREAM ====================
+    subgraph STRUCTURAL["📊 STRUCTURAL STREAM"]
+        direction TB
+
+        subgraph FEAT_EXT["Feature Extractor V2.5"]
+            BASE_FEAT["Base Features (10)<br/>━━━━━━━━━━<br/>failure_rate<br/>recent_failure_rate<br/>flakiness_rate<br/>test_age<br/>test_novelty<br/>consecutive_failures<br/>max_consecutive_failures<br/>failure_trend<br/>commit_count<br/>cr_count"]
+
+            DEEP_FEAT["DeepOrder Features (9)<br/>━━━━━━━━━━<br/>execution_status_last_[1,2,3,5,10]<br/>distance<br/>status_changes<br/>cycles_since_last_fail<br/>fail_rate_last_10"]
+        end
+
+        STRUCT_VEC["Structural Vector<br/>━━━━━━━━━━<br/>19-dim"]
+
+        subgraph GRAPH_BUILD["Multi-Edge Graph Builder"]
+            CO_FAIL["Co-Failure Edges<br/>weight: 1.0"]
+            CO_PASS["Co-Success Edges<br/>weight: 0.5"]
+            SEM_EDGE["Semantic Edges<br/>weight: 0.3<br/>top_k: 10"]
+            TEMP_EDGE["Temporal Edges"]
+            COMP_EDGE["Component Edges"]
+        end
+
+        GRAPH["Test Graph<br/>━━━━━━━━━━<br/>2,347 nodes<br/>~32K edges"]
+
+        subgraph GAT_BLOCK["Graph Attention Network"]
+            GAT_L1["GAT Layer 1<br/>19 → 128<br/>2 heads"]
+            GAT_ATT["Attention:<br/>α_ij = softmax(LeakyReLU(a·[Wh_i||Wh_j]))"]
+            GAT_OUT["GAT Output<br/>256-dim"]
+        end
+
+        STRUCT_OUT["Structural Features<br/>━━━━━━━━━━<br/>256-dim"]
+    end
+
+    %% ==================== FUSION ====================
+    subgraph FUSION["🔗 CROSS-ATTENTION FUSION"]
+        direction TB
+
+        CROSS_ATT["Bidirectional Attention<br/>━━━━━━━━━━<br/>Q=Semantic, K,V=Structural<br/>Q=Structural, K,V=Semantic<br/>4 heads"]
+
+        FUSE_CONCAT["Concatenation<br/>256 + 256 = 512"]
+
+        FUSE_OUT["Fused Representation<br/>━━━━━━━━━━<br/>512-dim"]
+    end
+
+    %% ==================== CLASSIFIER ====================
+    subgraph CLASSIFIER["🎯 CLASSIFIER"]
+        direction TB
+
+        CLS_L1["Linear: 512 → 256<br/>GELU + Dropout(0.2)"]
+        CLS_L2["Linear: 256 → 128<br/>GELU + Dropout(0.2)"]
+        CLS_L3["Linear: 128 → 64<br/>GELU + Dropout(0.2)"]
+        CLS_L4["Linear: 64 → 2<br/>Softmax"]
+
+        PROBS["P(Pass), P(Fail)<br/>━━━━━━━━━━<br/>per test case"]
+    end
+
+    %% ==================== TRAINING ====================
+    subgraph TRAINING["⚡ TRAINING"]
+        direction TB
+
+        SAMPLER["Balanced Sampling<br/>━━━━━━━━━━<br/>minority_weight: 1.0<br/>majority_weight: 0.1<br/>~10:1 ratio"]
+
+        LOSS["Weighted Focal Loss<br/>━━━━━━━━━━<br/>L = -α(1-p_t)^γ log(p_t)<br/>α=0.5, γ=2.0"]
+
+        OPTIM["AdamW Optimizer<br/>━━━━━━━━━━<br/>lr=3e-5<br/>weight_decay=1e-4"]
+
+        SCHED["Cosine Annealing<br/>━━━━━━━━━━<br/>eta_min=1e-6"]
+
+        EARLY["Early Stopping<br/>━━━━━━━━━━<br/>patience=15<br/>monitor=val_f1_macro"]
+    end
+
+    %% ==================== THRESHOLD ====================
+    subgraph THRESHOLD["🎚️ THRESHOLD OPTIMIZATION"]
+        direction TB
+
+        COARSE["Coarse Search<br/>━━━━━━━━━━<br/>step=0.05<br/>range=[0.1, 0.9]"]
+
+        FINE["Fine Search<br/>━━━━━━━━━━<br/>step=0.01<br/>around optimal"]
+
+        FBETA["F-beta Optimization<br/>━━━━━━━━━━<br/>β=0.8"]
+
+        OPT_THRESH["Optimal Threshold<br/>━━━━━━━━━━<br/>0.2777"]
+    end
+
+    %% ==================== ORPHAN HANDLING ====================
+    subgraph ORPHAN["🔍 ORPHAN HANDLING"]
+        direction TB
+
+        ORPHAN_DET["Orphan Detection<br/>━━━━━━━━━━<br/>Tests not in graph<br/>Score ≈ 0.5"]
+
+        KNN["KNN Scorer<br/>━━━━━━━━━━<br/>k=20<br/>euclidean distance"]
+
+        STRUCT_BLEND["Structural Blend<br/>━━━━━━━━━━<br/>weight=0.35"]
+
+        TEMP_SCALE["Temperature Scaling<br/>━━━━━━━━━━<br/>T=1.5"]
+
+        ORPHAN_SCORE["Orphan Scores<br/>━━━━━━━━━━<br/>mean=0.37, std=0.05"]
+    end
+
+    %% ==================== RANKING ====================
+    subgraph RANKING["📋 HYBRID RANKING"]
+        direction TB
+
+        PFAIL["P(Fail) Primary<br/>━━━━━━━━━━<br/>In-graph tests"]
+
+        HYBRID["Hybrid Score<br/>━━━━━━━━━━<br/>P(Fail) + Orphan KNN"]
+
+        PRIORITY["Prioritized List<br/>━━━━━━━━━━<br/>Sorted by score<br/>descending"]
+    end
+
+    %% ==================== EVALUATION ====================
+    subgraph EVAL["📈 EVALUATION"]
+        direction TB
+
+        APFD["APFD Calculation<br/>━━━━━━━━━━<br/>Per build"]
+
+        METRICS["Final Metrics<br/>━━━━━━━━━━<br/>Mean APFD: 0.7595<br/>Median: 0.7944<br/>≥0.7: 67.9%"]
+    end
+
+    %% ==================== OUTPUT ====================
+    subgraph OUTPUT["💾 OUTPUT FILES"]
+        direction TB
+
+        OUT_PRIO["prioritized_test_cases.csv<br/>━━━━━━━━━━<br/>Ranked tests with P(Fail)"]
+
+        OUT_APFD["apfd_per_build.csv<br/>━━━━━━━━━━<br/>277 builds"]
+
+        OUT_MODEL["best_model.pt<br/>━━━━━━━━━━<br/>Checkpoint"]
+
+        OUT_THRESH["optimal_threshold.txt<br/>━━━━━━━━━━<br/>0.2777"]
+    end
+
+    %% ==================== CONNECTIONS ====================
+
+    %% Data Input → Splitting
+    TRAIN --> LOADER
+    TEST --> LOADER
+    LOADER --> TRAIN_SET
+    LOADER --> VAL_SET
+    LOADER --> TEST_SET
+
+    %% Splitting → Semantic Stream
+    TRAIN_SET --> TC_SUMMARY
+    TRAIN_SET --> TC_STEPS
+    TRAIN_SET --> COMMIT_MSG
+
+    TC_SUMMARY --> SBERT_MODEL
+    TC_STEPS --> SBERT_MODEL
+    SBERT_MODEL --> TC_EMB
+    COMMIT_MSG --> SBERT_MODEL
+    SBERT_MODEL --> COMMIT_EMB
+    TC_EMB --> CONCAT_EMB
+    COMMIT_EMB --> CONCAT_EMB
+    CONCAT_EMB --> SEM_L1
+    SEM_L1 --> SEM_GELU1
+    SEM_GELU1 --> SEM_L2
+    SEM_L2 --> SEM_RES
+    SEM_RES --> SEM_OUT
+
+    %% Splitting → Structural Stream
+    TRAIN_SET --> BASE_FEAT
+    TRAIN_SET --> DEEP_FEAT
+    BASE_FEAT --> STRUCT_VEC
+    DEEP_FEAT --> STRUCT_VEC
+
+    TRAIN_SET --> CO_FAIL
+    TRAIN_SET --> CO_PASS
+    CONCAT_EMB --> SEM_EDGE
+    TRAIN_SET --> TEMP_EDGE
+    TRAIN_SET --> COMP_EDGE
+
+    CO_FAIL --> GRAPH
+    CO_PASS --> GRAPH
+    SEM_EDGE --> GRAPH
+    TEMP_EDGE --> GRAPH
+    COMP_EDGE --> GRAPH
+
+    STRUCT_VEC --> GAT_L1
+    GRAPH --> GAT_L1
+    GAT_L1 --> GAT_ATT
+    GAT_ATT --> GAT_OUT
+    GAT_OUT --> STRUCT_OUT
+
+    %% Streams → Fusion
+    SEM_OUT --> CROSS_ATT
+    STRUCT_OUT --> CROSS_ATT
+    CROSS_ATT --> FUSE_CONCAT
+    FUSE_CONCAT --> FUSE_OUT
+
+    %% Fusion → Classifier
+    FUSE_OUT --> CLS_L1
+    CLS_L1 --> CLS_L2
+    CLS_L2 --> CLS_L3
+    CLS_L3 --> CLS_L4
+    CLS_L4 --> PROBS
+
+    %% Training Loop
+    PROBS --> LOSS
+    SAMPLER --> LOSS
+    LOSS --> OPTIM
+    OPTIM --> SCHED
+    SCHED --> EARLY
+
+    %% Threshold Optimization
+    VAL_SET --> COARSE
+    PROBS --> COARSE
+    COARSE --> FINE
+    FINE --> FBETA
+    FBETA --> OPT_THRESH
+
+    %% Orphan Handling
+    TEST_SET --> ORPHAN_DET
+    PROBS --> ORPHAN_DET
+    ORPHAN_DET --> KNN
+    CONCAT_EMB --> KNN
+    STRUCT_VEC --> STRUCT_BLEND
+    KNN --> STRUCT_BLEND
+    STRUCT_BLEND --> TEMP_SCALE
+    TEMP_SCALE --> ORPHAN_SCORE
+
+    %% Ranking
+    PROBS --> PFAIL
+    ORPHAN_SCORE --> HYBRID
+    PFAIL --> HYBRID
+    HYBRID --> PRIORITY
+
+    %% Evaluation
+    PRIORITY --> APFD
+    TEST_SET --> APFD
+    APFD --> METRICS
+
+    %% Output
+    PRIORITY --> OUT_PRIO
+    METRICS --> OUT_APFD
+    EARLY --> OUT_MODEL
+    OPT_THRESH --> OUT_THRESH
+
+    %% Apply Styles
+    class TRAIN,TEST inputData
+    class SBERT_MODEL,TC_EMB,COMMIT_EMB,CONCAT_EMB,SEM_L1,SEM_GELU1,SEM_L2,SEM_RES,SEM_OUT embedding
+    class BASE_FEAT,DEEP_FEAT,STRUCT_VEC,STRUCT_OUT feature
+    class CO_FAIL,CO_PASS,SEM_EDGE,TEMP_EDGE,COMP_EDGE,GRAPH,GAT_L1,GAT_ATT,GAT_OUT graphStyle
+    class CROSS_ATT,FUSE_CONCAT,FUSE_OUT fusion
+    class CLS_L1,CLS_L2,CLS_L3,CLS_L4,PROBS model
+    class SAMPLER,LOSS,OPTIM,SCHED,EARLY model
+    class COARSE,FINE,FBETA,OPT_THRESH evaluation
+    class ORPHAN_DET,KNN,STRUCT_BLEND,TEMP_SCALE,ORPHAN_SCORE orphan
+    class PFAIL,HYBRID,PRIORITY,APFD,METRICS evaluation
+    class OUT_PRIO,OUT_APFD,OUT_MODEL,OUT_THRESH output

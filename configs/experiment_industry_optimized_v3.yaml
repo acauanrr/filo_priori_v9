@@ -97,15 +97,17 @@ priority_score:
 graph:
   build_graph: true
   use_multi_edge: true
-  edge_types: [co_failure, co_success, semantic]
+  edge_types: [co_failure, co_success, semantic, temporal, component]
   edge_weights:
     co_failure: 1.0
     co_success: 0.5
     semantic: 0.3
+    temporal: 0.2
+    component: 0.4
   min_co_occurrences: 1
-  weight_threshold: 0.05
-  semantic_top_k: 5
-  semantic_threshold: 0.75
+  weight_threshold: 0.03
+  semantic_top_k: 10
+  semantic_threshold: 0.65
   cache_path: "cache/01_industry/multi_edge_graph.pkl"
   type: "co_failure"
 
@@ -192,7 +194,7 @@ training:
   sampling:
     use_balanced_sampling: true
     minority_weight: 1.0
-    majority_weight: 0.1  # ← Menos agressivo (10:1 ao invés de 20:1)
+    majority_weight: 0.07  # Ajuste para ~15:1 visando melhor precisão
 
 # Ranking
 ranking:
@@ -205,8 +207,12 @@ ranking:
   orphan_strategy:
     enabled: true
     method: "knn_pfail"
-    k_neighbors: 10
-    alpha_blend: 0.5
+    k_neighbors: 20
+    alpha_blend: 0.55
+    similarity_metric: "euclidean"
+    structural_weight: 0.35
+    temperature: 0.7
+    min_similarity: 0.05
 
 # Evaluation
 evaluation:
@@ -221,9 +227,14 @@ evaluation:
 
   threshold_search:
     enabled: true
-    range: [0.1, 0.9]
-    step: 0.02
-    optimize_for: "f1_macro"
+    range: [0.05, 0.9]
+    step: 0.02          # Legacy single-phase step
+    coarse_step: 0.05   # Phase 1 (coarse)
+    fine_step: 0.01     # Phase 2 (fine)
+    fine_window: 0.05
+    two_phase: true
+    optimize_for: "f_beta"
+    beta: 0.8
 
 # System
 system:

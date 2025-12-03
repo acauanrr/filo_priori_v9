@@ -262,6 +262,13 @@ def find_optimal_threshold(
     y_true: np.ndarray,
     y_prob: np.ndarray,
     strategy: str = 'recall_minority',
+    min_threshold: float = 0.01,
+    max_threshold: float = 0.99,
+    num_thresholds: Optional[int] = None,
+    two_phase: bool = False,
+    coarse_step: float = 0.02,
+    fine_step: float = 0.005,
+    fine_window: float = 0.05,
     **kwargs
 ) -> Tuple[float, Dict]:
     """
@@ -277,15 +284,62 @@ def find_optimal_threshold(
             - 'youden': Maximize Youden's J (TPR - FPR)
             - 'f_beta': Maximize F-beta score
             - 'balanced_accuracy': Maximize balanced accuracy
+        min_threshold: Minimum threshold to consider
+        max_threshold: Maximum threshold to consider
+        num_thresholds: Number of thresholds (optional if steps provided)
+        two_phase: If True, run coarse then fine search (addresses precision/recall trade-offs)
+        coarse_step: Step size for coarse search
+        fine_step: Step size for fine search
+        fine_window: Window around coarse optimum for fine search
         **kwargs: Additional arguments for specific strategies
 
     Returns:
         optimal_threshold: Best threshold
         metrics: Dictionary with metrics at optimal threshold
     """
+    # Determine number of thresholds if not explicitly provided
+    if num_thresholds is None:
+        step = coarse_step if two_phase else kwargs.get('step', coarse_step)
+        num_thresholds = int((max_threshold - min_threshold) / step) + 1
+
+    minority_strategies = {'recall_minority', 'f1_macro', 'f1_minority', 'balanced_accuracy', 'precision_minority'}
+
+    if two_phase and strategy in minority_strategies:
+        # Coarse search
+        coarse_num = int((max_threshold - min_threshold) / coarse_step) + 1
+        coarse_threshold, _, _ = optimize_threshold_for_minority(
+            y_true,
+            y_prob,
+            metric=strategy,
+            min_threshold=min_threshold,
+            max_threshold=max_threshold,
+            num_thresholds=coarse_num
+        )
+
+        # Fine search around coarse optimum
+        fine_min = max(min_threshold, coarse_threshold - fine_window)
+        fine_max = min(max_threshold, coarse_threshold + fine_window)
+        fine_num = int((fine_max - fine_min) / fine_step) + 1
+
+        fine_threshold, _, fine_metrics = optimize_threshold_for_minority(
+            y_true,
+            y_prob,
+            metric=strategy,
+            min_threshold=fine_min,
+            max_threshold=fine_max,
+            num_thresholds=fine_num
+        )
+        fine_metrics['coarse_threshold'] = coarse_threshold
+        return fine_threshold, fine_metrics
+
     if strategy in ['recall_minority', 'f1_macro', 'f1_minority', 'balanced_accuracy', 'precision_minority']:
         threshold, score, metrics = optimize_threshold_for_minority(
-            y_true, y_prob, metric=strategy, **kwargs
+            y_true,
+            y_prob,
+            metric=strategy,
+            min_threshold=min_threshold,
+            max_threshold=max_threshold,
+            num_thresholds=num_thresholds
         )
     elif strategy == 'youden':
         threshold, score = optimize_threshold_youden(y_true, y_prob)

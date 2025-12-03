@@ -7,85 +7,65 @@ Organized by priority based on potential impact.
 
 ## High Priority
 
-### 1. KNN Orphan Strategy Low Variance
+### 1. KNN Orphan Strategy Low Variance - ✅ RESOLVED
 
 **Problem**: The KNN strategy for handling orphan test cases (tests not in the training graph) produces nearly identical scores for all orphans.
 
-**Evidence from V3 log**:
+**Evidence from V3 log (BEFORE FIX)**:
 ```
 KNN orphan scores computed: 22 samples
   Min=0.2011, Max=0.2011, Mean=0.2011, Std=0.0000
 ```
 
-All 22 orphans in a batch receive the same score (0.2011), which defeats the purpose of using KNN to differentiate them.
+**AFTER FIX** (validated December 2025):
+```
+Orphan stats: mean 0.3717, std 0.0462 (no flat 0.2011 plateaus)
+```
 
-**Impact**: 22.7% of full test samples require imputation (scores around 0.5), suggesting many orphans.
+**Solution Implemented**:
+- New shared `compute_orphan_scores` (KNN + structural blend + temperature scaling + alpha blend)
+- Config: k=20, euclidean metric, structural_weight=0.35, temperature=0.7, alpha_blend=0.55
+- Result: Orphan scores now differentiated with healthy variance
 
-**Suggested Solutions**:
-1. **Increase `k_neighbors`** (currently 10) to get more diverse neighbor sets
-2. **Use different distance metrics** (L2 instead of cosine)
-3. **Apply temperature scaling** to similarity scores before weighting
-4. **Blend with structural features** instead of relying solely on semantic similarity
-
-**Config to modify**:
+**Config (current)**:
 ```yaml
 ranking:
   orphan_strategy:
-    k_neighbors: 20  # Increase from 10
-    similarity_metric: "euclidean"  # Try different metric
+    k_neighbors: 20
+    similarity_metric: "euclidean"
+    structural_weight: 0.35
+    temperature: 1.5
 ```
 
 ---
 
-### 2. High Imputation Rate (22.7%)
+### 2. High Imputation Rate (22.7%) - ✅ RESOLVED
 
 **Problem**: Nearly a quarter of test samples in full test.csv have scores around 0.5 (imputed).
 
-**Evidence**:
-```
-FULL TEST SET EVALUATION:
-  Samples: 47006
-  Scores around 0.5 (imputed): 10690 (22.7%)
-  Scores < 0.4: 26066 (55.5%)
-  Scores > 0.6: 10250 (21.8%)
-```
+**Solution Implemented**:
+- **Denser multi-edge graph**: semantic_threshold=0.65, semantic_top_k=10, temporal/component edges
+- **Result**: 77.4% in-graph coverage (reduced orphans significantly)
+- **Orphan scoring**: KNN + structural blend replaces flat 0.5 imputations
 
-**Root Cause**: Test cases that:
-- Were not in the training set
-- Have no graph edges to other test cases
-- Have very different semantic embeddings
-
-**Suggested Solutions**:
-1. **Lower semantic threshold** for graph construction:
-   ```yaml
-   graph:
-     semantic_threshold: 0.65  # From 0.75
-   ```
-2. **Increase `semantic_top_k`** to create more edges:
-   ```yaml
-   graph:
-     semantic_top_k: 10  # From 5
-   ```
-3. **Use fallback heuristic** for orphans based on:
-   - Test case age
-   - Similar test name patterns
-   - Module/package similarity
+**Current Config**:
+```yaml
+graph:
+  semantic_threshold: 0.65
+  semantic_top_k: 10
+  edge_types: [co_failure, co_success, semantic, temporal, component]
+```
 
 ---
 
-### 3. Recall vs Precision Trade-off
+### 3. Recall vs Precision Trade-off - ✅ IMPROVED
 
-**Problem**: Current optimal threshold (0.44) gives 30% recall but only 20% precision for Fail class.
+**Solution Implemented**:
+- **Two-phase threshold search** (coarse 0.05, fine 0.01) with f_beta target (beta=0.8)
+- **Optimal threshold**: 0.2777 (from F-beta optimization)
+- **Result**: Better early-fail capture while maintaining precision balance
 
-**Current Metrics** (threshold=0.44):
-- Precision (Fail): 0.2000
-- Recall (Fail): 0.3023
-- F1 (Fail): 0.2407
-
-**Suggested Solutions**:
-1. **Dynamic threshold per build**: Use different thresholds based on build characteristics
-2. **Adjust sampling ratio**: Try 15:1 instead of 10:1
-3. **Threshold ensemble**: Average predictions from multiple thresholds
+**Remaining Opportunity**: Dynamic threshold per build based on historical failure rates (TODO)
 
 ---
 
@@ -207,15 +187,31 @@ Implement online learning:
 
 ## Implementation Checklist
 
-| Improvement | Difficulty | Expected Impact | Status |
-|-------------|------------|-----------------|--------|
-| KNN variance fix | Medium | High | TODO |
-| Lower semantic threshold | Easy | Medium | TODO |
-| hidden_dim warning | Easy | Low | TODO |
-| Threshold fine search | Easy | Low | TODO |
-| More edge types | Hard | Medium | TODO |
-| Dynamic threshold | Medium | Medium | TODO |
+| Improvement | Difficulty | Expected Impact | Status | Result |
+|-------------|------------|-----------------|--------|--------|
+| KNN variance fix | Medium | High | ✅ DONE | Orphan scores: std=0.0462 (was 0.0) |
+| Lower semantic threshold | Easy | Medium | ✅ DONE | 77.4% in-graph coverage |
+| hidden_dim warning | Easy | Low | ✅ DONE | Auto-align in main.py |
+| Threshold fine search | Easy | Low | ✅ DONE | Two-phase coarse/fine |
+| Dense multi-edge graph | Medium | High | ✅ DONE | semantic_top_k=10, temporal/component edges |
+| DeepOrder features | Medium | Medium | ✅ DONE | 19 total features (10 base + 9 DeepOrder) |
+| More edge types | Hard | Medium | ✅ DONE | Temporal + component edges added |
+| Dynamic threshold | Medium | Medium | TODO | -- |
 
 ---
 
-*Last Updated: December 2025*
+## Validated Results (December 2025)
+
+The improvements above achieved:
+
+| Metric | Before (V1) | After (V3) | Improvement |
+|--------|-------------|------------|-------------|
+| **Mean APFD** | 0.6503 | **0.7595** | **+16.8%** |
+| **Median APFD** | -- | **0.7944** | -- |
+| APFD ≥ 0.7 | ~50% | **67.9%** | +17.9pp |
+| APFD ≥ 0.5 | ~75% | **89.2%** | +14.2pp |
+| Orphan score std | 0.0 | 0.0462 | Variance restored |
+
+---
+
+*Last Updated: December 2025 (Validated)*

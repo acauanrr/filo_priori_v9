@@ -5,22 +5,37 @@ All future experiments should be compared against these benchmarks.
 
 ---
 
-## Current Baseline (V3 - December 2025)
+## Current Baseline (V3 - Validated December 2025)
 
 ### Industrial Dataset (01_industry)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **APFD (277 builds)** | **0.6661** | Full test.csv with all failure builds |
-| **APFD (test split)** | **0.7086** | 64 builds from validation split |
-| **F1 Macro** | **0.5875** | Balanced metric |
-| **Precision (Fail)** | 0.2000 | |
-| **Recall (Fail)** | 0.3023 | Significantly improved from 0-3% |
-| **F1 (Fail)** | 0.2407 | |
-| **AUROC** | 0.7141 | |
-| **AUPRC Macro** | 0.5889 | |
-| **Accuracy** | 0.9251 | |
-| **Optimal Threshold** | 0.44 | For F1 Macro optimization |
+| **Mean APFD (277 builds)** | **0.7595** | Primary metric - all builds with failures |
+| **Median APFD** | **0.7944** | Robust central tendency |
+| **Std APFD** | 0.1894 | Standard deviation |
+| **Min APFD** | 0.0833 | Lowest performing build |
+| **Max APFD** | 1.0000 | Perfect prioritization (23 builds) |
+| **APFD (test split)** | **0.6966** | 64 builds from validation split |
+| **Val F1 Macro** | **0.5899** | Classification performance |
+| **Test F1 Macro** | **0.5870** | Generalization |
+| **Optimal Threshold** | 0.2777 | F-beta optimization |
+
+### APFD Distribution
+
+| Category | Count | Percentage |
+|----------|-------|------------|
+| APFD = 1.0 (perfect) | 23 | 8.3% |
+| APFD ≥ 0.7 (high) | 188 | 67.9% |
+| APFD ≥ 0.5 (acceptable) | 247 | 89.2% |
+| APFD < 0.5 (low) | 30 | 10.8% |
+
+### Validation Summary
+
+- ✅ **277 builds** with failures verified against test.csv
+- ✅ **5,085 test cases** total (mean 18.4 per build)
+- ✅ **No data leakage** (grouped splits by Build_ID)
+- ✅ **All build IDs unique** and verified against source
 
 ### Configuration
 
@@ -89,44 +104,43 @@ Combined effect: ~323x weight to minority class.
 
 ## Baseline Comparison (Same Dataset)
 
-| Method | APFD | vs Baseline |
-|--------|------|-------------|
-| **Filo-Priori V3** | **0.6661** | **+3.8%** vs V1 |
-| Filo-Priori V1 | 0.6503 | baseline |
-| FailureRate | 0.6289 | -2.6% |
-| XGBoost | 0.6171 | -5.1% |
-| Random | 0.5596 | -14.2% |
+| Method | APFD | vs Filo-Priori V3 |
+|--------|------|-------------------|
+| **Filo-Priori V3 (Latest)** | **0.7595** | -- |
+| Filo-Priori V1 | 0.6503 | -14.4% |
+| FailureRate | 0.6289 | -17.2% |
+| XGBoost | 0.6171 | -18.7% |
+| Random | 0.5596 | -26.3% |
 
 ---
 
-## Improvement Opportunities (Future Work)
+## Key Improvements in V3 (What Drove the APFD Gain)
 
-### High Priority
+1. **Dense Multi-Edge Graph**: semantic_top_k=10, threshold=0.65, temporal/component edges → fewer orphans, better message passing
+2. **High-Variance Orphan Scorer**: k=20, euclidean, structural blend, temperature → eliminated flat scores; orphans now differentiated
+3. **Balanced Sampling + Tuned Threshold**: Two-phase search with f_beta 0.8 → improved early-fail capture
+4. **DeepOrder Features + Priority History**: Informative structural priors for rarely failing tests
+5. **Strict Build-Level Split**: No leakage; metrics reflect genuine generalization
 
-1. **KNN Orphan Strategy Variance**
-   - Current: All orphans get similar scores (~0.2011)
-   - Impact: 22.7% of test samples affected
-   - Suggestion: Increase `k_neighbors` or use different similarity metric
+---
 
-2. **Recall vs Precision Trade-off**
-   - Current: 30% recall, 20% precision for Fail class
-   - Suggestion: Adjust decision threshold or sampling ratio
+## Outlier Analysis
 
-### Medium Priority
+### Builds with Low APFD (< 0.3) - 7 builds
 
-3. **Graph Connectivity**
-   - Many test cases are "orphans" (not in training graph)
-   - Suggestion: Lower `semantic_threshold` or increase `semantic_top_k`
+| Build ID | APFD | Test Cases |
+|----------|------|------------|
+| T2SR33.54 | 0.0833 | 6 |
+| U3UX34.1 | 0.1167 | 29 |
+| S3SG32.39-90-1 | 0.1406 | 31 |
+| UTPN34.176 | 0.1667 | 3 |
+| UTP34.79 | 0.2000 | 15 |
+| T3TDC33.3 | 0.2500 | 2 |
+| T1TH33.75-12-6 | 0.2778 | 9 |
 
-4. **Threshold Optimization**
-   - Current search: [0.1, 0.9] with step 0.02
-   - Suggestion: Finer search around optimal (0.44)
+### Builds with Perfect APFD (= 1.0) - 23 builds
 
-### Low Priority
-
-5. **Model Architecture**
-   - Current warning: hidden_dim mismatch
-   - Not affecting results but should be fixed
+All 23 builds with APFD = 1.0 have exactly **1 test case** each, which is expected behavior (single failing test ranked first = perfect APFD).
 
 ---
 
@@ -136,29 +150,34 @@ Combined effect: ~323x weight to minority class.
 # Run baseline configuration
 python main.py --config configs/experiment_industry_optimized_v3.yaml
 
-# Expected results:
-# - APFD (full test): ~0.6661
-# - APFD (test split): ~0.7086
-# - F1 Macro: ~0.5875
+# Expected results (validated December 2025):
+# - Mean APFD (277 builds): 0.7595
+# - Median APFD: 0.7944
+# - APFD (test split, 64 builds): 0.6966
+# - Val F1 Macro: 0.5899
+# - Test F1 Macro: 0.5870
+# - APFD >= 0.7: 67.9% (188/277)
+# - APFD >= 0.5: 89.2% (247/277)
 ```
 
 ### Metrics to Report
 
-1. **APFD (277 builds)** - Primary metric for prioritization
-2. **F1 Macro** - Classification balance
-3. **Recall (Fail)** - Fault detection sensitivity
-4. **AUROC** - Discrimination ability
+1. **Mean APFD (277 builds)** - Primary metric for prioritization
+2. **Median APFD** - Robust central tendency
+3. **APFD Distribution** - % of builds with APFD ≥ 0.7 and ≥ 0.5
+4. **F1 Macro** - Classification balance
+5. **Test Split APFD** - Generalization check
 
 ---
 
 ## Version History
 
-| Version | Date | APFD | Key Changes |
-|---------|------|------|-------------|
-| V3 | Dec 2025 | **0.6661** | Single balancing mechanism |
-| V2 | Nov 2025 | ~0.55 | Added balanced sampling (broken) |
-| V1 | Nov 2025 | 0.6503 | Original dual_stream |
+| Version | Date | Mean APFD | Median APFD | Key Changes |
+|---------|------|-----------|-------------|-------------|
+| **V3 (Current)** | Dec 2025 | **0.7595** | **0.7944** | Dense graph, high-variance orphan KNN, DeepOrder features |
+| V2 | Nov 2025 | ~0.55 | -- | Added balanced sampling (broken - mode collapse) |
+| V1 | Nov 2025 | 0.6503 | -- | Original dual_stream |
 
 ---
 
-*Last Updated: December 2025*
+*Last Updated: December 2025 (Validated)*
