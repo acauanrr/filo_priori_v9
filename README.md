@@ -21,6 +21,404 @@ The key insight: tests that fail together often indicate related functionality, 
 
 ---
 
+## Filo-Priori Method: Industrial Dataset (01_industry)
+
+This section provides a comprehensive description of the Filo-Priori approach specifically optimized for the Industrial QTA dataset.
+
+### Problem Statement
+
+**Test Case Prioritization (TCP)** aims to order test cases such that those most likely to fail are executed first. This is critical in Continuous Integration (CI) environments where:
+
+- Test suites are large (2,347 unique test cases)
+- Build frequency is high (1,339 builds)
+- Time constraints require executing only a subset of tests
+- Early fault detection accelerates debugging
+
+**The Industrial Challenge:**
+
+| Challenge | Description | Impact |
+|-----------|-------------|--------|
+| **Extreme Class Imbalance** | 37:1 Pass:Fail ratio | Model tends to predict all Pass |
+| **Sparse Failures** | Only 20.7% of builds have failures | Limited positive training examples |
+| **Test Interdependencies** | Tests share functionality | Independent treatment loses information |
+| **Concept Drift** | Software evolves over time | Historical patterns may become stale |
+
+### The Filo-Priori Approach
+
+Filo-Priori introduces a **dual-stream architecture** that processes two complementary information sources:
+
+```
+                    FILO-PRIORI: DUAL-STREAM APPROACH
+    ================================================================
+
+    INPUT SOURCES                    PROCESSING                OUTPUT
+    -------------                    ----------                ------
+
+    ┌─────────────────┐
+    │  SEMANTIC INFO  │
+    │  - TC_Summary   │      ┌──────────────┐
+    │  - TC_Steps     │ ───> │   SBERT      │ ───> 768-dim ──┐
+    │  - Commit Msgs  │      │  Encoder     │                │
+    └─────────────────┘      └──────────────┘                │
+                                                              │
+                                                              ▼
+                                                    ┌─────────────────┐
+                             1536-dim combined ──>  │  SEMANTIC       │
+                                                    │  STREAM (FFN)   │
+                                                    │  [1536→256→256] │
+                                                    └────────┬────────┘
+                                                             │
+    ┌─────────────────┐                                      │
+    │ STRUCTURAL INFO │      ┌──────────────┐                │
+    │  - Failure rate │ ───> │  Feature     │                │
+    │  - Co-failures  │      │  Extractor   │                ▼
+    │  - Test age     │      │  V2.5        │      ┌─────────────────┐
+    │  - Trends       │      └──────────────┘      │  CROSS-ATTENTION│
+    └─────────────────┘              │             │     FUSION      │
+            │                        │             │  [512→256→256]  │
+            │                        ▼             └────────┬────────┘
+            │               ┌──────────────┐                │
+            │               │  TEST GRAPH  │                │
+            └──────────────>│  (Multi-Edge)│                │
+                            │  - Co-fail   │                │
+                            │  - Co-pass   │                ▼
+                            │  - Semantic  │      ┌─────────────────┐
+                            └──────┬───────┘      │   CLASSIFIER    │
+                                   │              │   MLP [256→128  │
+                                   ▼              │        →64→2]   │
+                            ┌──────────────┐      └────────┬────────┘
+                            │  STRUCTURAL  │               │
+                            │  STREAM (GAT)│               │
+                            │  [19→128→256]│ ──────────────┘
+                            └──────────────┘
+                                                           │
+                                                           ▼
+                                                    P(Fail) for each
+                                                      test case
+```
+
+### Component Details
+
+#### 1. Semantic Stream
+
+The semantic stream captures **what tests do** through natural language understanding:
+
+**Input Processing:**
+```
+Test Case Text:
+├── TC_Summary: "Verify login functionality with valid credentials"
+├── TC_Steps: "1. Navigate to login page\n2. Enter username\n3. Enter password..."
+└── Commit Messages: "Fix authentication bug in login module"
+
+         │
+         ▼ SBERT (all-mpnet-base-v2)
+         │
+    768-dim embedding (test) + 768-dim embedding (commit)
+         │
+         ▼ Concatenation
+         │
+    1536-dim combined semantic embedding
+```
+
+**Architecture:**
+| Layer | Input | Output | Activation |
+|-------|-------|--------|------------|
+| Linear + LayerNorm | 1536 | 256 | GELU |
+| Dropout | 256 | 256 | - |
+| Linear + LayerNorm | 256 | 256 | GELU |
+| Residual Connection | 256 | 256 | - |
+
+#### 2. Structural Stream with Graph Attention
+
+The structural stream captures **how tests behave** through historical patterns and test relationships:
+
+**Feature Engineering (19 features):**
+
+| Category | Features | Description |
+|----------|----------|-------------|
+| **Historical** | `failure_rate`, `recent_failure_rate`, `flakiness_rate` | Failure patterns |
+| **Temporal** | `test_age`, `test_novelty`, `consecutive_failures` | Time-based patterns |
+| **Trend** | `failure_trend`, `max_consecutive_failures` | Direction of change |
+| **Context** | `commit_count`, `cr_count` | Code change association |
+| **DeepOrder** | `execution_status_last_[1,2,3,5,10]`, `distance`, `status_changes`, `cycles_since_last_fail`, `fail_rate_last_10` | Execution history |
+
+**Multi-Edge Test Graph:**
+
+The graph captures relationships between test cases:
+
+```
+Test Graph Construction:
+========================
+
+For each pair of tests (Ti, Tj):
+
+1. CO-FAILURE EDGE (weight: 1.0)
+   - Added if Ti and Tj failed together in the same build
+   - Edge weight = number of co-failures / total builds
+   - Captures: "Tests that fail together are likely related"
+
+2. CO-SUCCESS EDGE (weight: 0.5)
+   - Added if Ti and Tj passed together consistently
+   - Lower weight because co-success is less informative
+   - Captures: "Tests that always pass together may test similar code"
+
+3. SEMANTIC EDGE (weight: 0.3)
+   - Added if cosine_similarity(embed(Ti), embed(Tj)) > 0.75
+   - Top-K (5) most similar tests connected
+   - Captures: "Tests with similar descriptions may be related"
+
+Graph Statistics (01_industry):
+├── Nodes: 2,347 (unique test cases)
+├── Co-failure edges: ~12,000
+├── Co-success edges: ~8,000
+├── Semantic edges: ~11,700
+└── Average degree: ~13.5 edges per test
+```
+
+**Graph Attention Network (GAT):**
+
+```python
+# GAT Layer processing
+h_i = σ(Σ_j α_ij · W · h_j)
+
+where:
+- h_i: representation of test i
+- α_ij: attention weight between tests i and j
+- W: learnable weight matrix
+- σ: ELU activation
+
+Attention computation:
+α_ij = softmax(LeakyReLU(a^T · [Wh_i || Wh_j]))
+```
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Layers | 1 | Deeper GAT overfits on sparse graph |
+| Heads | 2 | Multi-head captures different relationships |
+| Hidden dim | 128 | Balance expressiveness vs. overfitting |
+| Dropout | 0.15 | Regularization |
+
+#### 3. Cross-Attention Fusion
+
+The fusion module combines semantic and structural representations using bidirectional attention:
+
+```
+Semantic (256-dim) ─────┐
+                        ▼
+              ┌─────────────────┐
+              │  Cross-Attention │
+              │                  │
+              │  Q = Semantic    │
+              │  K,V = Structural│
+              │         +        │
+              │  Q = Structural  │
+              │  K,V = Semantic  │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  Concatenation   │
+              │  [256 + 256]     │
+              └────────┬────────┘
+                       │
+                       ▼
+              512-dim fused representation
+```
+
+This allows the model to:
+- Weight semantic features based on structural context
+- Weight structural features based on semantic similarity
+- Dynamically balance both modalities per test case
+
+#### 4. Classification Head
+
+The final classifier predicts P(Fail) for each test:
+
+```
+Fused (512-dim) → Linear(256) → GELU → Dropout(0.2)
+                → Linear(128) → GELU → Dropout(0.2)
+                → Linear(64)  → GELU → Dropout(0.2)
+                → Linear(2)   → Softmax
+                                  │
+                                  ▼
+                           [P(Pass), P(Fail)]
+```
+
+### Handling Extreme Class Imbalance (37:1)
+
+The industrial dataset has severe class imbalance, which caused significant challenges:
+
+#### Evolution of Balancing Strategies
+
+| Version | Strategy | Result | Problem |
+|---------|----------|--------|---------|
+| **V1** | `class_weights` only | APFD: 0.6503 | Recall (Fail): ~3% |
+| **V2** | `class_weights` + `balanced_sampling` + high `focal_alpha` | APFD: ~0.55 | Mode collapse to Fail |
+| **V3** | `balanced_sampling` only | APFD: **0.6661** | **Balanced predictions** |
+
+#### The Mode Collapse Problem
+
+**V2 Failure Analysis:**
+
+```
+V2 Configuration (BROKEN):
+├── class_weights: [1.0, 19.0]  → 19x weight to Fail
+├── balanced_sampling: minority_weight=1.0, majority_weight=0.05  → 20x oversampling
+└── focal_alpha: 0.85  → Additional ~1.7x preference for Fail
+
+Combined effect: 19 × 20 × 1.7 ≈ 323x weight to Fail class!
+
+Result: Model predicts ALL samples as Fail
+        Recall (Fail) = 100%, Precision (Fail) = 2.7%
+        F1 Macro ≈ 0.50 (degenerate)
+```
+
+**V3 Solution: Single Balancing Mechanism**
+
+```yaml
+# V3 Configuration (CORRECT)
+training:
+  loss:
+    type: "weighted_focal"
+    use_class_weights: false    # DISABLED
+    focal_alpha: 0.5            # NEUTRAL
+    focal_gamma: 2.0            # Focus on hard examples
+
+  sampling:
+    use_balanced_sampling: true
+    minority_weight: 1.0
+    majority_weight: 0.1        # 10:1 ratio (moderate)
+```
+
+**Key Insight:** Use **ONLY ONE** mechanism to handle class imbalance.
+
+#### Weighted Focal Loss
+
+The loss function combines focal modulation with optional class weighting:
+
+```python
+Focal Loss: L = -α_t · (1 - p_t)^γ · log(p_t)
+
+where:
+- p_t: probability of correct class
+- α_t: class weight (0.5 = neutral in V3)
+- γ: focusing parameter (2.0)
+
+Effect of γ:
+- Well-classified (p_t > 0.9): weight ≈ 0.01 (ignored)
+- Uncertain (p_t ≈ 0.5): weight ≈ 0.25 (moderate)
+- Misclassified (p_t < 0.1): weight ≈ 0.81 (emphasized)
+```
+
+#### Balanced Sampling
+
+Instead of modifying loss weights, V3 uses `WeightedRandomSampler`:
+
+```python
+# Sampling probabilities
+P(sample Fail) = 1.0 / N_fail    # High probability for minority
+P(sample Pass) = 0.1 / N_pass    # Low probability for majority
+
+# Effective batch composition:
+# - ~50% Fail samples (vs. 2.7% in original data)
+# - ~50% Pass samples
+```
+
+### Orphan Handling with KNN
+
+Test cases not present in the training graph ("orphans") require special handling:
+
+```
+Orphan Detection:
+├── Test case not in training set
+├── No graph edges to other tests
+└── Score ≈ 0.5 (uncertain)
+
+KNN Imputation:
+1. Compute semantic similarity to all in-graph tests
+2. Select K=10 nearest neighbors
+3. Weight neighbors by similarity
+4. Estimate P(Fail) = Σ(similarity_i × P(Fail)_i) / Σ(similarity_i)
+```
+
+**Configuration:**
+```yaml
+ranking:
+  orphan_strategy:
+    enabled: true
+    method: "knn_pfail"
+    k_neighbors: 10
+    alpha_blend: 0.5  # 50% KNN + 50% own P(Fail)
+```
+
+### Training Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      TRAINING PIPELINE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. DATA PREPARATION                                            │
+│     ├── Load train.csv, test.csv                                │
+│     ├── Split: 80% train / 10% val / 10% test                   │
+│     ├── Extract semantic embeddings (cached)                    │
+│     ├── Extract structural features (19 features)               │
+│     └── Build multi-edge graph                                  │
+│                                                                 │
+│  2. MODEL INITIALIZATION                                        │
+│     ├── SemanticStream: FFN [1536→256]                          │
+│     ├── StructuralStream: GAT [19→128→256]                      │
+│     ├── CrossAttentionFusion: [512→256]                         │
+│     └── Classifier: MLP [256→128→64→2]                          │
+│                                                                 │
+│  3. TRAINING LOOP (50 epochs)                                   │
+│     ├── Balanced sampling (10:1 ratio)                          │
+│     ├── Forward pass through dual-stream                        │
+│     ├── Weighted Focal Loss (γ=2.0, α=0.5)                      │
+│     ├── AdamW optimizer (lr=3e-5, wd=1e-4)                      │
+│     ├── Cosine annealing scheduler                              │
+│     ├── Gradient clipping (max_norm=1.0)                        │
+│     └── Early stopping (patience=15, monitor=val_f1_macro)      │
+│                                                                 │
+│  4. EVALUATION                                                  │
+│     ├── Threshold optimization (search [0.1, 0.9])              │
+│     ├── Classification metrics (F1, Precision, Recall)          │
+│     ├── Ranking metrics (APFD per build)                        │
+│     └── Full test.csv evaluation (277 builds with failures)     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Improvements in V3
+
+| Improvement | Before (V1/V2) | After (V3) | Impact |
+|-------------|----------------|------------|--------|
+| **Class Balancing** | Multiple mechanisms | Single (sampling) | Fixed mode collapse |
+| **Recall (Fail)** | 3% (V1) / 100% (V2) | **30.2%** | Balanced detection |
+| **APFD** | 0.6503 (V1) | **0.6661** | +2.4% improvement |
+| **F1 Macro** | ~0.50 | **0.5875** | +17.5% improvement |
+| **Bug Fix** | `use_class_weights` ignored | Config respected | Correct behavior |
+
+### Reproducibility
+
+To reproduce the V3 baseline results:
+
+```bash
+# 1. Ensure dependencies are installed
+pip install -r requirements.txt
+
+# 2. Run with best configuration
+python main.py --config configs/experiment_industry_optimized_v3.yaml
+
+# Expected output:
+# ├── APFD (277 builds): ~0.6661
+# ├── APFD (test split): ~0.7086
+# ├── F1 Macro: ~0.5875
+# └── Recall (Fail): ~30.2%
+```
+
+---
+
 ## Key Results
 
 ### Industrial Dataset (Classification Mode)
