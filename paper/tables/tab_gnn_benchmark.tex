@@ -1,0 +1,47 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TABLE: GNN Benchmark Results (Cora, CiteSeer, PubMed)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[!t]
+\centering
+\caption{Comparison with NodeRank on GNN Benchmark Datasets}
+\label{tab:gnn_benchmark}
+\footnotesize
+\begin{threeparttable}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Dataset} & \textbf{Method} & \textbf{APFD} & \textbf{Std} & \textbf{PFD@10} & \textbf{PFD@20} \\
+\midrule
+\multirow{6}{*}{\textbf{Cora}}
+ & Random & 0.502 & 0.012 & 0.101 & 0.202 \\
+ & DeepGini & 0.714 & 0.011 & 0.258 & 0.467 \\
+ & Entropy & 0.723 & 0.008 & 0.260 & 0.466 \\
+ & VanillaSM & 0.714 & 0.012 & 0.256 & 0.465 \\
+ & NodeRank$^\dagger$ & 0.833 & -- & -- & -- \\
+ & \textbf{Filo-Priori} & \textbf{0.861} & \textbf{0.014} & \textbf{0.412} & \textbf{0.755} \\
+\midrule
+\multirow{6}{*}{\textbf{CiteSeer}}
+ & Random & 0.500 & 0.004 & 0.099 & 0.202 \\
+ & DeepGini & 0.611 & 0.012 & 0.168 & 0.316 \\
+ & Entropy & 0.620 & 0.012 & 0.167 & 0.316 \\
+ & VanillaSM & 0.610 & 0.013 & 0.169 & 0.315 \\
+ & NodeRank$^\dagger$ & 0.733 & -- & -- & -- \\
+ & \textbf{Filo-Priori} & \textbf{0.742} & \textbf{0.016} & \textbf{0.228} & \textbf{0.436} \\
+\midrule
+\multirow{6}{*}{\textbf{PubMed}}
+ & Random & 0.498 & 0.010 & 0.100 & 0.199 \\
+ & DeepGini & 0.646 & 0.011 & 0.216 & 0.382 \\
+ & Entropy & 0.649 & 0.012 & 0.216 & 0.382 \\
+ & VanillaSM & 0.645 & 0.011 & 0.216 & 0.383 \\
+ & NodeRank$^\dagger$ & 0.790 & -- & -- & -- \\
+ & \textbf{Filo-Priori} & \textbf{0.785} & \textbf{0.014} & \textbf{0.322} & \textbf{0.570} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Results averaged over 5 independent runs with different random seeds.
+\item $^\dagger$NodeRank results from Li et al.~\cite{li2024noderank} (IEEE TSE 2024).
+\item PFD@$k$: Percentage of faults detected in first $k$\% of tests.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}

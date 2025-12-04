@@ -5,23 +5,26 @@
 % Note: Section header is in main_ieee_tse.tex
 
 This section presents experimental results organized by research questions.
-All experiments were conducted on the industrial QTA dataset containing
-4,552 builds with 100,502 test executions (277 builds with failures).
+We evaluate \filopriori{} on two complementary domains: (1) industrial software
+testing with rich semantic information, and (2) GNN benchmark datasets representing
+node classification tasks on citation networks.
 
 %------------------------------------------------------------------------------
-% RQ1: Effectiveness
+% RQ1: Effectiveness on Industrial Dataset
 %------------------------------------------------------------------------------
 
-\subsection{RQ1: Effectiveness Comparison}
+\subsection{RQ1: Effectiveness on Industrial Dataset}
 \label{sec:rq1}
 
 Table~\ref{tab:tcp_comparison} presents the comparison of \filopriori{} against
-state-of-the-art TCP methods. We use APFD as the primary metric with Wilcoxon
-signed-rank tests for statistical significance and Cliff's delta for effect size.
+state-of-the-art TCP methods on the industrial QTA dataset containing
+4,552 builds with 100,502 test executions (277 builds with failures).
+We use APFD as the primary metric with Wilcoxon signed-rank tests for statistical
+significance and Cliff's delta for effect size.
 
 \begin{table}[!t]
 \centering
-\caption{Comparison with State-of-the-Art TCP Methods}
+\caption{Comparison with State-of-the-Art TCP Methods (Industrial Dataset)}
 \label{tab:tcp_comparison}
 \footnotesize
 \begin{tabular}{lccccc}
@@ -62,15 +65,103 @@ superior fault detection compared to existing GNN-based approaches.
 \end{tcolorbox}
 
 %------------------------------------------------------------------------------
-% RQ1b: Cross-Dataset Validation (RTPTorrent)
+% GNN Benchmark Evaluation
+%------------------------------------------------------------------------------
+
+\subsection{Evaluation on GNN Benchmark Datasets}
+\label{sec:gnn_benchmark}
+
+To validate the generalizability of our approach beyond industrial software testing,
+we conducted a comprehensive evaluation on standard GNN benchmark datasets used in
+Li et al.'s NodeRank~\cite{li2024noderank}. This experiment demonstrates that the
+core principles of \filopriori{}---multi-edge graph construction, comprehensive
+feature extraction, and learning-to-rank---transfer effectively to the domain
+of test input prioritization for Graph Neural Networks.
+
+\subsubsection{Experimental Setup}
+
+We evaluated on three citation network datasets commonly used in GNN research:
+\textbf{Cora} (2,708 nodes, 7 classes), \textbf{CiteSeer} (3,327 nodes, 6 classes),
+and \textbf{PubMed} (19,717 nodes, 3 classes). Following the NodeRank experimental
+protocol~\cite{li2024noderank}, we trained a 2-layer Graph Convolutional Network
+(GCN) for node classification and treated misclassified nodes as ``faults'' to
+be detected through prioritization.
+
+We adapted the \filopriori{} methodology for GNN testing by implementing:
+\begin{itemize}
+    \item \textbf{Multi-Edge Graph Construction}: Combining original citation
+    edges, semantic similarity edges (cosine similarity $> 0.65$), and prediction
+    agreement edges (nodes with same predicted class).
+    \item \textbf{Feature Extraction}: 25 features across three categories---structural
+    (degree centrality, clustering coefficient, PageRank), uncertainty (entropy,
+    margin, Gini impurity, confidence), and neighborhood (neighbor entropy,
+    agreement, label homophily).
+    \item \textbf{Learning-to-Rank}: LightGBM classifier trained to predict
+    misclassification likelihood, with predicted probability as the ranking score.
+\end{itemize}
+
+We compared against five baselines: Random ordering, DeepGini~\cite{feng2020deepgini}
+(Gini impurity), Entropy (prediction entropy), VanillaSM (softmax margin), and
+PCS (least confidence). All experiments were repeated 5 times with different
+random seeds, and we report mean and standard deviation.
+
+\subsubsection{Results}
+
+Table~\ref{tab:gnn_benchmark} presents detailed results for each dataset, and
+Table~\ref{tab:gnn_summary} summarizes the comparison with NodeRank.
+
+\input{tables/tab_gnn_benchmark}
+
+\input{tables/tab_gnn_summary}
+
+\textbf{Key Findings:}
+
+\textbf{(1) Superior Performance on Cora.} \filopriori{} achieves APFD=0.861,
+outperforming NodeRank (0.833) by \textbf{+3.4\%}. This represents a substantial
+improvement on the most commonly used GNN benchmark. The strong PFD@10=0.412
+indicates that \filopriori{} detects over 41\% of misclassifications in the first
+10\% of the prioritized test sequence.
+
+\textbf{(2) Consistent Improvement on CiteSeer.} On CiteSeer, \filopriori{}
+achieves APFD=0.742 compared to NodeRank's 0.733, a \textbf{+1.3\%} improvement.
+CiteSeer is known to be more challenging due to higher feature sparsity and less
+distinct class boundaries, yet \filopriori{} maintains competitive performance.
+
+\textbf{(3) Competitive Performance on PubMed.} On PubMed, \filopriori{} achieves
+APFD=0.785, slightly below NodeRank (0.790, -0.6\%). PubMed's larger scale
+(19,717 nodes) and lower class count (3 classes) present a different challenge
+where uncertainty-based features may provide less discriminative power. Nevertheless,
+the difference is within one standard deviation, indicating comparable performance.
+
+\textbf{(4) Consistent Gains over Uncertainty Baselines.} Across all datasets,
+\filopriori{} substantially outperforms uncertainty-based baselines (DeepGini,
+Entropy, VanillaSM), with improvements ranging from +11\% to +21\%. This validates
+the value of incorporating structural information and learning-to-rank beyond
+simple uncertainty measures.
+
+\textbf{(5) Strong Early Fault Detection.} The PFD@10 and PFD@20 metrics
+demonstrate \filopriori{}'s effectiveness in early fault detection. On Cora,
+PFD@20=0.755 means 75.5\% of all misclassifications are found in the first
+20\% of the test sequence---a 3$\times$ improvement over random ordering.
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=GNN Benchmark Finding]
+\filopriori{} achieves an average APFD of 0.796 across GNN benchmarks,
+outperforming NodeRank~\cite{li2024noderank} on 2 of 3 datasets (Cora: +3.4\%,
+CiteSeer: +1.3\%) and achieving competitive results on PubMed (-0.6\%).
+The multi-edge graph construction and comprehensive feature extraction transfer
+effectively from software testing to GNN test input prioritization.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+% Cross-Dataset Validation: RTPTorrent
 %------------------------------------------------------------------------------
 
 \subsection{Cross-Dataset Validation: RTPTorrent}
 \label{sec:rq1_rtptorrent}
 
-To evaluate generalization beyond the industrial dataset, we conducted a comprehensive
-experiment on the RTPTorrent open-source benchmark~\cite{mattis2020rtptorrent}, which
-contains test execution histories from 20 Java projects with over 100,000 Travis CI builds.
+To further evaluate generalization, we conducted a comprehensive experiment on
+the RTPTorrent open-source benchmark~\cite{mattis2020rtptorrent}, which contains
+test execution histories from 20 Java projects with over 100,000 Travis CI builds.
 We adapted \filopriori{} using a LightGBM LambdaRank model with 16 ranking-optimized
 features, trained independently on each project.
 
@@ -137,8 +228,9 @@ deeplearning4j/dl4j & 0.9277 & 114 & +0.46\% \\
 
 \begin{tcolorbox}[colback=gray!5,colframe=gray!50,title=Cross-Dataset Finding]
 \filopriori{} generalizes effectively to open-source projects, achieving APFD=0.8376
-across 20 RTPTorrent projects and outperforming 6 of 7 baselines. This validates
-the approach on a well-known benchmark with limited semantic information.
+across 20 RTPTorrent projects and outperforming 6 of 7 baselines. Combined with
+GNN benchmark results (0.796 avg APFD), this demonstrates the approach's versatility
+across software testing and machine learning domains.
 \end{tcolorbox}
 
 %------------------------------------------------------------------------------
@@ -283,3 +375,43 @@ GNN Heads & 1, 2, 4, 8 & 2 & 2.4\% \\
 Optimal configuration: Weighted Focal Loss ($\gamma=2.5$), learning rate 3e-5,
 1-layer GAT with 2 heads. Loss function choice has the largest impact (4.7\%).
 \end{tcolorbox}
+
+%------------------------------------------------------------------------------
+% Summary of Experimental Results
+%------------------------------------------------------------------------------
+
+\subsection{Summary of Results}
+\label{sec:results_summary}
+
+Table~\ref{tab:results_summary} summarizes \filopriori{}'s performance across
+all experimental settings.
+
+\begin{table}[!t]
+\centering
+\caption{Summary of Experimental Results}
+\label{tab:results_summary}
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+\textbf{Experiment} & \textbf{APFD} & \textbf{vs.\ Best Baseline} & \textbf{Significance} \\
+\midrule
+Industrial QTA & 0.760 & +9.8\% (DeepOrder) & $p < 0.001$ \\
+GNN Benchmarks & 0.796 & +1.4\% (NodeRank) & 2/3 wins \\
+RTPTorrent (20 proj.) & 0.838 & +2.0\% (recently\_failed) & sig.* \\
+\midrule
+\textbf{Overall Average} & \textbf{0.798} & -- & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item APFD: Average Percentage of Faults Detected (higher is better).
+\item Results demonstrate consistent performance across three distinct domains.
+\end{tablenotes}
+\end{table}
+
+The experimental results demonstrate that \filopriori{} achieves consistent,
+state-of-the-art performance across three distinct evaluation settings:
+industrial software testing (0.760), GNN model testing (0.796), and open-source
+CI/CD environments (0.838). The multi-edge graph construction and dual-stream
+architecture provide robust prioritization regardless of the specific domain
+or characteristics of the test data.

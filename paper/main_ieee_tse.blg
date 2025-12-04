@@ -15,45 +15,45 @@ Warning--empty journal in rothermel1999test
 Warning--empty journal in arcuri2011practical
 
 Done.
-You've used 19 entries,
+You've used 20 entries,
             4087 wiz_defined-function locations,
-            932 strings with 11499 characters,
-and the built_in function-call counts, 16449 in all, are:
-= -- 1263
-> -- 441
-< -- 148
-+ -- 240
-- -- 75
-* -- 803
-:= -- 2320
-add.period$ -- 46
-call.type$ -- 19
-change.case$ -- 19
-chr.to.int$ -- 366
-cite$ -- 21
-duplicate$ -- 1138
-empty$ -- 1356
-format.name$ -- 94
-if$ -- 3873
+            937 strings with 11800 characters,
+and the built_in function-call counts, 17471 in all, are:
+= -- 1336
+> -- 474
+< -- 157
++ -- 258
+- -- 81
+* -- 852
+:= -- 2452
+add.period$ -- 49
+call.type$ -- 20
+change.case$ -- 20
+chr.to.int$ -- 390
+cite$ -- 22
+duplicate$ -- 1207
+empty$ -- 1445
+format.name$ -- 101
+if$ -- 4119
 int.to.chr$ -- 0
-int.to.str$ -- 19
-missing$ -- 199
-newline$ -- 82
-num.names$ -- 19
-pop$ -- 493
+int.to.str$ -- 20
+missing$ -- 212
+newline$ -- 85
+num.names$ -- 20
+pop$ -- 528
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1245
+skip$ -- 1321
 stack$ -- 0
-substring$ -- 869
-swap$ -- 941
-text.length$ -- 26
+substring$ -- 926
+swap$ -- 999
+text.length$ -- 27
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 19
+type$ -- 20
 warning$ -- 2
-while$ -- 83
-width$ -- 21
-write$ -- 201
+while$ -- 88
+width$ -- 22
+write$ -- 210
 (There were 2 warnings)

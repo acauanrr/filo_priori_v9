@@ -125,6 +125,13 @@ T.~Mattis, T.~Rausch, and M.~Rinard, ``{RTPTorrent}: An open-source dataset for
   International Conference on Mining Software Repositories (MSR)}.\hskip 1em
   plus 0.5em minus 0.4em\relax ACM, 2020, pp. 558--562.
 
+\bibitem{feng2020deepgini}
+Y.~Feng, Q.~Shi, X.~Gao, J.~Wan, C.~Fang, and Z.~Chen, ``Deepgini: Prioritizing
+  massive tests to enhance the robustness of deep neural networks,'' in
+  \emph{Proceedings of the 29th ACM SIGSOFT International Symposium on Software
+  Testing and Analysis (ISSTA)}.\hskip 1em plus 0.5em minus 0.4em\relax ACM,
+  2020, pp. 177--188.
+
 \bibitem{arcuri2011practical}
 A.~Arcuri and L.~Briand, ``A practical guide for using statistical tests to
   assess randomized algorithms in software engineering,'' pp. 1--10, 2011.

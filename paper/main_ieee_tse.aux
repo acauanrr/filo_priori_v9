@@ -75,7 +75,7 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Dual-stream architecture. The semantic stream processes SBERT embeddings through feed-forward networks, while the structural stream applies Graph Attention Networks over historical features. Cross-attention fusion enables bidirectional information flow between modalities.}}{5}{figure.caption.6}\protected@file@percent }
 \newlabel{fig:architecture}{{3}{5}{Dual-stream architecture. The semantic stream processes SBERT embeddings through feed-forward networks, while the structural stream applies Graph Attention Networks over historical features. Cross-attention fusion enables bidirectional information flow between modalities}{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Cross-Attention Fusion}{5}{subsection.4.7}\protected@file@percent }
-\citation{mattis2020rtptorrent}
+\citation{li2024noderank}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Training with Single-Mechanism Class Balancing}{6}{subsection.4.8}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Single-Mechanism Balancing Configuration}}{6}{table.caption.7}\protected@file@percent }
 \newlabel{tab:balancing}{{4}{6}{Single-Mechanism Balancing Configuration}{table.caption.7}{}}
@@ -87,63 +87,80 @@
 \newlabel{sec:experimental}{{5}{6}{Experimental Design}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Research Questions}{6}{subsection.5.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Datasets}{6}{subsection.5.2}\protected@file@percent }
-\citation{chen2023deeporder}
-\citation{li2024noderank}
-\citation{li2024noderank}
-\citation{chen2023deeporder}
 \citation{mattis2020rtptorrent}
+\citation{chen2023deeporder}
+\citation{li2024noderank}
+\citation{li2024noderank}
+\citation{chen2023deeporder}
 \@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Industrial QTA Dataset Statistics}}{7}{table.caption.9}\protected@file@percent }
 \newlabel{tab:dataset_qta}{{5}{7}{Industrial QTA Dataset Statistics}{table.caption.9}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces RTPTorrent Dataset Statistics}}{7}{table.caption.10}\protected@file@percent }
-\newlabel{tab:dataset_rtptorrent}{{6}{7}{RTPTorrent Dataset Statistics}{table.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces GNN Benchmark Dataset Statistics}}{7}{table.caption.10}\protected@file@percent }
+\newlabel{tab:dataset_gnn}{{6}{7}{GNN Benchmark Dataset Statistics}{table.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces RTPTorrent Dataset Statistics}}{7}{table.caption.11}\protected@file@percent }
+\newlabel{tab:dataset_rtptorrent}{{7}{7}{RTPTorrent Dataset Statistics}{table.caption.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Baselines}{7}{subsection.5.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Comparison with State-of-the-Art TCP Methods (Industrial Dataset)}}{7}{table.caption.12}\protected@file@percent }
+\newlabel{tab:tcp_comparison}{{8}{7}{Comparison with State-of-the-Art TCP Methods (Industrial Dataset)}{table.caption.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Evaluation Metrics}{7}{subsection.5.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Implementation Details}{7}{subsection.5.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Comparison with State-of-the-Art TCP Methods}}{7}{table.caption.11}\protected@file@percent }
-\newlabel{tab:tcp_comparison}{{7}{7}{Comparison with State-of-the-Art TCP Methods}{table.caption.11}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Results}{7}{section.6}\protected@file@percent }
 \newlabel{sec:results}{{6}{7}{Results}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}RQ1: Effectiveness Comparison}{7}{subsection.6.1}\protected@file@percent }
-\newlabel{sec:rq1}{{6.1}{7}{RQ1: Effectiveness Comparison}{subsection.6.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Cross-Dataset Validation: RTPTorrent}{7}{subsection.6.2}\protected@file@percent }
-\newlabel{sec:rq1_rtptorrent}{{6.2}{7}{Cross-Dataset Validation: RTPTorrent}{subsection.6.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces RTPTorrent Cross-Dataset Results (20 Projects)}}{8}{table.caption.12}\protected@file@percent }
-\newlabel{tab:rtptorrent_results}{{8}{8}{RTPTorrent Cross-Dataset Results (20 Projects)}{table.caption.12}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Top-5 Projects by APFD (RTPTorrent)}}{8}{table.caption.13}\protected@file@percent }
-\newlabel{tab:rtptorrent_top5}{{9}{8}{Top-5 Projects by APFD (RTPTorrent)}{table.caption.13}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}RQ2: Ablation Study}{8}{subsection.6.3}\protected@file@percent }
-\newlabel{sec:rq2}{{6.3}{8}{RQ2: Ablation Study}{subsection.6.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Ablation Study: Component Contributions to APFD}}{8}{table.caption.14}\protected@file@percent }
-\newlabel{tab:ablation}{{10}{8}{Ablation Study: Component Contributions to APFD}{table.caption.14}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Temporal Cross-Validation Results}}{8}{table.caption.15}\protected@file@percent }
-\newlabel{tab:temporal_cv}{{11}{8}{Temporal Cross-Validation Results}{table.caption.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}RQ3: Temporal Validation}{8}{subsection.6.4}\protected@file@percent }
-\newlabel{sec:rq3}{{6.4}{8}{RQ3: Temporal Validation}{subsection.6.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}RQ1: Effectiveness on Industrial Dataset}{7}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:rq1}{{6.1}{7}{RQ1: Effectiveness on Industrial Dataset}{subsection.6.1}{}}
+\citation{li2024noderank}
+\citation{li2024noderank}
+\citation{feng2020deepgini}
+\citation{li2024noderank}
+\citation{li2024noderank}
+\citation{li2024noderank}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Evaluation on GNN Benchmark Datasets}{8}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:gnn_benchmark}{{6.2}{8}{Evaluation on GNN Benchmark Datasets}{subsection.6.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.2.1}Experimental Setup}{8}{subsubsection.6.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.2.2}Results}{8}{subsubsection.6.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Comparison with NodeRank on GNN Benchmark Datasets}}{8}{table.caption.13}\protected@file@percent }
+\newlabel{tab:gnn_benchmark}{{9}{8}{Comparison with NodeRank on GNN Benchmark Datasets}{table.caption.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Summary: Filo-Priori vs.\ NodeRank on GNN Benchmarks (APFD)}}{8}{table.caption.15}\protected@file@percent }
+\newlabel{tab:gnn_summary}{{10}{8}{Summary: Filo-Priori vs.\ NodeRank on GNN Benchmarks (APFD)}{table.caption.15}{}}
+\citation{mattis2020rtptorrent}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces RTPTorrent Cross-Dataset Results (20 Projects)}}{9}{table.caption.17}\protected@file@percent }
+\newlabel{tab:rtptorrent_results}{{11}{9}{RTPTorrent Cross-Dataset Results (20 Projects)}{table.caption.17}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Top-5 Projects by APFD (RTPTorrent)}}{9}{table.caption.18}\protected@file@percent }
+\newlabel{tab:rtptorrent_top5}{{12}{9}{Top-5 Projects by APFD (RTPTorrent)}{table.caption.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Cross-Dataset Validation: RTPTorrent}{9}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:rq1_rtptorrent}{{6.3}{9}{Cross-Dataset Validation: RTPTorrent}{subsection.6.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Ablation Study: Component Contributions to APFD}}{9}{table.caption.19}\protected@file@percent }
+\newlabel{tab:ablation}{{13}{9}{Ablation Study: Component Contributions to APFD}{table.caption.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}RQ2: Ablation Study}{9}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:rq2}{{6.4}{9}{RQ2: Ablation Study}{subsection.6.4}{}}
 \citation{brody2022attentive}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Temporal Cross-Validation Results}}{10}{table.caption.20}\protected@file@percent }
+\newlabel{tab:temporal_cv}{{14}{10}{Temporal Cross-Validation Results}{table.caption.20}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Hyperparameter Sensitivity Analysis}}{10}{table.caption.21}\protected@file@percent }
+\newlabel{tab:sensitivity}{{15}{10}{Hyperparameter Sensitivity Analysis}{table.caption.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}RQ3: Temporal Validation}{10}{subsection.6.5}\protected@file@percent }
+\newlabel{sec:rq3}{{6.5}{10}{RQ3: Temporal Validation}{subsection.6.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}RQ4: Hyperparameter Sensitivity}{10}{subsection.6.6}\protected@file@percent }
+\newlabel{sec:rq4}{{6.6}{10}{RQ4: Hyperparameter Sensitivity}{subsection.6.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Summary of Experimental Results}}{10}{table.caption.22}\protected@file@percent }
+\newlabel{tab:results_summary}{{16}{10}{Summary of Experimental Results}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Summary of Results}{10}{subsection.6.7}\protected@file@percent }
+\newlabel{sec:results_summary}{{6.7}{10}{Summary of Results}{subsection.6.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{10}{section.7}\protected@file@percent }
+\newlabel{sec:discussion}{{7}{10}{Discussion}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Why Does Graph Attention Matter?}{10}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}The Role of Weighted Focal Loss}{10}{subsection.7.2}\protected@file@percent }
 \citation{arcuri2011practical}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Hyperparameter Sensitivity Analysis}}{9}{table.caption.16}\protected@file@percent }
-\newlabel{tab:sensitivity}{{12}{9}{Hyperparameter Sensitivity Analysis}{table.caption.16}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}RQ4: Hyperparameter Sensitivity}{9}{subsection.6.5}\protected@file@percent }
-\newlabel{sec:rq4}{{6.5}{9}{RQ4: Hyperparameter Sensitivity}{subsection.6.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{9}{section.7}\protected@file@percent }
-\newlabel{sec:discussion}{{7}{9}{Discussion}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Why Does Graph Attention Matter?}{9}{subsection.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}The Role of Weighted Focal Loss}{9}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Comparison with FailureRate Baseline}{9}{subsection.7.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Practical Implications}{9}{subsection.7.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Lessons Learned}{9}{subsection.7.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Limitations}{9}{subsection.7.6}\protected@file@percent }
 \citation{memon2017taming}
 \citation{rothermel1999test}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Threats to Validity}{10}{section.8}\protected@file@percent }
-\newlabel{sec:threats}{{8}{10}{Threats to Validity}{section.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Internal Validity}{10}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}External Validity}{10}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Construct Validity}{10}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Conclusion Validity}{10}{subsection.8.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Reproducibility}{10}{subsection.8.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{10}{section.9}\protected@file@percent }
-\newlabel{sec:conclusion}{{9}{10}{Conclusion}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Comparison with FailureRate Baseline}{11}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Practical Implications}{11}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Lessons Learned}{11}{subsection.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Limitations}{11}{subsection.7.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Threats to Validity}{11}{section.8}\protected@file@percent }
+\newlabel{sec:threats}{{8}{11}{Threats to Validity}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Internal Validity}{11}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}External Validity}{11}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Construct Validity}{11}{subsection.8.3}\protected@file@percent }
 \bibstyle{IEEEtran}
 \bibdata{references_ieee}
 \bibcite{hilton2016usage}{1}
@@ -163,9 +180,14 @@
 \bibcite{abdelkarim2022tcp}{15}
 \bibcite{li2024noderank}{16}
 \bibcite{reimers2019sentence}{17}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Conclusion Validity}{12}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Reproducibility}{12}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{12}{section.9}\protected@file@percent }
+\newlabel{sec:conclusion}{{9}{12}{Conclusion}{section.9}{}}
+\@writefile{toc}{\contentsline {section}{References}{12}{section*.24}\protected@file@percent }
 \bibcite{mattis2020rtptorrent}{18}
-\bibcite{arcuri2011practical}{19}
-\@writefile{toc}{\contentsline {section}{References}{11}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Biographies}{11}{IEEEbiography.0}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{Acauan C. Ribeiro}{11}{IEEEbiography.1}\protected@file@percent }
-\gdef \@abspage@last{11}
+\bibcite{feng2020deepgini}{19}
+\bibcite{arcuri2011practical}{20}
+\@writefile{toc}{\contentsline {section}{Biographies}{13}{IEEEbiography.0}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Acauan C. Ribeiro}{13}{IEEEbiography.1}\protected@file@percent }
+\gdef \@abspage@last{13}

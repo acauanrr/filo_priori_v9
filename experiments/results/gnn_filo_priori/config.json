@@ -1,0 +1,24 @@
+{
+  "seed": 42,
+  "num_epochs": 200,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "patience": 20,
+  "focal_alpha": 0.5,
+  "focal_gamma": 2.0,
+  "filo_alpha": 0.4,
+  "filo_beta": 0.3,
+  "filo_gamma": 0.3,
+  "model": {
+    "hidden_dim": 256,
+    "num_gat_heads": 4,
+    "num_gat_layers": 2,
+    "num_ffn_layers": 2,
+    "fusion_type": "cross_attention",
+    "dropout": 0.3,
+    "classifier_hidden_dims": [
+      128,
+      64
+    ]
+  }
+}
