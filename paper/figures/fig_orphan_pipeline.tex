@@ -1,0 +1,125 @@
+% Orphan Handling Pipeline Figure
+% Compile with: pdflatex fig_orphan_pipeline.tex
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, decorations.pathreplacing}
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+% Colors
+\definecolor{stage1}{RGB}{65,105,225}   % Royal Blue
+\definecolor{stage2}{RGB}{50,150,50}    % Green
+\definecolor{stage3}{RGB}{180,100,50}   % Orange
+\definecolor{stage4}{RGB}{150,50,150}   % Purple
+\definecolor{orphancolor}{RGB}{200,200,200}
+\definecolor{ingraphcolor}{RGB}{200,230,255}
+\definecolor{outputcolor}{RGB}{200,255,200}
+
+\begin{document}
+\begin{tikzpicture}[
+    node distance=0.5cm and 0.8cm,
+    >=Stealth,
+    every node/.style={font=\footnotesize},
+    stagebox/.style={rectangle, draw=#1!80, fill=#1!15,
+        minimum width=2.8cm, minimum height=1.2cm, rounded corners=3pt,
+        align=center, font=\footnotesize},
+    inputbox/.style={rectangle, draw=black!50, fill=orphancolor,
+        minimum width=1.8cm, minimum height=0.8cm, rounded corners=2pt,
+        align=center},
+    outputbox/.style={rectangle, draw=black!50, fill=outputcolor,
+        minimum width=2cm, minimum height=0.8cm, rounded corners=2pt,
+        align=center, font=\footnotesize\bfseries},
+    formula/.style={font=\scriptsize, align=center},
+    arrow/.style={->, thick, black!70},
+    param/.style={font=\tiny, black!60},
+]
+
+% === HEADER ===
+\node[font=\bfseries] at (5.5, 2) {Orphan Test Case Handling Pipeline};
+
+% === INPUT ===
+\node[inputbox] (orphan) at (0, 0) {Orphan\\Embeddings};
+\node[inputbox, below=0.3cm of orphan] (ingraph) {In-Graph\\Scores};
+
+% === STAGE 1: KNN Similarity ===
+\node[stagebox=stage1, right=1cm of $(orphan)!0.5!(ingraph)$] (stage1) {
+    \textbf{Stage 1}\\
+    KNN Similarity\\
+    {\tiny (Euclidean, k=20)}
+};
+
+% === STAGE 2: Structural Blend ===
+\node[stagebox=stage2, right=0.6cm of stage1] (stage2) {
+    \textbf{Stage 2}\\
+    Structural Blend\\
+    {\tiny ($w_s = 0.35$)}
+};
+
+% === STAGE 3: Temperature Softmax ===
+\node[stagebox=stage3, right=0.6cm of stage2] (stage3) {
+    \textbf{Stage 3}\\
+    Temperature\\Softmax\\
+    {\tiny ($T = 0.7$)}
+};
+
+% === STAGE 4: Alpha Blending ===
+\node[stagebox=stage4, right=0.6cm of stage3] (stage4) {
+    \textbf{Stage 4}\\
+    Alpha Blending\\
+    {\tiny ($\alpha = 0.55$)}
+};
+
+% === OUTPUT ===
+\node[outputbox, right=1cm of stage4] (output) {Orphan\\Scores};
+
+% === ARROWS ===
+\draw[arrow] (orphan.east) -- ++(0.3,0) |- (stage1.west);
+\draw[arrow] (ingraph.east) -- ++(0.3,0) |- (stage1.west);
+\draw[arrow] (stage1) -- (stage2);
+\draw[arrow] (stage2) -- (stage3);
+\draw[arrow] (stage3) -- (stage4);
+\draw[arrow] (stage4) -- (output);
+
+% === FORMULAS BELOW EACH STAGE ===
+\node[formula, below=0.5cm of stage1, text width=2.8cm] {
+    $d_{ij} = \|\mathbf{e}_i - \mathbf{e}_j\|_2$\\[2pt]
+    $\text{sim} = \exp(-d_{ij})$
+};
+
+\node[formula, below=0.5cm of stage2, text width=2.8cm] {
+    $\text{sim}_{c} = (1-w_s) \cdot$\\
+    $\text{sem} + w_s \cdot \text{str}$
+};
+
+\node[formula, below=0.5cm of stage3, text width=2.8cm] {
+    $w_i = \frac{\exp(\text{sim}_i / T)}{\sum_j \exp(\text{sim}_j / T)}$
+};
+
+\node[formula, below=0.5cm of stage4, text width=2.8cm] {
+    $s = \alpha \sum_i w_i s_i$\\
+    $+ (1-\alpha) s_{base}$
+};
+
+% === IMPACT BOX ===
+\node[draw=black!50, fill=yellow!15, rounded corners=3pt,
+      font=\scriptsize, align=center, text width=3cm] at (5.5, -2.8) {
+    \textbf{Impact}\\[2pt]
+    Score Std: $0.000 \rightarrow 0.046$\\
+    Orphan Rate: 22.6\%
+};
+
+% === BEFORE/AFTER ILLUSTRATION ===
+\node[font=\scriptsize\bfseries] at (0, -2.3) {Before};
+\node[font=\tiny, align=center] at (0, -2.9) {
+    All orphans:\\
+    score = 0.50
+};
+
+\node[font=\scriptsize\bfseries] at (11, -2.3) {After};
+\node[font=\tiny, align=center] at (11, -2.9) {
+    Differentiated:\\
+    [0.29, 0.51]
+};
+
+\end{tikzpicture}
+\end{document}

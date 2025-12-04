@@ -34,108 +34,116 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Graph Attention Networks}{2}{subsection.2.3}\protected@file@percent }
 \newlabel{sec:bg_gat}{{2.3}{2}{Graph Attention Networks}{subsection.2.3}{}}
 \citation{lin2017focal}
-\citation{kitchenham2007guidelines}
 \citation{rothermel2001prioritizing}
 \citation{elbaum2002test}
 \citation{kim2002history}
 \citation{spieker2017reinforcement}
-\citation{bertolino2020learning}
-\citation{bagherzadeh2022reinforcement}
-\citation{pan2022test}
 \citation{chen2023deeporder}
 \citation{abdelkarim2022tcp}
-\citation{khan2024hyperparameter}
-\citation{allamanis2018learning}
-\citation{wang2023graphprior}
-\citation{lou2024towards}
-\citation{rossi2020temporal}
-\citation{xu2020inductive}
-\citation{german2009evolution}
-\citation{godfrey2005evolution}
-\citation{dig2006automated}
-\citation{niu2024deeplearning,feng2020codebert,guo2021graphcodebert}
-\citation{spieker2017reinforcement}
+\citation{li2024noderank}
 \citation{chen2023deeporder}
-\citation{vansoest2024noderank}
-\citation{wang2023graphprior}
+\citation{li2024noderank}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Class Imbalance and Focal Loss}{3}{subsection.2.4}\protected@file@percent }
 \newlabel{sec:bg_focal}{{2.4}{3}{Class Imbalance and Focal Loss}{subsection.2.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Cross-Attention Mechanisms}{3}{subsection.2.5}\protected@file@percent }
 \newlabel{sec:bg_cross_attn}{{2.5}{3}{Cross-Attention Mechanisms}{subsection.2.5}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Related Work}{3}{section.3}\protected@file@percent }
 \newlabel{sec:related}{{3}{3}{Related Work}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Traditional TCP Approaches}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Traditional and Coverage-based TCP}{3}{subsection.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Machine Learning for TCP}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Deep Learning for TCP}{3}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Graph Neural Networks in Software Engineering}{3}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Software Evolution Analysis}{3}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Comparison with Our Approach}{3}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Graph Neural Networks for Testing}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Comparison with Our Approach}{3}{subsection.3.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison with State-of-the-Art TCP Approaches}}{3}{table.caption.2}\protected@file@percent }
+\newlabel{tab:comparison}{{2}{3}{Comparison with State-of-the-Art TCP Approaches}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Approach: \textsc  {Filo-Priori}{}}{3}{section.4}\protected@file@percent }
+\newlabel{sec:approach}{{4}{3}{Approach: \filopriori {}}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Overview}{3}{subsection.4.1}\protected@file@percent }
 \citation{reimers2019sentence}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Summary of Primary Studies from Systematic Literature Review}}{4}{table.caption.2}\protected@file@percent }
-\newlabel{tab:rsl_studies}{{2}{4}{Summary of Primary Studies from Systematic Literature Review}{table.caption.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison with Related Approaches}}{4}{table.caption.3}\protected@file@percent }
-\newlabel{tab:comparison}{{3}{4}{Comparison with Related Approaches}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Approach: \textsc  {Filo-Priori}{}}{4}{section.4}\protected@file@percent }
-\newlabel{sec:approach}{{4}{4}{Approach: \filopriori {}}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Overview}{4}{subsection.4.1}\protected@file@percent }
+\citation{chen2023deeporder}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Overview of the \textsc  {Filo-Priori}{} framework. The system processes test case descriptions and execution history through dual semantic and structural streams, fuses representations via cross-attention, and applies post-processing for orphan handling and threshold optimization.}}{4}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:framework}{{1}{4}{Overview of the \filopriori {} framework. The system processes test case descriptions and execution history through dual semantic and structural streams, fuses representations via cross-attention, and applies post-processing for orphan handling and threshold optimization}{figure.caption.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Semantic Feature Extraction}{4}{subsection.4.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Structural Feature Extraction}{4}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Multi-Edge Test Relationship Graph}{4}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Multi-Edge Graph Edge Types}}{4}{table.caption.4}\protected@file@percent }
+\newlabel{tab:edge_types}{{3}{4}{Multi-Edge Graph Edge Types}{table.caption.4}{}}
 \citation{velickovic2018graph}
-\citation{lin2017focal}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Test Relationship Graph Construction}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Multi-edge test relationship graph with five edge types. Edge thickness and style indicate relationship type and strength. Failed tests (red) propagate failure signals through co-failure edges (weight 1.0), while orphan tests (dashed) connect through semantic edges (weight 0.3).}}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:multiedge}{{2}{5}{Multi-edge test relationship graph with five edge types. Edge thickness and style indicate relationship type and strength. Failed tests (red) propagate failure signals through co-failure edges (weight 1.0), while orphan tests (dashed) connect through semantic edges (weight 0.3)}{figure.caption.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Semantic Stream}{5}{subsection.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Structural Stream (Graph Attention Network)}{5}{subsection.4.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Dual-stream architecture. The semantic stream processes SBERT embeddings through feed-forward networks, while the structural stream applies Graph Attention Networks over historical features. Cross-attention fusion enables bidirectional information flow between modalities.}}{5}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:architecture}{{3}{5}{Dual-stream architecture. The semantic stream processes SBERT embeddings through feed-forward networks, while the structural stream applies Graph Attention Networks over historical features. Cross-attention fusion enables bidirectional information flow between modalities}{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Cross-Attention Fusion}{5}{subsection.4.7}\protected@file@percent }
 \citation{mattis2020rtptorrent}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Training with Weighted Focal Loss}{6}{subsection.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Training with Single-Mechanism Class Balancing}{6}{subsection.4.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Single-Mechanism Balancing Configuration}}{6}{table.caption.7}\protected@file@percent }
+\newlabel{tab:balancing}{{4}{6}{Single-Mechanism Balancing Configuration}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}Threshold Optimization}{6}{subsection.4.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.10}Orphan Test Case Handling}{6}{subsection.4.10}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Four-stage orphan handling pipeline. Orphan test cases are scored using KNN similarity to in-graph tests, with structural blending and temperature-scaled softmax to concentrate weights on the most similar neighbors.}}{6}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:orphan}{{4}{6}{Four-stage orphan handling pipeline. Orphan test cases are scored using KNN similarity to in-graph tests, with structural blending and temperature-scaled softmax to concentrate weights on the most similar neighbors}{figure.caption.8}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Design}{6}{section.5}\protected@file@percent }
 \newlabel{sec:experimental}{{5}{6}{Experimental Design}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Research Questions}{6}{subsection.5.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Datasets}{6}{subsection.5.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Industrial QTA Dataset Statistics}}{6}{table.caption.4}\protected@file@percent }
-\newlabel{tab:dataset_qta}{{4}{6}{Industrial QTA Dataset Statistics}{table.caption.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces RTPTorrent Dataset Statistics}}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:dataset_rtptorrent}{{5}{6}{RTPTorrent Dataset Statistics}{table.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Baselines}{6}{subsection.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Evaluation Metrics}{6}{subsection.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Implementation Details}{6}{subsection.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{6}{section.6}\protected@file@percent }
-\newlabel{sec:results}{{6}{6}{Results}{section.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Comparison of TCP Methods (sorted by Mean APFD)}}{7}{table.caption.6}\protected@file@percent }
-\newlabel{tab:tcp_comparison}{{6}{7}{Comparison of TCP Methods (sorted by Mean APFD)}{table.caption.6}{}}
+\citation{chen2023deeporder}
+\citation{li2024noderank}
+\citation{li2024noderank}
+\citation{chen2023deeporder}
+\citation{mattis2020rtptorrent}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Industrial QTA Dataset Statistics}}{7}{table.caption.9}\protected@file@percent }
+\newlabel{tab:dataset_qta}{{5}{7}{Industrial QTA Dataset Statistics}{table.caption.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces RTPTorrent Dataset Statistics}}{7}{table.caption.10}\protected@file@percent }
+\newlabel{tab:dataset_rtptorrent}{{6}{7}{RTPTorrent Dataset Statistics}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Baselines}{7}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Evaluation Metrics}{7}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Implementation Details}{7}{subsection.5.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Comparison with State-of-the-Art TCP Methods}}{7}{table.caption.11}\protected@file@percent }
+\newlabel{tab:tcp_comparison}{{7}{7}{Comparison with State-of-the-Art TCP Methods}{table.caption.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{7}{section.6}\protected@file@percent }
+\newlabel{sec:results}{{6}{7}{Results}{section.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.1}RQ1: Effectiveness Comparison}{7}{subsection.6.1}\protected@file@percent }
 \newlabel{sec:rq1}{{6.1}{7}{RQ1: Effectiveness Comparison}{subsection.6.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}RQ2: Ablation Study}{7}{subsection.6.2}\protected@file@percent }
-\newlabel{sec:rq2}{{6.2}{7}{RQ2: Ablation Study}{subsection.6.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Ablation Study Results}}{7}{table.caption.7}\protected@file@percent }
-\newlabel{tab:ablation}{{7}{7}{Ablation Study Results}{table.caption.7}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Temporal Cross-Validation Results}}{7}{table.caption.8}\protected@file@percent }
-\newlabel{tab:temporal_cv}{{8}{7}{Temporal Cross-Validation Results}{table.caption.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}RQ3: Temporal Validation}{7}{subsection.6.3}\protected@file@percent }
-\newlabel{sec:rq3}{{6.3}{7}{RQ3: Temporal Validation}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Cross-Dataset Validation: RTPTorrent}{7}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:rq1_rtptorrent}{{6.2}{7}{Cross-Dataset Validation: RTPTorrent}{subsection.6.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces RTPTorrent Cross-Dataset Results (20 Projects)}}{8}{table.caption.12}\protected@file@percent }
+\newlabel{tab:rtptorrent_results}{{8}{8}{RTPTorrent Cross-Dataset Results (20 Projects)}{table.caption.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Top-5 Projects by APFD (RTPTorrent)}}{8}{table.caption.13}\protected@file@percent }
+\newlabel{tab:rtptorrent_top5}{{9}{8}{Top-5 Projects by APFD (RTPTorrent)}{table.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}RQ2: Ablation Study}{8}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:rq2}{{6.3}{8}{RQ2: Ablation Study}{subsection.6.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Ablation Study: Component Contributions to APFD}}{8}{table.caption.14}\protected@file@percent }
+\newlabel{tab:ablation}{{10}{8}{Ablation Study: Component Contributions to APFD}{table.caption.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Temporal Cross-Validation Results}}{8}{table.caption.15}\protected@file@percent }
+\newlabel{tab:temporal_cv}{{11}{8}{Temporal Cross-Validation Results}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}RQ3: Temporal Validation}{8}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:rq3}{{6.4}{8}{RQ3: Temporal Validation}{subsection.6.4}{}}
 \citation{brody2022attentive}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Hyperparameter Sensitivity Analysis}}{8}{table.caption.9}\protected@file@percent }
-\newlabel{tab:sensitivity}{{9}{8}{Hyperparameter Sensitivity Analysis}{table.caption.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}RQ4: Hyperparameter Sensitivity}{8}{subsection.6.4}\protected@file@percent }
-\newlabel{sec:rq4}{{6.4}{8}{RQ4: Hyperparameter Sensitivity}{subsection.6.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{8}{section.7}\protected@file@percent }
-\newlabel{sec:discussion}{{7}{8}{Discussion}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Why Does Graph Attention Matter?}{8}{subsection.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}The Role of Weighted Focal Loss}{8}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Comparison with FailureRate Baseline}{8}{subsection.7.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Practical Implications}{8}{subsection.7.4}\protected@file@percent }
 \citation{arcuri2011practical}
-\citation{memon2017taming}
-\citation{rothermel1999test}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Hyperparameter Sensitivity Analysis}}{9}{table.caption.16}\protected@file@percent }
+\newlabel{tab:sensitivity}{{12}{9}{Hyperparameter Sensitivity Analysis}{table.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}RQ4: Hyperparameter Sensitivity}{9}{subsection.6.5}\protected@file@percent }
+\newlabel{sec:rq4}{{6.5}{9}{RQ4: Hyperparameter Sensitivity}{subsection.6.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{9}{section.7}\protected@file@percent }
+\newlabel{sec:discussion}{{7}{9}{Discussion}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Why Does Graph Attention Matter?}{9}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}The Role of Weighted Focal Loss}{9}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Comparison with FailureRate Baseline}{9}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Practical Implications}{9}{subsection.7.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Lessons Learned}{9}{subsection.7.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Limitations}{9}{subsection.7.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Threats to Validity}{9}{section.8}\protected@file@percent }
-\newlabel{sec:threats}{{8}{9}{Threats to Validity}{section.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Internal Validity}{9}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}External Validity}{9}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Construct Validity}{9}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Conclusion Validity}{9}{subsection.8.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Reproducibility}{9}{subsection.8.5}\protected@file@percent }
+\citation{memon2017taming}
+\citation{rothermel1999test}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Threats to Validity}{10}{section.8}\protected@file@percent }
+\newlabel{sec:threats}{{8}{10}{Threats to Validity}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Internal Validity}{10}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}External Validity}{10}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Construct Validity}{10}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Conclusion Validity}{10}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Reproducibility}{10}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{10}{section.9}\protected@file@percent }
+\newlabel{sec:conclusion}{{9}{10}{Conclusion}{section.9}{}}
 \bibstyle{IEEEtran}
 \bibdata{references_ieee}
 \bibcite{hilton2016usage}{1}
@@ -151,29 +159,13 @@
 \bibcite{velickovic2018graph}{11}
 \bibcite{lin2017focal}{12}
 \bibcite{brody2022attentive}{13}
-\bibcite{kitchenham2007guidelines}{14}
-\bibcite{bertolino2020learning}{15}
-\bibcite{bagherzadeh2022reinforcement}{16}
-\bibcite{chen2023deeporder}{17}
-\bibcite{abdelkarim2022tcp}{18}
-\bibcite{khan2024hyperparameter}{19}
-\bibcite{allamanis2018learning}{20}
-\bibcite{wang2023graphprior}{21}
-\bibcite{lou2024towards}{22}
-\bibcite{rossi2020temporal}{23}
-\bibcite{xu2020inductive}{24}
-\bibcite{godfrey2005evolution}{25}
-\bibcite{dig2006automated}{26}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{10}{section.9}\protected@file@percent }
-\newlabel{sec:conclusion}{{9}{10}{Conclusion}{section.9}{}}
-\@writefile{toc}{\contentsline {section}{References}{10}{section*.11}\protected@file@percent }
-\bibcite{niu2024deeplearning}{27}
-\bibcite{feng2020codebert}{28}
-\bibcite{guo2021graphcodebert}{29}
-\bibcite{vansoest2024noderank}{30}
-\bibcite{reimers2019sentence}{31}
-\bibcite{mattis2020rtptorrent}{32}
-\bibcite{arcuri2011practical}{33}
+\bibcite{chen2023deeporder}{14}
+\bibcite{abdelkarim2022tcp}{15}
+\bibcite{li2024noderank}{16}
+\bibcite{reimers2019sentence}{17}
+\bibcite{mattis2020rtptorrent}{18}
+\bibcite{arcuri2011practical}{19}
+\@writefile{toc}{\contentsline {section}{References}{11}{section*.18}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{Biographies}{11}{IEEEbiography.0}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{Acauan C. Ribeiro}{11}{IEEEbiography.1}\protected@file@percent }
 \gdef \@abspage@last{11}

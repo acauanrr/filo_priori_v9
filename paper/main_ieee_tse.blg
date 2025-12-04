@@ -12,49 +12,48 @@ Database file #1: references_ieee.bib
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty journal in rothermel1999test
-Warning--empty journal in dig2006automated
 Warning--empty journal in arcuri2011practical
 
 Done.
-You've used 33 entries,
+You've used 19 entries,
             4087 wiz_defined-function locations,
-            997 strings with 14269 characters,
-and the built_in function-call counts, 26593 in all, are:
-= -- 2042
-> -- 717
-< -- 216
-+ -- 383
-- -- 129
-* -- 1286
-:= -- 3830
-add.period$ -- 78
-call.type$ -- 33
-change.case$ -- 35
-chr.to.int$ -- 519
-cite$ -- 36
-duplicate$ -- 1897
-empty$ -- 2240
-format.name$ -- 162
-if$ -- 6250
+            932 strings with 11499 characters,
+and the built_in function-call counts, 16449 in all, are:
+= -- 1263
+> -- 441
+< -- 148
++ -- 240
+- -- 75
+* -- 803
+:= -- 2320
+add.period$ -- 46
+call.type$ -- 19
+change.case$ -- 19
+chr.to.int$ -- 366
+cite$ -- 21
+duplicate$ -- 1138
+empty$ -- 1356
+format.name$ -- 94
+if$ -- 3873
 int.to.chr$ -- 0
-int.to.str$ -- 33
-missing$ -- 348
-newline$ -- 124
-num.names$ -- 33
-pop$ -- 853
+int.to.str$ -- 19
+missing$ -- 199
+newline$ -- 82
+num.names$ -- 19
+pop$ -- 493
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 2017
+skip$ -- 1245
 stack$ -- 0
-substring$ -- 1239
-swap$ -- 1511
-text.length$ -- 43
+substring$ -- 869
+swap$ -- 941
+text.length$ -- 26
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 33
-warning$ -- 3
-while$ -- 129
-width$ -- 35
-write$ -- 331
-(There were 3 warnings)
+type$ -- 19
+warning$ -- 2
+while$ -- 83
+width$ -- 21
+write$ -- 201
+(There were 2 warnings)

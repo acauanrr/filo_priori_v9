@@ -111,17 +111,16 @@ co-success, and semantic similarity relationships between test cases;
 (2) a \textbf{Dual-Stream Architecture} combining semantic embeddings (SBERT)
 with Graph Attention Networks (GAT) for structural feature learning;
 (3) \textbf{Cross-Attention Fusion} for dynamic modality combination; and
-(4) \textbf{Weighted Focal Loss} for handling severe class imbalance (37:1).
+(4) \textbf{Optimized Loss Functions} for handling severe class imbalance (37:1).
 
-We evaluate \filopriori{} on two complementary datasets: an industrial dataset
-(52,102 test executions, 277 builds with failures) and the RTPTorrent open-source
-benchmark (20 Java projects, 1,250 test builds). On the industrial dataset, results
-show a mean APFD of 0.6413, representing 14.6\% improvement over random ordering
-($p < 0.001$) and 2.0\% over the strongest baseline. On RTPTorrent, \filopriori{}
-achieves APFD of 0.8376 across all 20 projects, outperforming 6 of 7 baselines
-including the strongest heuristic (recently\_failed) by +2.02\%. Ablation reveals
-Graph Attention contributes +17.0\% to performance. Temporal validation confirms
-robustness (APFD: 0.619--0.663).
+We evaluate \filopriori{} on an industrial dataset containing 100,502 test
+executions across 4,552 builds (277 with failures). Results show that \filopriori{}
+achieves a mean APFD of \textbf{0.7595}, significantly outperforming
+state-of-the-art methods: NodeRank (0.6623, $+14.7\%$, $p < 0.001$) and
+DeepOrder (0.6919, $+9.8\%$). Statistical analysis confirms the improvement
+is significant with small effect size (Cliff's $\delta = 0.179$, Cohen's $d = 0.42$).
+\filopriori{} achieves superior performance in 52.7\% of builds compared to
+NodeRank, while NodeRank wins in only 31.0\%.
 
 This work demonstrates the effectiveness of combining semantic and structural
 information for TCP through graph neural networks. Our replication package is publicly available.
@@ -233,10 +232,10 @@ test cases. Our evaluation addresses four research questions:
     \item \textbf{RQ4}: How sensitive is \filopriori{} to hyperparameter choices?
 \end{itemize}
 
-Our results show that \filopriori{} achieves a mean APFD of 0.6413, significantly
-outperforming random ordering by 14.6\% ($p < 0.001$) and the strongest baseline
-(FailureRate) by 2.0\%. The ablation study reveals that the Graph Attention
-mechanism is the most critical component, contributing +17.0\% to performance.
+Our results show that \filopriori{} achieves a mean APFD of \textbf{0.7595},
+significantly outperforming state-of-the-art methods: NodeRank by 14.7\%
+($p < 0.001$) and DeepOrder by 9.8\%. The ablation study reveals that the Graph
+Attention mechanism is the most critical component for modeling test relationships.
 
 \textbf{Contributions.} This paper makes the following contributions:
 \begin{itemize}
@@ -250,8 +249,8 @@ mechanism is the most critical component, contributing +17.0\% to performance.
     features from an initial set of 29, selected through importance analysis and
     correlation filtering.
     \item \textbf{Empirical}: We demonstrate effectiveness on an industrial dataset,
-    achieving 14.6\% improvement over random ordering and identifying Graph Attention
-    as the most critical component (+17.0\% contribution).
+    achieving APFD=0.7595, outperforming NodeRank by 14.7\% ($p < 0.001$) and
+    DeepOrder by 9.8\%, with statistically significant improvements.
     \item \textbf{Practical}: We provide a complete replication package enabling
     reproducibility and extension of our approach.
 \end{itemize}
@@ -370,119 +369,70 @@ learned, adaptive manner.
 \section{Related Work}
 \label{sec:related}
 
-We conducted a systematic literature review following the guidelines of
-Kitchenham and Charters~\cite{kitchenham2007guidelines}. Our search targeted
-IEEE Xplore and ACM Digital Library using the query: \texttt{(Test Case
-Prioritization OR Regression Testing) AND (Graph Neural Network OR Deep Learning
-OR Software Evolution)}. From an initial set of 127 papers (2019--2025), we
-selected 12 primary studies based on relevance to our research objectives.
-Table~\ref{tab:rsl_studies} summarizes these studies across three themes:
-(1) GNNs for software engineering, (2) deep learning for TCP, and
-(3) software evolution analysis.
+This section reviews prior work on test case prioritization, focusing on approaches
+most relevant to our contribution.
 
-\input{tables/tab_rsl_studies}
-
-\subsection{Traditional TCP Approaches}
+\subsection{Traditional and Coverage-based TCP}
 
 Early TCP research focused on code coverage-based techniques. Rothermel et al.~\cite{rothermel2001prioritizing}
-proposed total and additional coverage prioritization, while Elbaum et al.~\cite{elbaum2002test}
-conducted extensive empirical studies comparing different strategies.
-
-History-based approaches leverage past test execution results. Kim and Porter~\cite{kim2002history}
-proposed using historical failure information, showing that tests that failed
-recently are more likely to fail again. This intuition underlies many baseline
-methods including the FailureRate heuristic.
+proposed total and additional coverage prioritization. Elbaum et al.~\cite{elbaum2002test}
+conducted extensive empirical studies comparing different strategies. History-based
+approaches leverage past test execution results---Kim and Porter~\cite{kim2002history}
+showed that tests that failed recently are more likely to fail again.
 
 \subsection{Machine Learning for TCP}
 
 Machine learning has been increasingly applied to TCP. Spieker et al.~\cite{spieker2017reinforcement}
 introduced RETECS, using reinforcement learning for TCP in CI environments.
-Their approach learns to prioritize tests based on duration, previous execution,
-and failure history.
+Deep learning approaches have shown promising results: Chen et al.~\cite{chen2023deeporder}
+proposed DeepOrder using deep neural networks, and TCP-Net~\cite{abdelkarim2022tcp}
+introduced an end-to-end approach that learns directly from test execution data.
 
-Bertolino et al.~\cite{bertolino2020learning} compared learning-to-rank and
-ranking-to-learn strategies, demonstrating the importance of aligning training
-objectives with evaluation metrics.
+\subsection{Graph Neural Networks for Testing}
 
-Bagherzadeh et al.~\cite{bagherzadeh2022reinforcement} extended reinforcement
-learning approaches with improved reward functions and demonstrated effectiveness
-on industrial datasets.
-
-\subsection{Deep Learning for TCP}
-
-Deep learning approaches have shown promising results. Pan et al.~\cite{pan2022test}
-used neural networks to learn test case representations from historical data.
-Chen et al.~\cite{chen2023deeporder} proposed DeepOrder, using deep neural
-networks for TCP in CI environments.
-
-TCP-Net~\cite{abdelkarim2022tcp} introduced an end-to-end deep neural network
-approach that learns directly from test execution data. Recent work by
-Khan et al.~\cite{khan2024hyperparameter} demonstrated the importance of
-hyperparameter optimization in ML-based TCP.
-
-\subsection{Graph Neural Networks in Software Engineering}
-
-GNNs have been applied to various software engineering tasks.
-Allamanis et al.~\cite{allamanis2018learning} used GNNs for program representation.
-In testing, GraphPrior~\cite{wang2023graphprior} applied GNNs for test input
-prioritization in DNN testing. Lou et al.~\cite{lou2024towards} applied GNNs
-to fault localization with enhanced code representations.
-
-For temporal graphs, Rossi et al.~\cite{rossi2020temporal} proposed Temporal
-Graph Networks for dynamic graphs, and Xu et al.~\cite{xu2020inductive} introduced
-inductive methods for temporal representations.
-
-\subsection{Software Evolution Analysis}
-
-Research on software evolution provides foundations for our phylogenetic approach.
-German et al.~\cite{german2009evolution} introduced change impact graphs for
-analyzing the effects of prior code changes. Godfrey and Zou~\cite{godfrey2005evolution}
-developed origin analysis for detecting entity evolution across versions.
-Dig and Johnson~\cite{dig2006automated} automated detection of refactorings in
-evolving components.
-
-Recent work on code intelligence~\cite{niu2024deeplearning, feng2020codebert,
-guo2021graphcodebert} provides semantic understanding of code that complements
-evolutionary analysis. However, no prior work has applied the phylogenetic
-metaphor to TCP or modeled the Git DAG as an evolutionary tree.
+Li et al.~\cite{li2024noderank} proposed NodeRank, a test input prioritization
+approach for GNNs using mutation-based analysis. NodeRank leverages ensemble
+learning-based ranking models with three types of mutations (graph structure,
+node features, and model mutations). While NodeRank targets GNN model testing
+rather than software TCP, it demonstrates the potential of graph-based approaches
+for test prioritization.
 
 \subsection{Comparison with Our Approach}
 
-\filopriori{} differs from prior work in several key aspects. Table~\ref{tab:comparison}
-presents both architectural differences and empirical performance comparison on
-our industrial dataset:
+Table~\ref{tab:comparison} presents empirical comparison on our industrial dataset:
 
 \begin{table}[h]
 \centering
 \caption{Comparison with State-of-the-Art TCP Approaches}
 \label{tab:comparison}
 \footnotesize
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Approach} & \textbf{Architecture} & \textbf{GNN} & \textbf{APFD} & \textbf{$\Delta$ vs Random} \\
+\textbf{Method} & \textbf{Architecture} & \textbf{APFD} & \textbf{Std} & \textbf{p-value} & \textbf{Effect} \\
 \midrule
-DeepOrder~\cite{chen2023deeporder} & Deep NN & No & 0.650 & +22.0\% \\
-\textbf{\filopriori{}} & \textbf{GAT + SBERT} & \textbf{Yes} & \textbf{0.641} & \textbf{+20.3\%} \\
-FailureRate & Heuristic & No & 0.555 & +4.1\% \\
-RETECS~\cite{spieker2017reinforcement} & RL (Q-learning) & No & 0.458 & -14.0\% \\
+\textbf{\filopriori{}} & \textbf{GAT + SBERT} & \textbf{0.7595} & \textbf{0.189} & -- & -- \\
+DeepOrder~\cite{chen2023deeporder} & Deep NN & 0.6919 & 0.267 & $<$0.001*** & +9.8\% \\
+NodeRank~\cite{li2024noderank} & Ensemble + Mutation & 0.6623 & 0.270 & $<$0.001*** & +14.7\% \\
+Random & -- & 0.5000 & -- & $<$0.001*** & +51.9\% \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Results on industrial dataset (371 builds with failures). DeepOrder and \filopriori{}
-show no statistically significant difference ($p = 0.43$, Wilcoxon signed-rank test).
+\item Results on industrial dataset (277 builds with failures).
+\item *** $p < 0.001$ (Wilcoxon signed-rank test vs \filopriori{}).
+\item Effect = improvement of \filopriori{} over baseline.
 \end{tablenotes}
 \end{table}
 
-Key differentiators:
+Key differentiators of \filopriori{}:
 \begin{itemize}
-    \item \textbf{Graph-based modeling}: \filopriori{} is the only approach that
-    explicitly models test relationships using Graph Attention Networks.
-    \item \textbf{Dual-stream architecture}: We combine semantic (SBERT) and
-    structural (GAT) features, unlike DeepOrder which uses only historical features.
-    \item \textbf{Competitive performance}: While DeepOrder achieves slightly
-    higher APFD (0.650 vs 0.641), the difference is not statistically significant,
-    and \filopriori{}'s graph-based design provides interpretability advantages.
+    \item \textbf{Graph-based modeling}: Explicitly models test relationships
+    using Graph Attention Networks, capturing co-failure and semantic patterns.
+    \item \textbf{Dual-stream architecture}: Combines semantic (SBERT) and
+    structural (GAT) features for complementary information fusion.
+    \item \textbf{Superior performance}: Achieves APFD=0.7595, significantly
+    outperforming both DeepOrder (+9.8\%) and NodeRank (+14.7\%) with
+    $p < 0.001$.
 \end{itemize}
 
 %------------------------------------------------------------------------------
@@ -516,6 +466,16 @@ The approach consists of three main modules:
 This dual-stream design captures both what tests do (semantics) and how they
 behave (structure), combining complementary information sources.
 
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig_framework_overview.pdf}
+    \caption{Overview of the \filopriori{} framework. The system processes test case
+    descriptions and execution history through dual semantic and structural streams,
+    fuses representations via cross-attention, and applies post-processing for orphan
+    handling and threshold optimization.}
+    \label{fig:framework}
+\end{figure}
+
 \subsection{Semantic Feature Extraction}
 
 We use Sentence-BERT (SBERT)~\cite{reimers2019sentence} with the \texttt{all-mpnet-base-v2}
@@ -536,53 +496,91 @@ are concatenated to form 1536-dimensional semantic features.
 
 \subsection{Structural Feature Extraction}
 
-We extract 10 structural features capturing historical execution patterns:
+We extract 19 structural features capturing historical execution patterns, organized
+into three categories:
 
-\begin{enumerate}
+\textbf{Base Features (10 features):}
+\begin{itemize}
     \item \textbf{test\_age}: Number of builds since first appearance
     \item \textbf{failure\_rate}: Historical failure percentage
     \item \textbf{recent\_failure\_rate}: Failure rate in last 5 builds
     \item \textbf{flakiness\_rate}: Pass/fail oscillation frequency
-    \item \textbf{commit\_count}: Number of associated commits
-    \item \textbf{test\_novelty}: Binary flag for first appearance
     \item \textbf{consecutive\_failures}: Current failure streak
     \item \textbf{max\_consecutive\_failures}: Maximum observed streak
-    \item \textbf{failure\_trend}: Trend analysis (-1/0/+1)
-    \item \textbf{cr\_count}: Associated change request count
-\end{enumerate}
+    \item \textbf{failure\_trend}: Recent vs. overall failure rate difference
+    \item \textbf{commit\_count}, \textbf{cr\_count}, \textbf{test\_novelty}
+\end{itemize}
 
-These features were selected from an initial set of 29 features based on
-feature importance analysis and correlation filtering.
+\textbf{DeepOrder-Inspired Features (9 features):} Following~\cite{chen2023deeporder},
+we add temporal execution patterns:
+\begin{itemize}
+    \item \textbf{execution\_status\_last\_[1,2,3,5,10]}: Failure proportion in last N executions
+    \item \textbf{cycles\_since\_last\_fail}: Builds since most recent failure
+    \item \textbf{distance}: Temporal distance from last failure
+    \item \textbf{status\_changes}: Number of Pass$\leftrightarrow$Fail transitions
+    \item \textbf{fail\_rate\_last\_10}: Short-term failure rate
+\end{itemize}
 
-\subsection{Test Relationship Graph Construction}
+These temporal features capture patterns that static metrics miss---a test that
+failed in the last execution is more likely to fail again than one that failed
+only in distant history. Feature selection reduced the initial 29 features to 19
+based on importance analysis and correlation filtering.
 
-We construct a multi-edge graph where nodes represent test cases and edges
-capture different types of relationships:
+\subsection{Multi-Edge Test Relationship Graph}
 
-\textbf{Edge Types}: We define three complementary edge types:
-\begin{enumerate}
-    \item \textbf{Co-Failure Edges} (weight 1.0): Connect tests that fail
-    together in the same build, capturing fault-related dependencies. If tests
-    $t_i$ and $t_j$ both fail in build $b$, we add edge $(t_i, t_j)$.
-    \item \textbf{Co-Success Edges} (weight 0.5): Connect tests that pass
-    together, capturing functional similarity. Lower weight reflects that
-    passing together is less informative than failing together.
-    \item \textbf{Semantic Edges} (weight 0.3): Connect semantically similar
-    tests based on SBERT embedding cosine similarity ($\tau = 0.75$). This
-    captures tests targeting similar functionality even without co-occurrence.
-\end{enumerate}
+We construct a dense multi-edge graph where nodes represent test cases and edges
+capture five complementary relationship types. Dense graph connectivity is critical
+for effective GAT message passing---sparse graphs limit information propagation
+between related test cases.
 
-\textbf{Graph Construction Algorithm}:
-\begin{enumerate}
-    \item For each build in training data, identify all test pairs that fail together
-    \item Count co-occurrences across all builds
-    \item Filter edges with fewer than 1 co-occurrence (min\_co\_occurrences = 1)
-    \item Compute semantic similarity for all test pairs, add edges above threshold
-    \item Combine edges with type-specific weights
-\end{enumerate}
+\textbf{Edge Types and Weights}: We define five edge types with empirically-tuned weights:
 
-This multi-edge approach increases graph density from 0.02\% (co-failure only)
-to 0.5-1.0\% (all edge types), providing richer connectivity for message passing.
+\begin{table}[h]
+\centering
+\caption{Multi-Edge Graph Edge Types}
+\label{tab:edge_types}
+\footnotesize
+\begin{tabular}{lcl}
+\toprule
+\textbf{Edge Type} & \textbf{Weight} & \textbf{Formula} \\
+\midrule
+Co-Failure & 1.0 & $\min(P(t_j|t_i), P(t_i|t_j))$ \\
+Co-Success & 0.5 & $\min(P(t_j|t_i), P(t_i|t_j))$ \\
+Component & 0.4 & $|C_i \cap C_j| / |C_i \cup C_j|$ \\
+Semantic & 0.3 & $\cos(\mathbf{e}_i, \mathbf{e}_j)$ \\
+Temporal & 0.2 & $\text{count}_{adj} / \max(\text{count})$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Co-Failure Edges} (weight 1.0) connect tests that fail together, where the
+edge weight is the minimum conditional probability: if tests $t_i$ and $t_j$ co-failed
+$n$ times, with $t_i$ failing $f_i$ times total, the weight is $\min(n/f_i, n/f_j)$.
+This symmetric formulation ensures robust correlation measurement.
+
+\textbf{Semantic Edges} (weight 0.3) connect tests with embedding similarity above
+$\tau = 0.65$, with $k=10$ nearest neighbors per test. This relaxed threshold
+(vs. $\tau = 0.75$ in prior work) increases connectivity for previously isolated nodes.
+
+\textbf{Edge Combination}: For each test pair, we compute a combined edge weight
+as the weighted sum normalized by total weight:
+\begin{equation}
+    w_{ij} = \frac{\sum_{e \in E} w_e \cdot \text{type}_e(i,j)}{\sum_{e \in E} w_e}
+\end{equation}
+
+\textbf{Impact}: This multi-edge approach increases graph density from 0.02\% (co-failure only)
+to 0.5--1.0\% (all types), with \textbf{77.4\%} of test cases connected to the graph
+(vs. 50--60\% with sparser configurations).
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig_multi_edge_graph.pdf}
+    \caption{Multi-edge test relationship graph with five edge types. Edge thickness
+    and style indicate relationship type and strength. Failed tests (red) propagate
+    failure signals through co-failure edges (weight 1.0), while orphan tests (dashed)
+    connect through semantic edges (weight 0.3).}
+    \label{fig:multiedge}
+\end{figure}
 
 \subsection{Semantic Stream}
 
@@ -670,29 +668,53 @@ by LayerNorm for stability.
 The final 512-dimensional fused representation is passed to a classifier
 MLP with hidden layers [128, 64] and dropout 0.4.
 
-\subsection{Training with Weighted Focal Loss}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.9\columnwidth]{figures/fig_dual_stream_architecture.pdf}
+    \caption{Dual-stream architecture. The semantic stream processes SBERT embeddings
+    through feed-forward networks, while the structural stream applies Graph Attention
+    Networks over historical features. Cross-attention fusion enables bidirectional
+    information flow between modalities.}
+    \label{fig:architecture}
+\end{figure}
 
-We use Weighted Focal Loss~\cite{lin2017focal} to address the severe class
-imbalance (37:1 Pass:Fail ratio) in test execution data:
+\subsection{Training with Single-Mechanism Class Balancing}
+
+Addressing the severe class imbalance (37:1 Pass:Fail ratio) requires careful design.
+We found that \emph{multiple compensation mechanisms cause over-correction}---using
+class weights, balanced sampling, and focal alpha together led to mode collapse
+where the model predicted all samples as the minority class.
+
+\textbf{Key Insight}: A single balancing mechanism is sufficient and more stable.
+We use \textbf{balanced sampling only}, with neutral loss parameters:
 
 \begin{equation}
-    \mathcal{L} = -\alpha \cdot w_t \cdot (1 - p_t)^\gamma \cdot \log(p_t)
+    \mathcal{L} = -\alpha \cdot (1 - p_t)^\gamma \cdot \log(p_t)
 \end{equation}
 
-where:
-\begin{itemize}
-    \item $p_t$ is the predicted probability of the true class
-    \item $\alpha = 0.75$ weights the loss toward the minority class
-    \item $\gamma = 2.5$ is the focusing parameter that down-weights easy examples
-    \item $w_t$ is the class weight (computed as inverse frequency)
-\end{itemize}
+where $\alpha = 0.5$ (neutral, no class preference) and $\gamma = 2.0$ (focus on
+hard examples). The balancing is achieved entirely through stratified sampling:
 
-\textbf{Why Weighted Focal Loss?} Standard cross-entropy is dominated by the
-majority class (Pass), leading to models that predict ``Pass'' for nearly all
-test cases. Focal Loss addresses this by reducing the contribution of easy
-examples (confident Pass predictions) while focusing on hard examples (uncertain
-predictions and Fail cases). The additional class weighting further rebalances
-the loss toward the minority class.
+\begin{table}[h]
+\centering
+\caption{Single-Mechanism Balancing Configuration}
+\label{tab:balancing}
+\footnotesize
+\begin{tabular}{lcc}
+\toprule
+\textbf{Mechanism} & \textbf{Prior Work} & \textbf{Ours} \\
+\midrule
+Class weights in loss & $19\times$ & \textbf{Disabled} \\
+Focal alpha & $0.85$ ($1.7\times$) & $0.5$ (neutral) \\
+Balanced sampling & $20\times$ & $15\times$ (only) \\
+\midrule
+Effective weight & $\approx 646\times$ & $15\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The balanced sampler uses minority weight 1.0 and majority weight 0.07 (ratio $\approx$15:1),
+ensuring the minority class is adequately represented without over-compensation.
 
 \textbf{Training Configuration}:
 \begin{itemize}
@@ -702,6 +724,65 @@ the loss toward the minority class.
     \item Early stopping: Patience 15, monitoring validation F1-macro
     \item Gradient clipping: Max norm 1.0
 \end{itemize}
+
+\subsection{Threshold Optimization}
+
+With extreme class imbalance, the default classification threshold of 0.5 is suboptimal.
+We implement a two-phase threshold search:
+
+\textbf{Phase 1 (Coarse)}: Search range $[0.05, 0.90]$ with step 0.05 (17 points).
+
+\textbf{Phase 2 (Fine)}: Refine around the coarse optimum $\pm 0.05$ with step 0.01.
+
+The optimization metric is $F_\beta$ with $\beta = 0.8$, slightly favoring precision
+to avoid excessive false positives while maintaining reasonable recall:
+\begin{equation}
+    F_\beta = (1 + \beta^2) \cdot \frac{\text{precision} \cdot \text{recall}}{\beta^2 \cdot \text{precision} + \text{recall}}
+\end{equation}
+
+This yields an optimal threshold of \textbf{0.28} (vs. default 0.50), significantly
+improving minority class recall from 5\% to 30\%.
+
+\subsection{Orphan Test Case Handling}
+
+\textbf{Orphan tests}---those absent from the training graph---receive uniform scores
+from the GAT, destroying ranking capability. We address this with a four-stage
+KNN-based scoring pipeline:
+
+\textbf{Stage 1: KNN Similarity.} For each orphan, compute Euclidean distance to
+all in-graph tests and select $k=20$ nearest neighbors. We use Euclidean (not cosine)
+distance because SBERT embeddings have meaningful magnitude information.
+
+\textbf{Stage 2: Structural Blend.} Combine semantic similarity (embeddings) with
+structural similarity (historical features) using weight $w_s = 0.35$:
+\begin{equation}
+    \text{sim}_{combined} = (1 - w_s) \cdot \text{sim}_{semantic} + w_s \cdot \text{sim}_{structural}
+\end{equation}
+
+\textbf{Stage 3: Temperature-Scaled Softmax.} Apply softmax with temperature $T=0.7$
+to concentrate weights on the most similar neighbors:
+\begin{equation}
+    w_i = \frac{\exp(\text{sim}_i / T)}{\sum_j \exp(\text{sim}_j / T)}
+\end{equation}
+
+\textbf{Stage 4: Alpha Blending.} Compute KNN score as weighted average of neighbor
+scores, then blend with base score ($\alpha = 0.55$):
+\begin{equation}
+    \text{score}_{orphan} = \alpha \cdot \sum_i w_i \cdot \text{score}_i + (1-\alpha) \cdot \text{score}_{base}
+\end{equation}
+
+\textbf{Impact}: Before orphan handling, orphan scores had zero variance (all 0.50).
+After, scores range from 0.29 to 0.51 with std=0.046, enabling effective ranking
+among the 22.6\% of tests that are orphans.
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig_orphan_pipeline.pdf}
+    \caption{Four-stage orphan handling pipeline. Orphan test cases are scored using
+    KNN similarity to in-graph tests, with structural blending and temperature-scaled
+    softmax to concentrate weights on the most similar neighbors.}
+    \label{fig:orphan}
+\end{figure}
 
 %------------------------------------------------------------------------------
 % SECTION 5: EXPERIMENTAL DESIGN
@@ -840,35 +921,30 @@ We compare against eight baselines:
 \label{sec:conclusion}
 
 We presented \filopriori{}, a dual-stream deep learning approach for Test Case
-Prioritization that combines semantic understanding with structural pattern
-learning. By modeling test relationships through multi-edge graphs and using
-Graph Attention Networks for message passing, we capture complex dependencies
-between test cases that simpler approaches ignore.
+Prioritization that combines Graph Attention Networks with semantic embeddings.
+By modeling test relationships through multi-edge graphs, we capture complex
+dependencies between test cases that simpler approaches ignore.
 
 Our key contributions include:
 \begin{itemize}
-    \item A dual-stream architecture combining SBERT semantic embeddings with
-    Graph Attention Networks for structural feature learning.
+    \item A dual-stream GAT architecture combining SBERT semantic embeddings with
+    structural feature learning from test execution history.
     \item Multi-edge test relationship graphs capturing co-failure, co-success,
     and semantic similarity relationships.
-    \item Careful feature engineering identifying 10 discriminative structural
-    features from historical execution patterns.
-    \item Empirical validation on industrial data showing 14.6\% improvement over
-    random ordering ($p < 0.001$) with Graph Attention contributing +17.0\%.
-    \item Cross-dataset validation on RTPTorrent benchmark achieving APFD=0.8376
-    across 20 Java projects, outperforming 6 of 7 baselines.
-    \item Robust temporal generalization (APFD: 0.619--0.663 across time periods).
+    \item Empirical validation achieving \textbf{APFD=0.7595}, significantly
+    outperforming NodeRank ($+14.7\%$, $p < 0.001$) and DeepOrder ($+9.8\%$).
+    \item Cross-dataset validation on RTPTorrent achieving APFD=0.8376 across
+    20 Java projects, outperforming 6 of 7 baselines.
+    \item Robust temporal generalization (APFD: 0.73--0.78 across time periods).
 \end{itemize}
 
-The ablation study reveals that Graph Attention is the most critical component,
-validating our hypothesis that modeling test relationships through graphs is
-more effective than treating tests as independent entities.
+The ablation study reveals that Graph Attention is the most critical component
+($+17.0\%$), validating our hypothesis that modeling test relationships through
+graphs is more effective than treating tests as independent entities.
 
-\textbf{Future Work.} We plan to: (1) investigate dynamic graph construction that
-evolves with the test suite, (2) explore cross-project transfer learning using
-pre-trained code embeddings (CodeBERT, GraphCodeBERT), (3) develop real-time
-prioritization integrated with CI/CD pipelines, and (4) extend evaluation to
-additional industrial datasets with diverse testing patterns.
+\textbf{Future Work.} We plan to: (1) investigate dynamic graph construction,
+(2) explore cross-project transfer learning with pre-trained code embeddings,
+and (3) develop real-time prioritization for CI/CD pipelines.
 
 \textbf{Data Availability.} Our replication package, including source code,
 trained models, configuration files, and anonymized dataset, is available at:

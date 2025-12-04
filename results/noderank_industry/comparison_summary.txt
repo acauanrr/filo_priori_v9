@@ -1,0 +1,43 @@
+======================================================================
+NodeRank - Industry Dataset Results
+======================================================================
+
+Total builds analyzed: 277
+
+APFD Statistics:
+  Mean APFD:   0.6623 (PRIMARY METRIC)
+  Std:         0.2701
+  Median:      0.7222
+  Min:         0.0106
+  Max:         1.0000
+
+APFD Distribution:
+  APFD = 1.0:  23 builds
+  APFD >= 0.7: 147 builds
+  APFD >= 0.5: 211 builds
+  APFD < 0.5:  66 builds
+
+Timing:
+  Training:    17.61s
+  Evaluation:  9.13s
+  Total:       34.85s
+
+======================================================================
+Configuration:
+======================================================================
+  train_path: datasets/01_industry/train.csv
+  test_path: datasets/01_industry/test.csv
+  build_col: Build_ID
+  test_col: TC_Key
+  result_col: TE_Test_Result
+  duration_col: None
+  n_gsm_mutations: 5
+  n_nfm_mutations: 5
+  n_gmm_variants: 4
+  k_neighbors: 5
+  history_window: 10
+  use_ensemble: True
+  seed: 42
+  output_dir: results/noderank_industry
+  method_name: NodeRank
+  test_scenario: industry_dataset

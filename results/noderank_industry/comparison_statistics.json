@@ -1,0 +1,40 @@
+{
+  "n_builds_compared": 277,
+  "noderank": {
+    "mean": 0.662292159955278,
+    "std": 0.2700513606875197,
+    "median": 0.7222222222222222,
+    "ci_95": [
+      0.6305467890805656,
+      0.6934982425105287
+    ]
+  },
+  "filopriori": {
+    "mean": 0.7595406539747789,
+    "std": 0.18903346941359514,
+    "median": 0.7944444444444445,
+    "ci_95": [
+      0.7367532068070765,
+      0.7816184892230619
+    ]
+  },
+  "difference": {
+    "mean": 0.09724849401950102,
+    "std": 0.2563170509803338,
+    "positive_pct": 52.707581227436826,
+    "negative_pct": 31.046931407942242,
+    "equal_pct": 16.24548736462094
+  },
+  "wilcoxon": {
+    "statistic": 7791.5,
+    "p_value": 2.248486932967471e-08,
+    "significant_0.05": "True",
+    "significant_0.01": "True"
+  },
+  "effect_size": {
+    "cliffs_delta": 0.1787329432157333,
+    "cliffs_interpretation": "small",
+    "cohens_d": 0.4164615497355932,
+    "cohens_interpretation": "small"
+  }
+}

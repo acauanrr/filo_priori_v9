@@ -95,23 +95,6 @@ S.~Brody, U.~Alon, and E.~Yahav, ``How attentive are graph attention
   networks?'' in \emph{International Conference on Learning Representations
   (ICLR)}, 2022.
 
-\bibitem{kitchenham2007guidelines}
-B.~Kitchenham and S.~Charters, ``Guidelines for performing systematic
-  literature reviews in software engineering,'' Keele University and Durham
-  University Joint Report, Tech. Rep. EBSE-2007-01, 2007.
-
-\bibitem{bertolino2020learning}
-A.~Bertolino, A.~Guerriero, B.~Miranda, R.~Pietrantuono, and S.~Russo,
-  ``Learning-to-rank vs ranking-to-learn: Strategies for regression testing in
-  continuous integration,'' in \emph{Proceedings of the ACM/IEEE 42nd
-  International Conference on Software Engineering (ICSE)}.\hskip 1em plus
-  0.5em minus 0.4em\relax ACM, 2020, pp. 1--12.
-
-\bibitem{bagherzadeh2022reinforcement}
-M.~Bagherzadeh, N.~Khosravi, and L.~Briand, ``Reinforcement learning for test
-  case prioritization,'' \emph{IEEE Transactions on Software Engineering},
-  vol.~48, no.~8, pp. 2836--2856, 2022.
-
 \bibitem{chen2023deeporder}
 J.~Chen, Y.~Bai, D.~Hao, L.~Zhang, L.~Zhang, and B.~Xie, ``Deeporder: Deep
   learning for test case prioritization in continuous integration testing,'' in
@@ -125,69 +108,10 @@ A.~Abdelkarim, K.~K. Sabor, G.~Bonnet, and F.~Ber, ``Tcp-net: Test case
   of the IEEE/ACM International Conference on Automation of Software Test
   (AST)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2022, pp. 1--12.
 
-\bibitem{khan2024hyperparameter}
-I.~Khan \emph{et~al.}, ``Machine learning-based test case prioritization using
-  hyperparameter optimization,'' in \emph{Proceedings of the 5th ACM/IEEE
-  International Conference on Automation of Software Test (AST)}.\hskip 1em
-  plus 0.5em minus 0.4em\relax ACM, 2024, pp. 1--10.
-
-\bibitem{allamanis2018learning}
-M.~Allamanis, M.~Brockschmidt, and M.~Khademi, ``Learning to represent programs
-  with graphs,'' in \emph{International Conference on Learning Representations
-  (ICLR)}, 2018.
-
-\bibitem{wang2023graphprior}
-J.~Wang \emph{et~al.}, ``Graphprior: Mutation-based test input prioritization
-  for graph neural networks,'' \emph{ACM Transactions on Software Engineering
-  and Methodology}, vol.~32, no.~6, pp. 1--32, 2023.
-
-\bibitem{lou2024towards}
-Y.~Lou \emph{et~al.}, ``Towards better graph neural network-based fault
-  localization through enhanced code representation,'' \emph{ACM Transactions
-  on Software Engineering and Methodology}, 2024, dOI: 10.1145/3660793.
-
-\bibitem{rossi2020temporal}
-E.~Rossi, B.~Chamberlain, F.~Frasca, D.~Eynard, F.~Monti, and M.~Bronstein,
-  ``Temporal graph networks for deep learning on dynamic graphs,'' in
-  \emph{ICML 2020 Workshop on Graph Representation Learning}, 2020.
-
-\bibitem{xu2020inductive}
-D.~Xu, C.~Ruan, E.~Korpeoglu, S.~Kumar, and K.~Achan, ``Inductive
-  representation learning on temporal graphs,'' in \emph{International
-  Conference on Learning Representations (ICLR)}, 2020.
-
-\bibitem{godfrey2005evolution}
-M.~W. Godfrey and L.~Zou, ``Using origin analysis to detect merging and
-  splitting of source code entities,'' in \emph{IEEE Transactions on Software
-  Engineering}, vol.~31, no.~2.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
-  2005, pp. 166--181.
-
-\bibitem{dig2006automated}
-D.~Dig and R.~Johnson, ``Automated detection of refactorings in evolving
-  components,'' pp. 404--428, 2006.
-
-\bibitem{niu2024deeplearning}
-C.~Niu \emph{et~al.}, ``Deep learning for code intelligence: Survey, benchmark
-  and toolkit,'' \emph{ACM Computing Surveys}, vol.~56, no.~8, pp. 1--45, 2024,
-  dOI: 10.1145/3664597.
-
-\bibitem{feng2020codebert}
-Z.~Feng, D.~Guo, D.~Tang, N.~Duan, X.~Feng, M.~Gong, L.~Shou, B.~Qin, T.~Liu,
-  D.~Jiang, and M.~Zhou, ``Codebert: A pre-trained model for programming and
-  natural languages,'' in \emph{Findings of the Association for Computational
-  Linguistics (EMNLP)}.\hskip 1em plus 0.5em minus 0.4em\relax ACL, 2020, pp.
-  1536--1547.
-
-\bibitem{guo2021graphcodebert}
-D.~Guo, S.~Ren, S.~Lu, Z.~Feng, D.~Tang, S.~Liu, L.~Zhou, N.~Duan, J.~Yin,
-  D.~Jiang, and M.~Zhou, ``Graphcodebert: Pre-training code representations
-  with data flow,'' in \emph{International Conference on Learning
-  Representations (ICLR)}, 2021.
-
-\bibitem{vansoest2024noderank}
-R.~van Soest \emph{et~al.}, ``Noderank: A graph neural network approach for
-  test case prioritization in continuous integration,'' \emph{Empirical
-  Software Engineering}, vol.~29, no.~3, pp. 1--42, 2024.
+\bibitem{li2024noderank}
+Y.~Li, X.~Dang, W.~Pian, A.~Habib, J.~Klein, and T.~F. Bissyand{\'e}, ``Test
+  input prioritization for graph neural networks,'' \emph{IEEE Transactions on
+  Software Engineering}, vol.~50, no.~6, pp. 1396--1424, 2024.
 
 \bibitem{reimers2019sentence}
 N.~Reimers and I.~Gurevych, ``Sentence-bert: Sentence embeddings using siamese
