@@ -40,7 +40,7 @@
 \node[layerbox=semanticcolor, below=0.3cm of sem_ffn2] (sem_ln) {LayerNorm};
 
 % FFN Block detail
-\node[font=\tiny, right=0.1cm of sem_ffn1, align=left, text=gray] {
+\node[font=\tiny, right=0.25cm of sem_ffn1, align=left, text=gray] {
     Linear 256$\rightarrow$1024\\
     GELU + Dropout\\
     Linear 1024$\rightarrow$256
@@ -51,17 +51,22 @@
 % Stream label
 \node[streamlabel, left=0.3cm of sem_ffn1, semanticcolor] {Semantic Stream};
 
-% === STRUCTURAL STREAM (Right) ===
-\node[inputbox] (str_in) at (5, 0) {Features\\(19-d)};
-\node[inputbox, right=0.3cm of str_in] (graph_in) {Graph\\$\mathcal{G}$};
+\node[inputbox] (str_in) at (5.4, 0.2) {Features\\(19-d)};
+\node[inputbox, right=0.9cm of str_in] (graph_in) {Graph\\$\mathcal{G}$};
 
-\node[layerbox=structuralcolor, below=0.4cm of $(str_in)!0.5!(graph_in)$] (str_proj) {Linear 19$\rightarrow$256};
-\node[layerbox=structuralcolor, below=0.3cm of str_proj] (gat1) {GAT Layer 1 (4 heads)};
-\node[layerbox=structuralcolor, below=0.3cm of gat1] (gat2) {GAT Layer 2 (1 head)};
-\node[layerbox=structuralcolor, below=0.3cm of gat2] (str_ln) {LayerNorm};
+\node[layerbox=structuralcolor, below=0.6cm of $(str_in)!0.5!(graph_in)$] (str_proj) {Linear 19$\rightarrow$256};
+\node[layerbox=structuralcolor, below=0.32cm of str_proj] (gat1) {GAT Layer 1 (4 heads)};
+\node[layerbox=structuralcolor, below=0.32cm of gat1] (gat2) {GAT Layer 2 (1 head)};
+\node[layerbox=structuralcolor, below=0.32cm of gat2] (str_ln) {LayerNorm};
+
+% Merge inputs for cleaner arrows
+\coordinate (strmerge) at ($(str_proj.north)+(0,0.32)$);
+\draw[arrow] (str_in.south) -- ++(0,-0.28) -| (strmerge);
+\draw[arrow] (graph_in.south) -- ++(0,-0.28) -| (strmerge);
+\draw[arrow] (strmerge) -- (str_proj.north);
 
 % GAT detail
-\node[font=\tiny, right=0.1cm of gat1, align=left, text=gray] {
+\node[font=\tiny, right=0.45cm of gat1, align=left, text=gray] {
     Multi-head attention\\
     $h_i = \|_{k=1}^4 \sigma(\sum \alpha_{ij}^k W^k h_j)$
 };
@@ -72,16 +77,16 @@
 \node[streamlabel, right=0.3cm of gat1, structuralcolor] {Structural Stream};
 
 % === CROSS-ATTENTION FUSION ===
-\node[layerbox=fusioncolor, below=1.2cm of $(sem_out)!0.5!(str_out)$, minimum width=4cm] (cross1) {
+\node[layerbox=fusioncolor, below=1.3cm of $(sem_out)!0.5!(str_out)$, minimum width=4.2cm] (cross1) {
     Cross-Attention: Semantic $\rightarrow$ Structural
 };
-\node[layerbox=fusioncolor, below=0.3cm of cross1, minimum width=4cm] (cross2) {
+\node[layerbox=fusioncolor, below=0.35cm of cross1, minimum width=4.2cm] (cross2) {
     Cross-Attention: Structural $\rightarrow$ Semantic
 };
-\node[layerbox=fusioncolor, below=0.3cm of cross2, minimum width=3cm] (concat) {Concatenate [512-d]};
+\node[layerbox=fusioncolor, below=0.35cm of cross2, minimum width=3.2cm] (concat) {Concatenate [512-d]};
 
 % Fusion label
-\node[font=\small\bfseries, fusioncolor, left=0.5cm of cross1] {Fusion};
+\node[font=\small\bfseries, fusioncolor, left=0.65cm of cross1] {Fusion};
 
 % === CLASSIFIER ===
 \node[layerbox=black, below=0.5cm of concat, minimum width=2.5cm] (mlp1) {MLP: 512$\rightarrow$128$\rightarrow$64};
@@ -95,8 +100,6 @@
 \draw[arrow] (sem_ffn2) -- (sem_ln);
 
 % Structural stream
-\draw[arrow] (str_in) -- ++(0,-0.2) -| (str_proj);
-\draw[arrow] (graph_in) -- ++(0,-0.2) -| (str_proj);
 \draw[arrow] (str_proj) -- (gat1);
 \draw[arrow] (gat1) -- (gat2);
 \draw[arrow] (gat2) -- (str_ln);

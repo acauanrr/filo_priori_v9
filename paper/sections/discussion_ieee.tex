@@ -5,9 +5,9 @@
 This section discusses the implications of our findings, analyzes the reasons
 behind \filopriori{}'s effectiveness, and addresses practical considerations.
 
-\subsection{Why Does Graph Attention Matter?}
+\subsection{Why Does Multi-Edge Graph Construction Matter?}
 
-The ablation study reveals that Graph Attention Networks contribute +17.0\%
+The ablation study reveals that the Dense Multi-Edge Graph contributes +10.0\%
 to performance, making it the most critical component. We attribute this to
 several factors:
 
@@ -35,9 +35,11 @@ are dominated by the majority class. Our Weighted Focal Loss addresses this:
     \mathcal{L} = -\alpha \cdot w_t \cdot (1 - p_t)^\gamma \cdot \log(p_t)
 \end{equation}
 
-The ablation shows that Focal Loss contributes +4.6\% improvement over standard
-cross-entropy, and additional class weighting contributes +3.5\%. This validates
-our hypothesis that proper handling of class imbalance is critical for TCP.
+The sensitivity analysis shows that the choice of loss function has a 4.7\%
+impact on performance, with Weighted Focal Loss achieving the best results.
+Additionally, the ablation study reveals that proper balancing strategy
+(Single Balancing) contributes +4.0\%. This validates our hypothesis that
+careful handling of class imbalance is critical for TCP.
 
 \subsection{Comparison with FailureRate Baseline}
 
@@ -61,8 +63,8 @@ failure patterns, simpler approaches may be sufficient.
 \subsection{Practical Implications}
 
 \textbf{For Practitioners}: \filopriori{} can be integrated into CI/CD pipelines
-to prioritize test execution. The 14\% improvement over random ordering
-translates to faster fault detection, reducing the feedback loop for developers.
+to prioritize test execution. The 51.9\% improvement over random ordering
+translates to substantially faster fault detection, reducing the feedback loop for developers.
 
 \textbf{Computational Cost}: Training requires approximately 2-3 hours on a
 single GPU. Inference is fast ($<$1 second per build), making real-time
@@ -95,8 +97,9 @@ limited history may benefit from transfer learning approaches.
 While \filopriori{} demonstrates strong performance, several limitations exist:
 
 \begin{itemize}
-    \item \textbf{Single dataset}: Our evaluation uses one industrial dataset.
-    Generalization to other projects requires further validation.
+    \item \textbf{Domain specificity}: While we evaluated on three distinct
+    domains (industrial testing, GNN benchmarks, and open-source CI/CD),
+    results may not generalize to all software projects or testing contexts.
 
     \item \textbf{Cold start}: New test cases without semantic similarity to
     existing tests may not benefit from the graph structure.

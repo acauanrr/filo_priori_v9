@@ -54,7 +54,9 @@ S.~Elbaum, A.~G. Malishevsky, and G.~Rothermel, ``Test case prioritization: A
 
 \bibitem{rothermel1999test}
 G.~Rothermel, R.~H. Untch, C.~Chu, and M.~J. Harrold, ``Test case
-  prioritization: An empirical study,'' pp. 179--188, 1999.
+  prioritization: An empirical study,'' in \emph{Proceedings IEEE International
+  Conference on Software Maintenance (ICSM)}.\hskip 1em plus 0.5em minus
+  0.4em\relax IEEE, 1999, pp. 179--188.
 
 \bibitem{kim2002history}
 J.-M. Kim and A.~Porter, ``A history-based test prioritization technique for
@@ -134,6 +136,8 @@ Y.~Feng, Q.~Shi, X.~Gao, J.~Wan, C.~Fang, and Z.~Chen, ``Deepgini: Prioritizing
 
 \bibitem{arcuri2011practical}
 A.~Arcuri and L.~Briand, ``A practical guide for using statistical tests to
-  assess randomized algorithms in software engineering,'' pp. 1--10, 2011.
+  assess randomized algorithms in software engineering,'' in \emph{Proceedings
+  of the 33rd International Conference on Software Engineering (ICSE)}.\hskip
+  1em plus 0.5em minus 0.4em\relax ACM, 2011, pp. 1--10.
 
 \end{thebibliography}

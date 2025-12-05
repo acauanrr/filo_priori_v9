@@ -17,7 +17,7 @@
 
 \begin{document}
 \begin{tikzpicture}[
-    node distance=0.5cm and 0.8cm,
+    node distance=0.55cm and 0.9cm,
     >=Stealth,
     every node/.style={font=\footnotesize},
     stagebox/.style={rectangle, draw=#1!80, fill=#1!15,
@@ -42,39 +42,39 @@
 \node[inputbox, below=0.3cm of orphan] (ingraph) {In-Graph\\Scores};
 
 % === STAGE 1: KNN Similarity ===
-\node[stagebox=stage1, right=1cm of $(orphan)!0.5!(ingraph)$] (stage1) {
+\node[stagebox=stage1, right=1.2cm of $(orphan)!0.5!(ingraph)$] (stage1) {
     \textbf{Stage 1}\\
     KNN Similarity\\
     {\tiny (Euclidean, k=20)}
 };
 
 % === STAGE 2: Structural Blend ===
-\node[stagebox=stage2, right=0.6cm of stage1] (stage2) {
+\node[stagebox=stage2, right=0.85cm of stage1] (stage2) {
     \textbf{Stage 2}\\
     Structural Blend\\
     {\tiny ($w_s = 0.35$)}
 };
 
 % === STAGE 3: Temperature Softmax ===
-\node[stagebox=stage3, right=0.6cm of stage2] (stage3) {
+\node[stagebox=stage3, right=0.85cm of stage2] (stage3) {
     \textbf{Stage 3}\\
     Temperature\\Softmax\\
     {\tiny ($T = 0.7$)}
 };
 
 % === STAGE 4: Alpha Blending ===
-\node[stagebox=stage4, right=0.6cm of stage3] (stage4) {
+\node[stagebox=stage4, right=0.85cm of stage3] (stage4) {
     \textbf{Stage 4}\\
     Alpha Blending\\
     {\tiny ($\alpha = 0.55$)}
 };
 
 % === OUTPUT ===
-\node[outputbox, right=1cm of stage4] (output) {Orphan\\Scores};
+\node[outputbox, right=1.3cm of stage4] (output) {Orphan\\Scores};
 
 % === ARROWS ===
-\draw[arrow] (orphan.east) -- ++(0.3,0) |- (stage1.west);
-\draw[arrow] (ingraph.east) -- ++(0.3,0) |- (stage1.west);
+\draw[arrow] (orphan.east) -- ++(0.35,0) |- (stage1.west);
+\draw[arrow] (ingraph.east) -- ++(0.35,0) |- (stage1.west);
 \draw[arrow] (stage1) -- (stage2);
 \draw[arrow] (stage2) -- (stage3);
 \draw[arrow] (stage3) -- (stage4);
@@ -115,10 +115,10 @@
     score = 0.50
 };
 
-\node[font=\scriptsize\bfseries] at (11, -2.3) {After};
-\node[font=\tiny, align=center] at (11, -2.9) {
+\node[font=\scriptsize\bfseries] at (10.9, -2.3) {After};
+\node[font=\tiny, align=center] at (10.9, -2.9) {
     Differentiated:\\
-    [0.29, 0.51]
+    {[0.29, 0.51]}
 };
 
 \end{tikzpicture}
