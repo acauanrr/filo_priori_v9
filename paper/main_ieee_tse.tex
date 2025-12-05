@@ -78,20 +78,23 @@
 % AUTHORS
 %------------------------------------------------------------------------------
 \author{
-  \IEEEauthorblockN{Acauan C. Ribeiro}
-  \IEEEauthorblockA{
-    Instituto de Computa\c{c}\~{a}o (IComp)\\
+  \IEEEauthorblockN{Acauan C. Ribeiro\IEEEauthorrefmark{1},
+    Eduardo Luzeiro Feitosa\IEEEauthorrefmark{1},
+    Andre Luiz da Costa Carvalho\IEEEauthorrefmark{1},\\
+    Eulanda Miranda dos Santos\IEEEauthorrefmark{1},
+    Bruno Freitas Gadelha\IEEEauthorrefmark{1},
+    and Yan Rodrigo Da Silva Soares\IEEEauthorrefmark{1}}
+  \IEEEauthorblockA{\IEEEauthorrefmark{1}Instituto de Computa\c{c}\~{a}o (IComp)\\
     Universidade Federal do Amazonas (UFAM)\\
     Manaus, AM, Brazil\\
-    acauan@icomp.ufam.edu.br
-  }
+    \{acauan.ribeiro, efeitosa, andre, emsantos, bruno, yan.soares\}@icomp.ufam.edu.br}
 }
 
 %------------------------------------------------------------------------------
 % HEADERS
 %------------------------------------------------------------------------------
 \markboth{IEEE Transactions on Software Engineering, Vol. XX, No. X, Month 2026}%
-{Ribeiro: Filo-Priori: Deep Learning-based Test Case Prioritization}
+{Ribeiro \MakeLowercase{\textit{et al.}}: Filo-Priori: Deep Learning-based Test Case Prioritization}
 
 %------------------------------------------------------------------------------
 % ABSTRACT
@@ -470,7 +473,7 @@ behave (structure), combining complementary information sources.
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/fig_framework_overview.pdf}
+    \includegraphics[width=\columnwidth]{figures/fig_framework_overview_new.pdf}
     \caption{Overview of the \filopriori{} framework. The system processes test case
     descriptions and execution history through dual semantic and structural streams,
     fuses representations via cross-attention, and applies post-processing for orphan
@@ -672,7 +675,7 @@ MLP with hidden layers [128, 64] and dropout 0.4.
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.9\columnwidth]{figures/fig_dual_stream_architecture.pdf}
+    \includegraphics[width=0.9\columnwidth]{figures/fig_dual_stream_architecture_new.pdf}
     \caption{Dual-stream architecture. The semantic stream processes SBERT embeddings
     through feed-forward networks, while the structural stream applies Graph Attention
     Networks over historical features. Cross-attention fusion enables bidirectional
@@ -779,7 +782,7 @@ among the 22.6\% of tests that are orphans.
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/fig_orphan_pipeline.pdf}
+    \includegraphics[width=\columnwidth]{figures/fig_orphan_pipeline_new.pdf}
     \caption{Four-stage orphan handling pipeline. Orphan test cases are scored using
     KNN similarity to in-graph tests, with structural blending and temperature-scaled
     softmax to concentrate weights on the most similar neighbors.}
@@ -997,6 +1000,31 @@ This work was supported by [funding information]. We thank [acknowledgments].
 is a researcher at the Institute of Computing (IComp), Federal University of
 Amazonas (UFAM), Brazil. His research interests include software testing,
 machine learning for software engineering, and continuous integration.
+\end{IEEEbiographynophoto}
+
+\begin{IEEEbiographynophoto}{Eduardo Luzeiro Feitosa}
+is a professor at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil.
+\end{IEEEbiographynophoto}
+
+\begin{IEEEbiographynophoto}{Andre Luiz da Costa Carvalho}
+is a professor at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil.
+\end{IEEEbiographynophoto}
+
+\begin{IEEEbiographynophoto}{Eulanda Miranda dos Santos}
+is a professor at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil.
+\end{IEEEbiographynophoto}
+
+\begin{IEEEbiographynophoto}{Bruno Freitas Gadelha}
+is a professor at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil.
+\end{IEEEbiographynophoto}
+
+\begin{IEEEbiographynophoto}{Yan Rodrigo Da Silva Soares}
+is a researcher at the Institute of Computing (IComp), Federal University of
+Amazonas (UFAM), Brazil.
 \end{IEEEbiographynophoto}
 
 \end{document}
